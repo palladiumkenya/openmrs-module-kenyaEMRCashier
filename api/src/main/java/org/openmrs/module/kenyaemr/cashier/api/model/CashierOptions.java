@@ -75,9 +75,9 @@ public class CashierOptions {
 		FLOOR(1), MID(2), CEILING(3);
 
 		@SuppressWarnings("unused")
-		private int value;
+		private final int value;
 
-		private RoundingMode(int value) {
+		RoundingMode(int value) {
 			this.value = value;
 		}
 	}

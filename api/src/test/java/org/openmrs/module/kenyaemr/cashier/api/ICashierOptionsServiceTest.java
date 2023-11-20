@@ -48,7 +48,7 @@ public class ICashierOptionsServiceTest extends BaseModuleContextTest {
 		Assert.assertEquals(3, options.getDefaultReceiptReportId());
 		Assert.assertEquals(CashierOptions.RoundingMode.MID, options.getRoundingMode());
 		Assert.assertEquals(5, (int)options.getRoundToNearest());
-		Assert.assertEquals(true, options.isTimesheetRequired());
+		Assert.assertTrue(options.isTimesheetRequired());
 	}
 
 	/**

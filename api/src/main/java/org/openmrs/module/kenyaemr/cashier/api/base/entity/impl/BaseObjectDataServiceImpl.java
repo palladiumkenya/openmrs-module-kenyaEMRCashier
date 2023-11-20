@@ -251,7 +251,7 @@ public abstract class BaseObjectDataServiceImpl<E extends OpenmrsObject, P exten
 
 		loadPagingTotal(pagingInfo, criteria);
 
-		if (orderBy != null && orderBy.length > 0) {
+		if (orderBy != null) {
 			for (Order order : orderBy) {
 				criteria.addOrder(order);
 			}

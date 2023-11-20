@@ -19,9 +19,9 @@ package org.openmrs.module.kenyaemr.cashier.api.model;
 public enum BillStatus {
 	PENDING(0), POSTED(4), PAID(1), CANCELLED(2), ADJUSTED(3);
 
-	private int value;
+	private final int value;
 
-	private BillStatus(int value) {
+	BillStatus(int value) {
 		this.value = value;
 	}
 }

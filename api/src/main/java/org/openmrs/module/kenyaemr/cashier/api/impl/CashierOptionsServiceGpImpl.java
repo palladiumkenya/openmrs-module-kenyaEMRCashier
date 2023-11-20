@@ -66,7 +66,7 @@ public class CashierOptionsServiceGpImpl implements ICashierOptionsService {
 				String roundToNearestProperty = Context.getAdministrationService()
 				        .getGlobalProperty(ModuleSettings.ROUND_TO_NEAREST_PROPERTY);
 				if (StringUtils.isNotEmpty(roundToNearestProperty)) {
-					options.setRoundToNearest(new Integer(roundToNearestProperty));
+					options.setRoundToNearest(Integer.valueOf(roundToNearestProperty));
 
 					String roundingItemId = Context.getAdministrationService()
 					        .getGlobalProperty(ModuleSettings.ROUNDING_ITEM_ID);

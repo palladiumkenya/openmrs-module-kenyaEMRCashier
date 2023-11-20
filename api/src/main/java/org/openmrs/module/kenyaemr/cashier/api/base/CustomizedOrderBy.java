@@ -24,7 +24,7 @@ import org.hibernate.criterion.Order;
  * http://blog.hexican.com/2012/05/how-to-customize-hibernate-order-by/
  */
 public class CustomizedOrderBy extends Order {
-	private String sqlExpression;
+	private final String sqlExpression;
 
 	public static Order asc(String sqlFormula) {
 		if (!StringUtils.endsWith(sqlFormula, " asc")) {

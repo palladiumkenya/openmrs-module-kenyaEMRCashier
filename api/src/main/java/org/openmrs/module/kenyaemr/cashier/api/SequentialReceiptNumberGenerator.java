@@ -32,9 +32,9 @@ import org.openmrs.patient.impl.LuhnIdentifierValidator;
 public class SequentialReceiptNumberGenerator implements IReceiptNumberGenerator {
 	private static final Log LOG = LogFactory.getLog(ReceiptNumberGeneratorFactory.class);
 
-	private ISequentialReceiptNumberGeneratorService service;
+	private final ISequentialReceiptNumberGeneratorService service;
 	private SequentialReceiptNumberGeneratorModel model;
-	private LuhnIdentifierValidator checkDigitGenerator;
+	private final LuhnIdentifierValidator checkDigitGenerator;
 	private boolean loaded = false;
 
 	public SequentialReceiptNumberGenerator() {
@@ -184,12 +184,12 @@ public class SequentialReceiptNumberGenerator implements IReceiptNumberGenerator
 	/**
 	 * The defination of the constants to be used in Sequence receipt generation
 	 */
-	public static enum SequenceType {
+	public enum SequenceType {
 		COUNTER(0), DATE_COUNTER(1), DATE_TIME_COUNTER(2);
 
-		private int value;
+		private final int value;
 
-		private SequenceType(int value) {
+		SequenceType(int value) {
 			this.value = value;
 		}
 	}
@@ -197,12 +197,12 @@ public class SequentialReceiptNumberGenerator implements IReceiptNumberGenerator
 	/**
 	 * Defination of the constants to be used in grouping.
 	 */
-	public static enum GroupingType {
+	public enum GroupingType {
 		NONE(0), CASHIER(1), CASH_POINT(2), CASHIER_AND_CASH_POINT(3);
 
-		private int value;
+		private final int value;
 
-		private GroupingType(int value) {
+		GroupingType(int value) {
 			this.value = value;
 		}
 	}

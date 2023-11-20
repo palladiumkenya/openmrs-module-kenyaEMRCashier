@@ -19,22 +19,22 @@ package org.openmrs.module.kenyaemr.cashier.api.base.compatibility;
 public abstract class PrivilegeConstantsCompatibility {
 
 	/* Commons privilege constants */
-	public static String GET_LOCATIONS = new String();
-	public static String GET_CONCEPT_CLASSES = new String();
-	public static String GET_USERS = new String();
-	public static String GET_PROVIDERS = new String();
-	public static String GET_CONCEPTS = new String();
+	public static String GET_LOCATIONS = "";
+	public static String GET_CONCEPT_CLASSES = "";
+	public static String GET_USERS = "";
+	public static String GET_PROVIDERS = "";
+	public static String GET_CONCEPTS = "";
 
 	/* Cashier Module privilege constants */
-	public static String GET_VISITS = new String();
-	public static String GET_ENCOUNTERS = new String();
-	public static String GET_OBS = new String();
-	public static String GET_PATIENTS = new String();
-	public static String DASHBOARD_SUMMARY = new String();
-	public static String DASHBOARD_DEMOGRAPHICS = new String();
-	public static String DASHBOARD_OVERVIEW = new String();
-	public static String DASHBOARD_VISITS = new String();
+	public static String GET_VISITS = "";
+	public static String GET_ENCOUNTERS = "";
+	public static String GET_OBS = "";
+	public static String GET_PATIENTS = "";
+	public static String DASHBOARD_SUMMARY = "";
+	public static String DASHBOARD_DEMOGRAPHICS = "";
+	public static String DASHBOARD_OVERVIEW = "";
+	public static String DASHBOARD_VISITS = "";
 
 	/* Inventory Module privilege constants */
-	public static String GET_ROLES = new String();
+	public static String GET_ROLES = "";
 }

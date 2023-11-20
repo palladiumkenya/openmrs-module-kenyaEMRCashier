@@ -94,7 +94,7 @@ public class ReceiptNumberGeneratorFactoryTest {
 		TestReceiptNumberGenerator generator = (TestReceiptNumberGenerator)ReceiptNumberGeneratorFactory.getGenerator();
 
 		Assert.assertNotNull(generator);
-		Assert.assertEquals(true, generator.isLoaded());
+		Assert.assertTrue(generator.isLoaded());
 		Assert.assertEquals(1, generator.getLoadedCount());
 	}
 
@@ -107,13 +107,13 @@ public class ReceiptNumberGeneratorFactoryTest {
 		TestReceiptNumberGenerator generator = new TestReceiptNumberGenerator();
 		generator.load();
 
-		Assert.assertEquals(true, generator.isLoaded());
+		Assert.assertTrue(generator.isLoaded());
 		Assert.assertEquals(1, generator.getLoadedCount());
 
 		ReceiptNumberGeneratorFactory.setGenerator(generator);
 		generator = (TestReceiptNumberGenerator)ReceiptNumberGeneratorFactory.getGenerator();
 
-		Assert.assertEquals(true, generator.isLoaded());
+		Assert.assertTrue(generator.isLoaded());
 		Assert.assertEquals(1, generator.getLoadedCount());
 	}
 

@@ -17,9 +17,6 @@
   		    http://www.springframework.org/schema/util
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
 
-	<context:annotation-config/>
-	<context:component-scan base-package="org.openmrs.module.kenyaemr.cashier"/>
-
 	<!-- Services accessible via Context.getService() -->
 	<bean parent="serviceContext">
 		<property name="moduleService">

@@ -162,7 +162,7 @@ public class ITimesheetServiceTest extends IEntityDataServiceTest<ITimesheetServ
 
 		Timesheet current = service.getCurrentTimesheet(cashier);
 		Assert.assertNotNull(current);
-		Assert.assertFalse(original.getId().equals(current.getId()));
+		Assert.assertNotEquals(original.getId(), current.getId());
 	}
 
 	/**

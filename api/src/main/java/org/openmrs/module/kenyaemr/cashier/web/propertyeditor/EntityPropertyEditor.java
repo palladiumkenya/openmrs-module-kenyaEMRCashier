@@ -27,7 +27,7 @@ import org.openmrs.module.kenyaemr.cashier.api.base.entity.IObjectDataService;
  * @param <E> The model class
  */
 public class EntityPropertyEditor<E extends OpenmrsObject> extends PropertyEditorSupport {
-	private IObjectDataService<E> service;
+	private final IObjectDataService<E> service;
 
 	public EntityPropertyEditor(Class<? extends IObjectDataService<E>> service) {
 		this.service = Context.getService(service);

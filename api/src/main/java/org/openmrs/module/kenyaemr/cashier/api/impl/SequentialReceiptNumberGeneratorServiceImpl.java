@@ -38,9 +38,7 @@ public class SequentialReceiptNumberGeneratorServiceImpl
 	}
 
 	@Override
-	protected void validate(SequentialReceiptNumberGeneratorModel entity) {
-		return;
-	}
+	protected void validate(SequentialReceiptNumberGeneratorModel entity) {}
 
 	@Override
 	@Transactional(readOnly = true)

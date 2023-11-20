@@ -73,6 +73,6 @@ public class PagingInfo {
 	}
 
 	public Boolean hasMoreResults() {
-		return (page * pageSize) < totalRecordCount;
+		return ((long)page * pageSize) < totalRecordCount;
 	}
 }

@@ -47,7 +47,7 @@ public class ModuleSettings {
 	public static final String PAYMENTS_BY_PAYMENT_MODE_REPORT_ID_PROPERTY =
 	        "openhmis.cashier.reports.paymentsByPaymentMode";
 
-	private static AdministrationService administrationService;
+	private static final AdministrationService administrationService;
 
 	static {
 		administrationService = Context.getAdministrationService();

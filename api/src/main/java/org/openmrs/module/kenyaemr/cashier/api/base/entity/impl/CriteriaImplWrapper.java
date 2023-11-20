@@ -39,7 +39,7 @@ public class CriteriaImplWrapper {
 	private static Method getProjectionMethod;
 	private static Method getResultTransformerMethod;
 
-	private Object impl;
+	private final Object impl;
 
 	static {
 		Class<?> cls;
