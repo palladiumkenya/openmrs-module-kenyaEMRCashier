@@ -14,10 +14,12 @@
 package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestMetadataResource;
+import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.web.CashierRestConstants;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IMetadataDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
+import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
@@ -25,7 +27,7 @@ import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceD
 /**
  * REST resource representing a {@link CashPoint}.
  */
-@Resource(name = CashierRestConstants.CASH_POINT_RESOURCE, supportedClass = CashPoint.class,
+@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/cashPoint", supportedClass = CashPoint.class,
         supportedOpenmrsVersions = { "2.0 - 2.*" })
 public class CashPointResource extends BaseRestMetadataResource<CashPoint> {
 	@Override
