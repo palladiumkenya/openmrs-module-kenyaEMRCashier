@@ -26,8 +26,7 @@ import org.openmrs.Patient;
 import org.openmrs.Provider;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
-import org.openmrs.module.openhmis.inventory.api.model.Item;
-import org.openmrs.module.openhmis.inventory.api.model.ItemPrice;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 
 /**
  * Model class that represents a list of {@link BillLineItem}s and {@link Payment}s created by a cashier for a patient.
@@ -62,6 +61,10 @@ public class Bill extends BaseOpenmrsData {
 
 	public void setReceiptPrinted(Boolean receiptPrinted) {
 		this.receiptPrinted = receiptPrinted;
+	}
+
+	public Boolean getReceiptPrinted() {
+		return receiptPrinted;
 	}
 
 	public BigDecimal getTotal() {
@@ -169,18 +172,17 @@ public class Bill extends BaseOpenmrsData {
 		this.lineItems = lineItems;
 	}
 
-	public BillLineItem addLineItem(Item item, ItemPrice price, int quantity) {
+	public BillLineItem addLineItem(StockItem item, ItemPrice price, int quantity) {
 		if (item == null) {
 			throw new NullPointerException("The item to add must be defined.");
 		}
 		if (price == null) {
 			throw new NullPointerException("The item price must be defined.");
 		}
-		return null;
-		//		return addLineItem(item, price.getPrice(), "", quantity);
+		return addLineItem(item, price.getPrice(), "", quantity);
 	}
 
-	public BillLineItem addLineItem(Item item, BigDecimal price, String priceName, int quantity) {
+	public BillLineItem addLineItem(StockItem item, BigDecimal price, String priceName, int quantity) {
 		if (item == null) {
 			throw new IllegalArgumentException("The item to add must be defined.");
 		}

@@ -656,6 +656,19 @@
 				baseTableName="cashier_bill_line_item" baseColumnNames="item_id"
 				referencedTableName="inv_item" referencedColumnNames="item_id" />
 	</changeSet>
+
+
+	<changeSet id="openhmis.cashier-901-v2.0-1" author="ibewes">
+		<preConditions onFail="MARK_RAN">
+			<foreignKeyConstraintExists foreignKeyName="cashier_bill_line_item_item_id_fk" />
+		</preConditions>
+
+		<dropForeignKeyConstraint baseTableName="cashier_bill_line_item" constraintName="cashier_bill_line_item_item_id_fk" />
+		<addForeignKeyConstraint constraintName="cashier_bill_line_item_item_id_fk"
+								 baseTableName="cashier_bill_line_item" baseColumnNames="item_id"
+								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id" />
+	</changeSet>
+
     <changeSet id="openhmis.cashier-001-v2.0.0-2" author="Benjamin Mwalimu">
         <comment>Adding the column "adjustment_reason" to the table cashier_bill </comment>
         <addColumn tableName="cashier_bill">
@@ -838,5 +851,45 @@
 		<addColumn tableName="cashier_payment_mode">
 			<column name="sort_order" type="int"><constraints nullable="true"/></column>
 		</addColumn>
+	</changeSet>
+	<changeSet id="openhmis.cashier-00019919-v2.2.0-0" author="">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<tableExists tableName="inv_item_price"/>
+			</not>
+		</preConditions>
+		<createTable tableName="inv_item_price">
+			<column name="item_price_id" autoIncrement="true" type="int">
+				<constraints nullable="false" primaryKey="true" />
+			</column>
+			<column name="item_id" type="int"><constraints nullable="false"/></column>
+			<column name="price" type="decimal(10,2)"><constraints nullable="false"/></column>
+
+			<column defaultValue="" name="name" type="varchar(255)" />
+
+			<column name="creator" type="int" defaultValueNumeric="0" ><constraints nullable="false"/></column>
+			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
+			<column name="changed_by" type="int"/>
+			<column name="date_changed" type="DATETIME"/>
+			<column defaultValueBoolean="false" name="retired" type="BOOLEAN"><constraints nullable="false"/></column>
+			<column name="retired_by" type="int"/>
+			<column name="date_retired" type="DATETIME"/>
+			<column name="retire_reason" type="varchar(255)"/>
+			<column name="uuid" type="char(38)"><constraints nullable="false" unique="true" /></column>
+		</createTable>
+
+		<addForeignKeyConstraint constraintName="inv_item_price_item_id_fk"
+								 baseTableName="inv_item_price" baseColumnNames="item_id"
+								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id"
+								 onDelete="CASCADE" onUpdate="CASCADE"/>
+		<addForeignKeyConstraint constraintName="inv_item_price_creator_fk"
+								 baseTableName="inv_item_price" baseColumnNames="creator"
+								 referencedTableName="users" referencedColumnNames="user_id"/>
+		<addForeignKeyConstraint constraintName="inv_item_price_changed_by_fk"
+								 baseTableName="inv_item_price" baseColumnNames="changed_by"
+								 referencedTableName="users" referencedColumnNames="user_id"/>
+		<addForeignKeyConstraint constraintName="inv_item_price_retired_by_fk"
+								 baseTableName="inv_item_price" baseColumnNames="retired_by"
+								 referencedTableName="users" referencedColumnNames="user_id"/>
 	</changeSet>
 </databaseChangeLog>

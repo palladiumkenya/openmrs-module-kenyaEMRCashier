@@ -104,8 +104,8 @@ public class PrivilegeConstants {
 
 		List<String> names = new ArrayList<String>();
 		// Add other required cashier privileges
-		names.add(org.openmrs.module.openhmis.inventory.api.util.PrivilegeConstants.VIEW_ITEMS);
-		names.add(org.openmrs.module.openhmis.inventory.api.util.PrivilegeConstants.VIEW_METADATA);
+		names.add("View Inventory Items");
+		names.add("View Inventory Metadata");
 		names.add(JasperReportPrivilegeConstants.VIEW_JASPER_REPORTS);
 
 		names.add(org.openmrs.util.PrivilegeConstants.ADD_ENCOUNTERS);

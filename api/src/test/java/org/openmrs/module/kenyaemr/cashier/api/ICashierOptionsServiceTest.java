@@ -19,8 +19,6 @@ import org.junit.Test;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.base.BaseModuleContextTest;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierOptions;
-import org.openmrs.module.openhmis.inventory.api.IDepartmentDataServiceTest;
-import org.openmrs.module.openhmis.inventory.api.IItemDataServiceTest;
 
 public class ICashierOptionsServiceTest extends BaseModuleContextTest {
 	public static final String OPTIONS_DATASET_VALID = TestConstants.BASE_DATASET_DIR + "CashierOptionsTestValid.xml";
@@ -40,8 +38,8 @@ public class ICashierOptionsServiceTest extends BaseModuleContextTest {
 	@Test
 	public void getOptions_shouldLoadOptions() throws Exception {
 		executeDataSet(OPTIONS_DATASET_VALID);
-		executeDataSet(IDepartmentDataServiceTest.DEPARTMENT_DATASET);
-		executeDataSet(IItemDataServiceTest.ITEM_DATASET);
+		//		executeDataSet(IDepartmentDataServiceTest.DEPARTMENT_DATASET);
+		//		executeDataSet(IItemDataServiceTest.ITEM_DATASET);
 
 		CashierOptions options = cashierOptionsService.getOptions();
 		Assert.assertEquals("4028814B399565AA01399681B1B5000E", options.getRoundingItemUuid());

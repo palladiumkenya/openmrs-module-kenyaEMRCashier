@@ -17,13 +17,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
+import org.openmrs.module.kenyaemr.cashier.api.IBillService;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.ItemPrice;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
-import org.openmrs.module.openhmis.inventory.api.IItemDataService;
-import org.openmrs.module.openhmis.inventory.api.model.ItemPrice;
-import org.openmrs.module.webservices.rest.helper.Converter;
+import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
@@ -32,6 +34,8 @@ import org.openmrs.module.webservices.rest.web.representation.DefaultRepresentat
 import org.openmrs.module.webservices.rest.web.representation.FullRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
+
+import java.math.BigDecimal;
 
 /**
  * REST resource representing a {@link BillLineItem}.
@@ -58,7 +62,8 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 
 	@PropertySetter(value = "price")
 	public void setPriceValue(BillLineItem instance, Object price) {
-		instance.setPrice(Converter.objectToBigDecimal(price));
+		// TODO Update conversion logic
+		instance.setPrice((BigDecimal) price);
 	}
 
 	@PropertySetter(value = "priceName")
@@ -74,7 +79,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 
 	@PropertySetter(value = "priceUuid")
 	public void setItemPrice(BillLineItem instance, String uuid) {
-		IItemDataService itemDataService = Context.getService(IItemDataService.class);
+		StockManagementService itemDataService = Context.getService(StockManagementService.class);
 		ItemPrice itemPrice = null;
 		if (itemPrice != null) {
 			instance.setItemPrice(itemPrice);
@@ -95,7 +100,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 
 	@Override
 	public BillLineItem getByUniqueId(String uuid) {
-		return null;
+		return getService().getByUuid(uuid);
 	}
 
 	@Override
@@ -105,6 +110,6 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 
 	@Override
 	public Class<IEntityDataService<BillLineItem>> getServiceClass() {
-		return null;
+		return (Class<IEntityDataService<BillLineItem>>)(Object) BillLineItemService.class;
 	}
 }

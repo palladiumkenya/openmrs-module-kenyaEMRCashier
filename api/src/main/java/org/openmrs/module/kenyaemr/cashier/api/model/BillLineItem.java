@@ -16,8 +16,7 @@ package org.openmrs.module.kenyaemr.cashier.api.model;
 import java.math.BigDecimal;
 
 import org.openmrs.BaseOpenmrsData;
-import org.openmrs.module.openhmis.inventory.api.model.Item;
-import org.openmrs.module.openhmis.inventory.api.model.ItemPrice;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 
 /**
  * A LineItem represents a line on a {@link Bill} which will bill some quantity of a particular {@link Item}.
@@ -27,7 +26,7 @@ public class BillLineItem extends BaseOpenmrsData {
 
 	private int billLineItemId;
 	private Bill bill;
-	private Item item;
+	private StockItem item;
 	private BigDecimal price;
 	private String priceName;
 	private ItemPrice itemPrice;
@@ -52,6 +51,14 @@ public class BillLineItem extends BaseOpenmrsData {
 		return price.multiply(BigDecimal.valueOf(quantity));
 	}
 
+	public ItemPrice getItemPrice() {
+		return itemPrice;
+	}
+
+	public void setItemPrice(ItemPrice itemPrice) {
+		this.itemPrice = itemPrice;
+	}
+
 	public Integer getQuantity() {
 		return quantity;
 	}
@@ -68,11 +75,11 @@ public class BillLineItem extends BaseOpenmrsData {
 		this.bill = bill;
 	}
 
-	public Item getItem() {
+	public StockItem getItem() {
 		return item;
 	}
 
-	public void setItem(Item item) {
+	public void setItem(StockItem item) {
 		this.item = item;
 	}
 
@@ -90,14 +97,6 @@ public class BillLineItem extends BaseOpenmrsData {
 
 	public void setPriceName(String priceName) {
 		this.priceName = priceName;
-	}
-
-	public ItemPrice getItemPrice() {
-		return itemPrice;
-	}
-
-	public void setItemPrice(ItemPrice itemPrice) {
-		this.itemPrice = itemPrice;
 	}
 
 	public Integer getLineItemOrder() {

@@ -14,26 +14,12 @@
 
 	<dependencies>
 
-<!--		<dependency>-->
-<!--			<groupId>org.openmrs.module</groupId>-->
-<!--			<artifactId>openhmis.commons-api</artifactId>-->
-<!--		</dependency>-->
-
-<!--		<dependency>-->
-<!--			<groupId>org.openmrs.module</groupId>-->
-<!--			<artifactId>openhmis.commons-tests</artifactId>-->
-<!--		</dependency>-->
 
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
-			<artifactId>openhmis.inventory-api</artifactId>
+			<artifactId>stockmanagement-api</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.openmrs.module</groupId>
-			<artifactId>openhmis.inventory-api</artifactId>
-			<type>test-jar</type>
-		</dependency>
 
 		<dependency>
 			<groupId>org.openmrs.module</groupId>

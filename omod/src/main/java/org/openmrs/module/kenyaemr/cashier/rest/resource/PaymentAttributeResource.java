@@ -32,6 +32,7 @@ import org.openmrs.api.PatientService;
 import org.openmrs.api.EncounterService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestAttributeDataResource;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
@@ -172,6 +173,7 @@ public class PaymentAttributeResource extends BaseRestAttributeDataResource<Paym
 
 	@Override
 	public Class<? extends IEntityDataService<PaymentAttribute>> getServiceClass() {
-		return null;
+		// Todo add  PaymentAttributeService
+		return (Class<IEntityDataService<PaymentAttribute>>)(Object) PaymentAttribute.class;
 	}
 }

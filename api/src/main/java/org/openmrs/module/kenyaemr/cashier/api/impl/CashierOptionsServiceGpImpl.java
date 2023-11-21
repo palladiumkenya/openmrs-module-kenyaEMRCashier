@@ -20,8 +20,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.ModuleSettings;
 import org.openmrs.module.kenyaemr.cashier.api.ICashierOptionsService;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierOptions;
-import org.openmrs.module.openhmis.inventory.api.IItemDataService;
-import org.openmrs.module.openhmis.inventory.api.model.Item;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 
 /**
  * Service to load CashierOptions from global options
@@ -47,7 +46,7 @@ public class CashierOptionsServiceGpImpl implements ICashierOptionsService {
 		CashierOptions options = new CashierOptions();
 
 		setDefaultReceiptReportId(options);
-		setRoundingOptions(options);
+		//		setRoundingOptions(options);
 		if (StringUtils.isEmpty(options.getRoundingItemUuid())) {
 			setRoundingOptionsForEmptyUuid(options);
 		}
@@ -71,18 +70,19 @@ public class CashierOptionsServiceGpImpl implements ICashierOptionsService {
 					String roundingItemId = Context.getAdministrationService()
 					        .getGlobalProperty(ModuleSettings.ROUNDING_ITEM_ID);
 					if (StringUtils.isNotEmpty(roundingItemId)) {
-						Item roundingItem = new Item();
-						//						try {
-						//							Integer itemId = Integer.parseInt(roundingItemId);
-						//							roundingItem = Context.getService(IItemDataService.class).getById(itemId);
-						//						} catch (Exception e) {
-						//							LOG.error("Did not find rounding item by ID with ID <" + roundingItemId + ">", e);
-						//						}
-						//						if (roundingItem != null) {
-						//							options.setRoundingItemUuid(roundingItem.getUuid());
-						//						} else {
-						//							LOG.error("Rounding item is NULL. Check your ID");
-						//						}
+						StockItem roundingItem = new StockItem();
+						try {
+							Integer itemId = Integer.parseInt(roundingItemId);
+							// TODO Rounding logic
+							//							roundingItem = Context.getService(IItemDataService.class).getById(itemId);
+						} catch (Exception e) {
+							LOG.error("Did not find rounding item by ID with ID <" + roundingItemId + ">", e);
+						}
+						if (roundingItem != null) {
+							options.setRoundingItemUuid(roundingItem.getUuid());
+						} else {
+							LOG.error("Rounding item is NULL. Check your ID");
+						}
 					}
 				}
 			} catch (IllegalArgumentException iae) {

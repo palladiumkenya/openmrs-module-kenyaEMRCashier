@@ -41,7 +41,7 @@ public class CashierModuleActivator extends BaseModuleActivator {
 	 */
 	@Override
 	public void started() {
-		RoundingUtil.setupRoundingDeptAndItem(LOG);
+		//		RoundingUtil.setupRoundingDeptAndItem(LOG);
 
 		LOG.info("OpenHMIS Cashier Module Module started");
 	}

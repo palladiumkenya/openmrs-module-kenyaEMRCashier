@@ -21,7 +21,6 @@ import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentMode;
-import org.openmrs.module.webservices.rest.helper.Converter;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
@@ -35,6 +34,7 @@ import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceD
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingSubResource;
 import org.openmrs.module.webservices.rest.web.response.ObjectNotFoundException;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -100,12 +100,14 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 
 	@PropertySetter("amount")
 	public void setPaymentAmount(Payment instance, Object price) {
-		instance.setAmount(Converter.objectToBigDecimal(price));
+		// TODO Conversion logic
+		instance.setAmount((BigDecimal) price);
 	}
 
 	@PropertySetter("amountTendered")
 	public void setPaymentAmountTendered(Payment instance, Object price) {
-		instance.setAmountTendered(Converter.objectToBigDecimal(price));
+		// TODO Conversion logic
+		instance.setAmountTendered((BigDecimal) price);
 	}
 
 	@PropertyGetter("dateCreated")
