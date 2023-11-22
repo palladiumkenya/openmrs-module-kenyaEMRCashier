@@ -14,7 +14,6 @@
 package org.openmrs.module.kenyaemr.cashier.web.controller;
 
 import org.openmrs.module.kenyaemr.cashier.web.CashierWebConstants;
-import org.openmrs.module.openhmis.backboneforms.web.controller.BackboneMessageRenderController;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -48,7 +47,7 @@ public class CashierMessageRenderController {
 		keys.addAll(resourceBundle.keySet());
 
 		// retrieve backboneforms messages
-		BackboneMessageRenderController backboneController = new BackboneMessageRenderController();
+		/**BackboneMessageRenderController backboneController = new BackboneMessageRenderController();
 		ModelAndView modelAndView = backboneController.render(request);
 
 		// store backboneforms message keys in the vector object
@@ -59,7 +58,7 @@ public class CashierMessageRenderController {
 				if (!keys.contains(key))
 					keys.add(key);
 			}
-		}
+		}*/
 
 		return new ModelAndView(CashierWebConstants.MESSAGE_PAGE, "keys", keys.elements());
 	}

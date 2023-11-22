@@ -32,17 +32,6 @@
 <!--			<artifactId>openhmis.commons-omod</artifactId>-->
 <!--		</dependency>-->
 
-		<dependency>
-			<groupId>org.openmrs.module</groupId>
-			<artifactId>openhmis.backboneforms-omod</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.openmrs.module</groupId>
-			<artifactId>openhmis.backboneforms-omod</artifactId>
-			<type>test-jar</type>
-		</dependency>
-
 <!--		<dependency>-->
 <!--			<groupId>org.openmrs.module</groupId>-->
 <!--			<artifactId>openhmis.inventory-omod</artifactId>-->
@@ -231,77 +220,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<configuration>
-					<artifactItems>
-						<artifactItem>
-							<groupId>${project.parent.groupId}</groupId>
-							<artifactId>openhmis.backboneforms-omod</artifactId>
-							<overWrite>true</overWrite>
-							<outputDirectory>${project.build.directory}/jasmine/backboneforms</outputDirectory>
-							<includes>web/module/resources/**</includes>
-						</artifactItem>
-						<artifactItem>
-							<groupId>${project.parent.groupId}</groupId>
-							<artifactId>openhmis.backboneforms-omod</artifactId>
-							<type>test-jar</type>
-							<overWrite>true</overWrite>
-							<outputDirectory>${project.build.directory}/jasmine/backboneforms/test</outputDirectory>
-							<includes>js/**</includes>
-						</artifactItem>
-<!--						<artifactItem>-->
-<!--							<groupId>${project.parent.groupId}</groupId>-->
-<!--							<artifactId>openhmis.inventory-omod</artifactId>-->
-<!--							<overWrite>true</overWrite>-->
-<!--							<outputDirectory>${project.build.directory}/jasmine/inventory</outputDirectory>-->
-<!--							<includes>web/module/resources/**</includes>-->
-<!--						</artifactItem>-->
-					</artifactItems>
-				</configuration>
-				<executions>
-					<execution>
-						<id>Expand moduleApplicationContext and messages</id>
-						<goals>
-							<goal>unpack-dependencies</goal>
-						</goals>
-						<phase>generate-resources</phase>
-						<configuration>
-							<includeGroupIds>${project.parent.groupId}</includeGroupIds>
-							<includeArtifactIds>
-								${project.parent.artifactId}-api, ${project.parent.artifactId}-omod_1.x,
-								${project.parent.artifactId}-omod_2.x
-							</includeArtifactIds>
-							<excludeTransitive>true</excludeTransitive>
-							<includes>**/*</includes>
-							<excludes>**/parent*.xml</excludes>
-							<outputDirectory>${project.build.directory}/classes</outputDirectory>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 
-			<plugin>
-		        <groupId>com.github.searls</groupId>
-		        <artifactId>jasmine-maven-plugin</artifactId>
-		        <version>1.2.0.0</version>
-		        <extensions>true</extensions>
-		        <configuration>
-		        	<customRunnerTemplate>${project.basedir}/src/test/webapp/resources/js/BlankSpecRunner.htmltemplate</customRunnerTemplate>
-		        	<jsSrcDir>${project.basedir}/src/main/webapp/resources/js</jsSrcDir>
-		       		<jsTestSrcDir>${project.basedir}/src/test/webapp/resources/js</jsTestSrcDir>
-		       		<preloadSources>
-		         		<include>/target/jasmine/backboneforms/web/module/resources/js/curl.js</include>
-		         		<include>/src/test/webapp/resources/js/test-init.js</include>
-		         		<include>/target/jasmine/backboneforms/test/js/test-utils.js</include>
-		         		<include>/src/test/webapp/resources/js/test-data.js</include>
-		         		<include>/src/test/webapp/resources/js/start-tests.js</include>
-		       		</preloadSources>
-		      		<sourceIncludes />
-		     		<specIncludes />
-		        </configuration>
-	      </plugin>
 	      <plugin>
 		      <groupId>net.alchim31.maven</groupId>
               <artifactId>yuicompressor-maven-plugin</artifactId>
