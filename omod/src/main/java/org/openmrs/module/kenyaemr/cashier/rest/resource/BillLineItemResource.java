@@ -26,6 +26,7 @@ import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceContro
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
@@ -60,10 +61,18 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 		return description;
 	}
 
+	@PropertySetter(value = "item")
+	public void setItem(BillLineItem instance, Object item) {
+		StockManagementService service = Context.getService(StockManagementService.class);
+		String itemUuid = (String) item;
+		instance.setItem(service.getStockItemByUuid(itemUuid));
+	}
+
+
 	@PropertySetter(value = "price")
 	public void setPriceValue(BillLineItem instance, Object price) {
 		// TODO Update conversion logic
-		instance.setPrice((BigDecimal) price);
+		instance.setPrice(BigDecimal.valueOf((Double) price));
 	}
 
 	@PropertySetter(value = "priceName")

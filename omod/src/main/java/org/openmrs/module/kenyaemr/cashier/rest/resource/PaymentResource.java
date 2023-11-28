@@ -101,13 +101,13 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 	@PropertySetter("amount")
 	public void setPaymentAmount(Payment instance, Object price) {
 		// TODO Conversion logic
-		instance.setAmount((BigDecimal) price);
+		instance.setAmount(BigDecimal.valueOf((Double) price));
 	}
 
 	@PropertySetter("amountTendered")
 	public void setPaymentAmountTendered(Payment instance, Object price) {
 		// TODO Conversion logic
-		instance.setAmountTendered((BigDecimal) price);
+		instance.setAmountTendered(BigDecimal.valueOf((Double) price));
 	}
 
 	@PropertyGetter("dateCreated")
