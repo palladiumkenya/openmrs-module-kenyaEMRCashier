@@ -69,10 +69,19 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 		instance.setItem(service.getStockItemByUuid(itemUuid));
 	}
 
-
+	@PropertyGetter(value = "item")
+	public String getItem(BillLineItem instance) {
+		try {
+			StockItem stockItem = instance.getItem();
+			return stockItem.getConcept().getDisplayString();
+		} catch (Exception e) {
+			LOG.warn("Item probably was deleted", e);
+			return "";
+		}
+	}
+	
 	@PropertySetter(value = "price")
 	public void setPriceValue(BillLineItem instance, Object price) {
-		// TODO Update conversion logic
 		instance.setPrice(BigDecimal.valueOf((Double) price));
 	}
 
