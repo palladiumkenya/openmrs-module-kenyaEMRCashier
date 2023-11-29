@@ -4,7 +4,7 @@
 		"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.openmrs.module.kenyaemr.cashier.api.model">
 
-	<class name="ItemPrice" table="inv_item_price">
+	<class name="ItemPrice" table="cashier_item_price">
 		<id name="id" type="int" column="item_price_id">
 			<generator class="native">
 				<param name="sequence">inv_item_price_item_price_id_seq</param>
