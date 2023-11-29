@@ -225,7 +225,7 @@
 	<build>
 		<pluginManagement>
 			<plugins>
-				<plugin>
+				<!--<plugin>
 					<groupId>com.googlecode.maven-java-formatter-plugin</groupId>
 					<artifactId>maven-java-formatter-plugin</artifactId>
 					<version>0.4</version>
@@ -244,7 +244,7 @@
 							<version>4.1.0-SNAPSHOT</version>
 						</dependency>
 					</dependencies>
-				</plugin>
+				</plugin>-->
 <!--				<plugin>-->
 <!--					<groupId>org.apache.maven.plugins</groupId>-->
 <!--					<artifactId>maven-checkstyle-plugin</artifactId>-->

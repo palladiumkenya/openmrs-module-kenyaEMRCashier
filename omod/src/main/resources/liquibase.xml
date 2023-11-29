@@ -892,4 +892,11 @@
 								 baseTableName="inv_item_price" baseColumnNames="retired_by"
 								 referencedTableName="users" referencedColumnNames="user_id"/>
 	</changeSet>
+
+	<changeSet id="openhmis.cashier-001-v3.0.0-0" author="Aojwang">
+		<comment>Adding the column status to the table cashier_bill_line_item </comment>
+		<addColumn tableName="cashier_bill_line_item">
+			<column name="payment_status" type="varchar(10)"><constraints nullable="false"/></column>
+		</addColumn>
+	</changeSet>
 </databaseChangeLog>

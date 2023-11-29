@@ -57,6 +57,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 			description.addProperty("priceName");
 			description.addProperty("priceUuid");
 			description.addProperty("lineItemOrder");
+			description.addProperty("paymentStatus");
 		}
 		return description;
 	}
@@ -77,7 +78,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 
 	@PropertySetter(value = "priceName")
 	public void setPriceName(BillLineItem instance, String name) {
-		//name is set in setItemPriceMethod as not set in js
+		instance.setPriceName(name);
 	}
 
 	@PropertyGetter(value = "priceName")
