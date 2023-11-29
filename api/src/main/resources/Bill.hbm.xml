@@ -104,7 +104,12 @@
 		<property name="priceName" type="java.lang.String" column="price_name" length="255" />
 		<property name="quantity" type="int" column="quantity" not-null="true" />
 		<property name="lineItemOrder" type="int" column="line_item_order" />
-
+		<property name="paymentStatus" column="payment_status" not-null="true">
+			<type name="org.hibernate.type.EnumType">
+				<param name="enumClass">org.openmrs.module.kenyaemr.cashier.api.model.BillStatus</param>
+				<param name="type">12</param>
+			</type>
+		</property>
 		<!-- bi-directional many-to-one association to User -->
 		<many-to-one name="creator" class="org.openmrs.User" not-null="true" column="creator" />
 		<property name="dateCreated" type="java.util.Date" column="date_created" not-null="true" length="19" />

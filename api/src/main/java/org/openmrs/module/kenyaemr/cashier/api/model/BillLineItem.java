@@ -19,7 +19,8 @@ import org.openmrs.BaseOpenmrsData;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
 
 /**
- * A LineItem represents a line on a {@link Bill} which will bill some quantity of a particular {@link Item}.
+ * A LineItem represents a line on a {@link Bill} which will bill some quantity
+ * of a particular {@link StockItem}.
  */
 public class BillLineItem extends BaseOpenmrsData {
 	public static final long serialVersionUID = 0L;
@@ -33,6 +34,9 @@ public class BillLineItem extends BaseOpenmrsData {
 	private Integer quantity;
 	private Integer lineItemOrder;
 
+	private BillStatus paymentStatus; // this should only be set to either
+										// pending or paid
+
 	@Override
 	public Integer getId() {
 		return billLineItemId;
@@ -45,6 +49,7 @@ public class BillLineItem extends BaseOpenmrsData {
 
 	/**
 	 * Get the total price for the line item
+	 * 
 	 * @return double the total price for the line item
 	 */
 	public BigDecimal getTotal() {
@@ -105,5 +110,13 @@ public class BillLineItem extends BaseOpenmrsData {
 
 	public void setLineItemOrder(Integer lineItemOrder) {
 		this.lineItemOrder = lineItemOrder;
+	}
+
+	public BillStatus getPaymentStatus() {
+		return paymentStatus;
+	}
+
+	public void setPaymentStatus(BillStatus paymentStatus) {
+		this.paymentStatus = paymentStatus;
 	}
 }
