@@ -111,8 +111,8 @@
 		</resources>
 
 		<pluginManagement>
-			<!-- <plugins>
-				<plugin>
+			<plugins>
+				<!-- <plugin>
 					<groupId>com.googlecode.maven-java-formatter-plugin</groupId>
 					<artifactId>maven-java-formatter-plugin</artifactId>
 					<executions>
