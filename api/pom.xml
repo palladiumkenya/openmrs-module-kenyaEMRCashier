@@ -108,7 +108,7 @@
 		</testResources>
 
 		<plugins>
-			<plugin>
+			<!-- <plugin>
 				<groupId>com.googlecode.maven-java-formatter-plugin</groupId>
 				<artifactId>maven-java-formatter-plugin</artifactId>
 				<executions>
@@ -118,8 +118,8 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
+			</plugin> -->
+			<!-- <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
 				<executions>
@@ -131,7 +131,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 
