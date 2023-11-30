@@ -81,6 +81,10 @@
 			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
 			<column name="changed_by" type="int"/>
 			<column name="date_changed" type="DATETIME"/>
+			<column name="voided" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+			<column name="voided_by" type="int" />
+			<column name="date_voided" type="datetime" />
+			<column name="void_reason" type="varchar(255)" defaultValue="null"/>
 			<column defaultValueBoolean="false" name="retired" type="BOOLEAN"><constraints nullable="false"/></column>
 			<column name="retired_by" type="int"/>
 			<column name="date_retired" type="DATETIME"/>
