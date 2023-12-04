@@ -2,24 +2,17 @@ package org.openmrs.module.kenyaemr.cashier.advice;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.lang3.time.DateUtils;
-import org.openmrs.DrugOrder;
-import org.openmrs.Order;
-import org.openmrs.Patient;
-import org.openmrs.TestOrder;
+import org.openmrs.*;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
-import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
-import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
-import org.openmrs.module.kenyaemr.cashier.api.model.ItemPrice;
+import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
@@ -121,15 +114,25 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             System.out.println("Finished Getting Item Price");
             billLineItem.setPrice((itemPrices != null && itemPrices.size() > 0) ? itemPrices.get(0).getPrice() : new BigDecimal(0.0));
             billLineItem.setQuantity(quantity);
+            billLineItem.setPaymentStatus(BillStatus.PENDING);
+            billLineItem.setLineItemOrder(0);
+
+
             
             // Bill
-            activeBill.setCashier(Context.getProviderService().getUnknownProvider());
-            List<CashPoint> cashPoints = cashPointService.getAll();
-            activeBill.setCashPoint(cashPoints.get(0));
-            activeBill.addLineItem(billLineItem);
+            User user = Context.getAuthenticatedUser();
+            List<Provider> providers = new ArrayList<>(Context.getProviderService().getProvidersByPerson(user.getPerson()));
 
-            // Save Bill
-            billService.save(activeBill);
+            if (!providers.isEmpty()) {
+                activeBill.setCashier(providers.get(0));
+                List<CashPoint> cashPoints = cashPointService.getAll();
+                activeBill.setCashPoint(cashPoints.get(0));
+                activeBill.addLineItem(billLineItem);
+                activeBill.setStatus(BillStatus.PENDING);
+                    billService.save(activeBill);
+            } else {
+                System.out.println("User is not a provider");
+            }
 
         } catch (Exception ex) {
             System.err.println("Error sending the bill item: " + ex.getMessage());
