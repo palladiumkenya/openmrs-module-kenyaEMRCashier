@@ -574,93 +574,6 @@
 			</column>
 		</addColumn>
 	</changeSet>
-	<changeSet id="openhmis.cashier-001-v1.7.0-1" author="ibewes">
-		<comment>Remove all the rounding item prices</comment>
-		<sql>
-			DELETE cp.*
-			FROM cashier_item_price cp INNER JOIN cashier_item i ON
-					cp.item_id = i.item_id
-				INNER JOIN cashier_department d ON
-					i.department_id = d.department_id
-			WHERE i.name = 'Rounding' AND d.name = 'Rounding'
-		</sql>
-
-		<comment>Create a single rounding item price</comment>
-		<sql>
-			INSERT INTO cashier_item_price (item_id, price, name, description, creator, date_created, uuid)
-			SELECT i.item_id, 0.0, '', '', 1, NOW(), UUID()
-			FROM cashier_item i INNER JOIN cashier_department d ON
-			i.department_id = d.department_id
-			WHERE i.name = 'Rounding' AND d.name = 'Rounding'
-		</sql>
-
-		<comment>Update the default price id on the rounding item</comment>
-		<sql>
-			UPDATE cashier_item i INNER JOIN cashier_department d ON
-			i.department_id = d.department_id
-			INNER JOIN cashier_item_price cp ON
-			i.item_id = cp.item_id
-			SET i.default_price_id = cp.item_price_id
-			WHERE i.name = 'Rounding' AND d.name = 'Rounding'
-		</sql>
-	</changeSet>
-	<changeSet id="openhmis.cashier-001-v2.0-0" author="ibewes">
-		<preConditions onFail="MARK_RAN">
-			<and>
-				<tableExists tableName="inv_item" />
-				<sqlCheck expectedResult="0">
-					SELECT COUNT(*) FROM inv_item
-				</sqlCheck>
-			</and>
-		</preConditions>
-		<comment>
-			This script copies the previously defined cashier departments and items (with associated child tables)
-			into the appropriate inventory module tables.  This script will only be run if the inventory module has been
-			installed but no items have been created.
-		</comment>
-		<sql>
-			INSERT INTO inv_department (department_id, name, description,
-			creator, date_created, changed_by, date_changed, retired, retired_by, date_retired,
-			retire_reason, uuid)
-			SELECT department_id, name, description,
-			creator, date_created, changed_by, date_changed, retired, retired_by, date_retired,
-			retire_reason, uuid
-			FROM cashier_department;
-
-			INSERT INTO inv_item (item_id, name, description, department_id, default_price_id,
-			creator, date_created, changed_by, date_changed, retired, retired_by, date_retired,
-			retire_reason, uuid)
-			SELECT item_id, name, description, department_id, default_price_id,
-			creator, date_created, changed_by, date_changed, retired, retired_by, date_retired,
-			retire_reason, uuid
-			FROM cashier_item;
-
-			INSERT INTO inv_item_code (item_code_id, item_id, code, name, description,
-			creator, date_created, changed_by, date_changed, retired, retired_by, date_retired,
-			retire_reason, uuid)
-			SELECT item_code_id, item_id, code, name, description, creator, date_created, changed_by, date_changed, retired, retired_by, date_retired,
-			retire_reason, uuid
-			FROM cashier_item_code;
-
-			INSERT INTO inv_item_price (item_price_id, item_id, price, name, description,
-			creator, date_created, changed_by, date_changed, retired, retired_by, date_retired,
-			retire_reason, uuid)
-			SELECT item_price_id, item_id, price, name, description, creator, date_created, changed_by, date_changed, retired, retired_by, date_retired,
-			retire_reason, uuid
-			FROM cashier_item_price;
-		</sql>
-	</changeSet>
-	<changeSet id="openhmis.cashier-001-v2.0-1" author="ibewes">
-		<preConditions onFail="MARK_RAN">
-			<foreignKeyConstraintExists foreignKeyName="cashier_bill_line_item_item_id_fk" />
-		</preConditions>
-
-		<dropForeignKeyConstraint baseTableName="cashier_bill_line_item" constraintName="cashier_bill_line_item_item_id_fk" />
-		<addForeignKeyConstraint constraintName="cashier_bill_line_item_item_id_fk"
-				baseTableName="cashier_bill_line_item" baseColumnNames="item_id"
-				referencedTableName="inv_item" referencedColumnNames="item_id" />
-	</changeSet>
-
 
 	<changeSet id="openhmis.cashier-901-v2.0-1" author="ibewes">
 		<preConditions onFail="MARK_RAN">
@@ -859,10 +772,10 @@
 	<changeSet id="openhmis.cashier-00019919-v2.2.0-0" author="">
 		<preConditions onFail="MARK_RAN">
 			<not>
-				<tableExists tableName="inv_item_price"/>
+				<tableExists tableName="cashier_item_price"/>
 			</not>
 		</preConditions>
-		<createTable tableName="inv_item_price">
+		<createTable tableName="cashier_item_price">
 			<column name="item_price_id" autoIncrement="true" type="int">
 				<constraints nullable="false" primaryKey="true" />
 			</column>
@@ -875,25 +788,25 @@
 			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
 			<column name="changed_by" type="int"/>
 			<column name="date_changed" type="DATETIME"/>
-			<column defaultValueBoolean="false" name="retired" type="BOOLEAN"><constraints nullable="false"/></column>
-			<column name="retired_by" type="int"/>
-			<column name="date_retired" type="DATETIME"/>
-			<column name="retire_reason" type="varchar(255)"/>
+			<column defaultValueBoolean="false" name="voided" type="BOOLEAN"><constraints nullable="false"/></column>
+			<column name="voided_by" type="int"/>
+			<column name="date_voided" type="DATETIME"/>
+			<column name="void_reason" type="varchar(255)"/>
 			<column name="uuid" type="char(38)"><constraints nullable="false" unique="true" /></column>
 		</createTable>
 
-		<addForeignKeyConstraint constraintName="inv_item_price_item_id_fk"
-								 baseTableName="inv_item_price" baseColumnNames="item_id"
+		<addForeignKeyConstraint constraintName="cashier_item_price_item_id_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="item_id"
 								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id"
 								 onDelete="CASCADE" onUpdate="CASCADE"/>
-		<addForeignKeyConstraint constraintName="inv_item_price_creator_fk"
-								 baseTableName="inv_item_price" baseColumnNames="creator"
+		<addForeignKeyConstraint constraintName="cashier_item_price_creator_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="creator"
 								 referencedTableName="users" referencedColumnNames="user_id"/>
-		<addForeignKeyConstraint constraintName="inv_item_price_changed_by_fk"
-								 baseTableName="inv_item_price" baseColumnNames="changed_by"
+		<addForeignKeyConstraint constraintName="cashier_item_price_changed_by_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="changed_by"
 								 referencedTableName="users" referencedColumnNames="user_id"/>
-		<addForeignKeyConstraint constraintName="inv_item_price_retired_by_fk"
-								 baseTableName="inv_item_price" baseColumnNames="retired_by"
+		<addForeignKeyConstraint constraintName="cashier_item_price_retired_by_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="voided_by"
 								 referencedTableName="users" referencedColumnNames="user_id"/>
 	</changeSet>
 
