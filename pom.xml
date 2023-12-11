@@ -114,6 +114,12 @@
 				<version>2.9</version>
 				<scope>provided</scope>
 			</dependency>
+			<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>webservices.rest-omod-common</artifactId>
+				<version>2.9</version>
+				<scope>provided</scope>
+			</dependency>
 
 			<!-- https://mvnrepository.com/artifact/com.google.common/google-collect -->
 
