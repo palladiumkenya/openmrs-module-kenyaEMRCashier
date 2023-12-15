@@ -11,58 +11,66 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.kenyaemr.cashier.web.controller;
-
-import java.io.IOException;
-import java.util.HashMap;
-
-import javax.servlet.http.HttpServletResponse;
+package org.openmrs.module.kenyaemr.cashier.rest.controller;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.openmrs.api.context.Context;
 import org.openmrs.module.jasperreport.JasperReport;
 import org.openmrs.module.jasperreport.ReportGenerator;
-import org.openmrs.module.kenyaemr.cashier.ModuleSettings;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
-import org.openmrs.module.kenyaemr.cashier.web.CashierWebConstants;
+import org.openmrs.module.webservices.rest.web.RestConstants;
+import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.HashMap;
+
 /**
  * Controller to manage the Receipt Generation Page
  */
 @Controller
-@RequestMapping(value = CashierWebConstants.RECEIPT)
-public class ReceiptController {
-	@RequestMapping(method = RequestMethod.GET)
-	public void get(@RequestParam(value = "billId", required = false) Integer billId,
-	        HttpServletResponse response) throws IOException {
-		if (billId == null) {
-			response.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
+@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE  + "/receipt")
+public class ReceiptController extends BaseRestController {
+	@RequestMapping(method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	public ResponseEntity<Resource>  get(@RequestParam(value = "billId", required = false) Integer billId) throws IOException {
 
 		IBillService service = Context.getService(IBillService.class);
 		Bill bill = service.getById(billId);
-		if (!validateBill(billId, bill, response)) {
-			return;
-		}
 
-		JasperReport report = ModuleSettings.getReceiptReport();
-		if (report == null) {
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Configuration error: need to specify global "
-			        + "option for default report ID.");
-			return;
+		File file = service.downloadBillReceipt(bill);
+		if (file != null) {
+			System.out.println("receipt report generated");
 		}
+		if (file.exists()) {
+			System.out.println("receipt report generated");
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+			headers.setContentDispositionFormData("attachment", file.getName());
 
-		if (generateReport(billId, response, bill, report)) {
-			bill.setReceiptPrinted(true);
-			service.save(bill);
+			try {
+				Resource resource = new FileSystemResource(file);
+				byte[] fileContent = Files.readAllBytes(file.toPath());
+
+				return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+			} catch (IOException e) {
+				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
 
