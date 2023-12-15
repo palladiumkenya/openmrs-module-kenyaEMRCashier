@@ -14,6 +14,7 @@
 
 package org.openmrs.module.kenyaemr.cashier.api;
 
+import java.io.File;
 import java.util.List;
 
 import org.openmrs.Patient;
@@ -99,4 +100,13 @@ public interface IBillService extends IEntityDataService<Bill> {
 	@Override
 	@Authorized(PrivilegeConstants.VIEW_BILLS)
 	Bill getByUuid(String uuid);
+
+	/**
+	 * Gets bill receipt using the specified {@link Bill} settings.
+	 * @param bill The bill search settings.
+	 * @return The receipt containing bill items.
+	 */
+	@Transactional(readOnly = true)
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	File downloadBillReceipt(Bill bill);
 }

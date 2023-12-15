@@ -51,6 +51,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<powermock.version>1.4.10</powermock.version>
 		<javaCompilerVersion>1.7</javaCompilerVersion>
+		<itextPdfVersion>7.2.5</itextPdfVersion>
 	</properties>
 
 	<dependencyManagement>
@@ -237,6 +238,83 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
+			<dependency>
+				<groupId>com.itextpdf</groupId>
+				<artifactId>kernel</artifactId>
+				<version>${itextPdfVersion}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-api</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-simple</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.itextpdf</groupId>
+				<artifactId>io</artifactId>
+				<version>${itextPdfVersion}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-api</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-simple</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.itextpdf</groupId>
+				<artifactId>layout</artifactId>
+				<version>${itextPdfVersion}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-api</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-simple</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>com.itextpdf</groupId>
+				<artifactId>barcodes</artifactId>
+				<version>${itextPdfVersion}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-api</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-simple</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<!-- only needed for Asian fonts -->
+			<dependency>
+				<groupId>com.itextpdf</groupId>
+				<artifactId>font-asian</artifactId>
+				<version>${itextPdfVersion}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-api</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.slf4j</groupId>
+						<artifactId>slf4j-simple</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
 
 			<dependency>
 				<groupId>joda-time</groupId>
