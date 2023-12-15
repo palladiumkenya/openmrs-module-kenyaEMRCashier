@@ -30,7 +30,7 @@ public class BillLineItem extends BaseOpenmrsData {
 	private StockItem item;
 	private BigDecimal price;
 	private String priceName;
-	private ItemPrice itemPrice;
+	private CashierItemPrice itemPrice;
 	private Integer quantity;
 	private Integer lineItemOrder;
 
@@ -56,11 +56,11 @@ public class BillLineItem extends BaseOpenmrsData {
 		return price.multiply(BigDecimal.valueOf(quantity));
 	}
 
-	public ItemPrice getItemPrice() {
+	public CashierItemPrice getItemPrice() {
 		return itemPrice;
 	}
 
-	public void setItemPrice(ItemPrice itemPrice) {
+	public void setItemPrice(CashierItemPrice itemPrice) {
 		this.itemPrice = itemPrice;
 	}
 

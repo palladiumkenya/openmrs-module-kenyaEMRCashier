@@ -18,9 +18,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
-import org.openmrs.module.kenyaemr.cashier.api.IBillService;
-import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
-import org.openmrs.module.kenyaemr.cashier.api.model.ItemPrice;
+import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
@@ -99,7 +97,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 	@PropertySetter(value = "priceUuid")
 	public void setItemPrice(BillLineItem instance, String uuid) {
 		StockManagementService itemDataService = Context.getService(StockManagementService.class);
-		ItemPrice itemPrice = null;
+		CashierItemPrice itemPrice = null;
 		if (itemPrice != null) {
 			instance.setItemPrice(itemPrice);
 			instance.setPriceName("");
@@ -109,7 +107,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 	@PropertyGetter(value = "priceUuid")
 	public String getItemPriceUuid(BillLineItem instance) {
 		try {
-			ItemPrice itemPrice = instance.getItemPrice();
+			CashierItemPrice itemPrice = instance.getItemPrice();
 			return "";
 		} catch (Exception e) {
 			LOG.warn("Price probably was deleted", e);

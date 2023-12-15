@@ -172,7 +172,7 @@ public class Bill extends BaseOpenmrsData {
 		this.lineItems = lineItems;
 	}
 
-	public BillLineItem addLineItem(StockItem item, ItemPrice price, int quantity) {
+	public BillLineItem addLineItem(StockItem item, CashierItemPrice price, int quantity) {
 		if (item == null) {
 			throw new NullPointerException("The item to add must be defined.");
 		}

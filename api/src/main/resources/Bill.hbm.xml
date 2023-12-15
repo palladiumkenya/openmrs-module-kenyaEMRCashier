@@ -4,7 +4,7 @@
 		"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.openmrs.module.kenyaemr.cashier.api.model">
 
-	<class name="ItemPrice" table="cashier_item_price">
+	<class name="CashierItemPrice" table="cashier_item_price">
 		<id name="id" type="int" column="item_price_id">
 			<generator class="native">
 				<param name="sequence">inv_item_price_item_price_id_seq</param>
@@ -12,7 +12,8 @@
 		</id>
 		<discriminator column="item_price_id" insert="false" />
 
-		<many-to-one name="item" class="org.openmrs.module.stockmanagement.api.model.StockItem" not-null="true" column="item_id" />
+		<many-to-one name="item" class="org.openmrs.module.stockmanagement.api.model.StockItem" not-null="false" column="item_id" />
+		<many-to-one name="billableService" class="org.openmrs.module.kenyaemr.cashier.api.model.BillableService" not-null="false" column="service_id" />
 
 		<property name="name" type="java.lang.String" column="name" not-null="false" length="255" />
 		<property name="price" type="java.math.BigDecimal" column="price" not-null="true" />
@@ -25,6 +26,50 @@
 
 		<property name="voided" type="java.lang.Boolean" column="voided" length="1" not-null="true" />
 		<many-to-one name="voidedBy" class="org.openmrs.User" column="voided_by" />
+		<property name="dateVoided" type="java.util.Date" column="date_voided" length="19" />
+		<property name="voidReason" type="java.lang.String" column="void_reason" length="255" />
+
+		<property name="uuid" type="java.lang.String" column="uuid" length="38" unique="true" />
+	</class>
+
+	<class name="org.openmrs.module.kenyaemr.cashier.api.model.BillableService" table="cashier_billable_service">
+		<cache usage="read-write"/>
+
+		<id name="id" type="int" column="service_id">
+			<generator class="native">
+				<param name="sequence">cashier_billable_service_id_seq</param>
+			</generator>
+		</id>
+		<discriminator column="service_id" insert="false" />
+
+
+		<property name="name" type="java.lang.String" column="name" not-null="true" length="19" />
+		<property name="shortName" type="java.lang.String" column="short_name" length="19" />
+
+		<many-to-one name="serviceType" class="org.openmrs.Concept" not-null="false" column="service_type" />
+		<many-to-one name="serviceCategory" class="org.openmrs.Concept" not-null="false" column="service_category" />
+
+		<list name="servicePrices" lazy="false" inverse="true" cascade="all-delete-orphan">
+			<key column="service_id" />
+			<list-index column="item_price_id" />
+			<one-to-many class="org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice" />
+		</list>
+		<property name="serviceStatus" column="service_status" not-null="true">
+			<type name="org.hibernate.type.EnumType">
+				<param name="enumClass">org.openmrs.module.kenyaemr.cashier.api.model.ServiceStatus</param>
+				<param name="type">12</param>
+			</type>
+		</property>
+		<!-- bi-directional many-to-one association to User -->
+		<many-to-one name="creator" class="org.openmrs.User" not-null="true" column="creator" />
+		<property name="dateCreated" type="java.util.Date" column="date_created" not-null="true" length="19" />
+
+		<many-to-one name="changedBy" class="org.openmrs.User" column="changed_by" />
+		<property name="dateChanged" type="java.util.Date" column="date_changed" length="19" />
+
+		<property name="voided" type="java.lang.Boolean" column="voided" length="1" not-null="true" />
+		<many-to-one name="voidedBy" class="org.openmrs.User" column="voided_by" />
+
 		<property name="dateVoided" type="java.util.Date" column="date_voided" length="19" />
 		<property name="voidReason" type="java.lang.String" column="void_reason" length="255" />
 
@@ -99,7 +144,7 @@
 
 		<many-to-one name="bill" class="org.openmrs.module.kenyaemr.cashier.api.model.Bill" column="bill_id" not-null="true" />
 		<many-to-one name="item" class="org.openmrs.module.stockmanagement.api.model.StockItem" column="item_id" not-null="true" />
-		<many-to-one name="itemPrice" class="org.openmrs.module.kenyaemr.cashier.api.model.ItemPrice" column="price_id" />
+		<many-to-one name="itemPrice" class="org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice" column="price_id" />
 		<property name="price" type="java.math.BigDecimal" column="price" not-null="true" />
 		<property name="priceName" type="java.lang.String" column="price_name" length="255" />
 		<property name="quantity" type="int" column="quantity" not-null="true" />

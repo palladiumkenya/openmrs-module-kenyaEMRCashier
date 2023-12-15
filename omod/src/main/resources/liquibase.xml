@@ -4,6 +4,80 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
 
+	<changeSet id="openhmis.cashier-001-v3.0.0-01" author="jecihjoy">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<tableExists tableName="cashier_billable_service"/>
+			</not>
+		</preConditions>
+		<createTable tableName="cashier_billable_service">
+			<column name="service_id" type="int" autoIncrement="true">
+				<constraints primaryKey="true" nullable="false" />
+			</column>
+			<column name="name"  type="varchar(255)"><constraints nullable="false"/></column>
+			<column name="short_name"  type="varchar(255)"><constraints nullable="true" /></column>
+
+			<column name="service_type" type="int"><constraints nullable="true" /></column>
+			<column name="service_category" type="int"><constraints nullable="true" /></column>
+			<column name="service_status" type="varchar(255)"><constraints nullable="true" /></column>
+
+			<column name="creator" type="int"><constraints nullable="false"/></column>
+			<column name="date_created" type="datetime"><constraints nullable="false"/></column>
+			<column name="changed_by" type="int"/>
+			<column name="date_changed" type="datetime" />
+			<column name="voided" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+			<column name="voided_by" type="int" />
+			<column name="date_voided" type="datetime" />
+			<column name="void_reason" type="varchar(255)" defaultValue="null"/>
+			<column name="uuid" type="char(38)"><constraints nullable="false" unique="true" /></column>
+		</createTable>
+	</changeSet>
+
+	<changeSet id="openhmis.cashier-001-v3.0.0-092" author="jecihjoy">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<tableExists tableName="cashier_item_price"/>
+			</not>
+		</preConditions>
+		<createTable tableName="cashier_item_price">
+			<column name="item_price_id" autoIncrement="true" type="int">
+				<constraints nullable="false" primaryKey="true" />
+			</column>
+			<column name="item_id" type="int"><constraints nullable="true"/></column>
+			<column name="service_id" type="int"><constraints nullable="true"/></column>
+			<column name="price" type="decimal(10,2)"><constraints nullable="false"/></column>
+
+			<column defaultValue="" name="name" type="varchar(255)" />
+
+			<column name="creator" type="int" defaultValueNumeric="0" ><constraints nullable="false"/></column>
+			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
+			<column name="changed_by" type="int"/>
+			<column name="date_changed" type="DATETIME"/>
+			<column defaultValueBoolean="false" name="voided" type="BOOLEAN"><constraints nullable="false"/></column>
+			<column name="voided_by" type="int"/>
+			<column name="date_voided" type="DATETIME"/>
+			<column name="void_reason" type="varchar(255)"/>
+			<column name="uuid" type="char(38)"><constraints nullable="false" unique="true" /></column>
+		</createTable>
+
+		<addForeignKeyConstraint constraintName="cashier_item_price_item_id_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="item_id"
+								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id"
+								 onDelete="CASCADE" onUpdate="CASCADE"/>
+		<addForeignKeyConstraint constraintName="cashier_item_price_service_id_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="service_id"
+								 referencedTableName="cashier_billable_service" referencedColumnNames="service_id"
+								 onDelete="CASCADE" onUpdate="CASCADE"/>
+		<addForeignKeyConstraint constraintName="cashier_item_price_creator_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="creator"
+								 referencedTableName="users" referencedColumnNames="user_id"/>
+		<addForeignKeyConstraint constraintName="cashier_item_price_changed_by_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="changed_by"
+								 referencedTableName="users" referencedColumnNames="user_id"/>
+		<addForeignKeyConstraint constraintName="cashier_item_price_retired_by_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="voided_by"
+								 referencedTableName="users" referencedColumnNames="user_id"/>
+	</changeSet>
 	<changeSet id="openhmis.cashier-001-v1.0-1" author="ibewes">
 		<createTable tableName="cashier_item">
 			<column name="item_id" autoIncrement="true" type="int">
@@ -768,46 +842,6 @@
 		<addColumn tableName="cashier_payment_mode">
 			<column name="sort_order" type="int"><constraints nullable="true"/></column>
 		</addColumn>
-	</changeSet>
-	<changeSet id="openhmis.cashier-00019919-v2.2.0-0" author="">
-		<preConditions onFail="MARK_RAN">
-			<not>
-				<tableExists tableName="cashier_item_price"/>
-			</not>
-		</preConditions>
-		<createTable tableName="cashier_item_price">
-			<column name="item_price_id" autoIncrement="true" type="int">
-				<constraints nullable="false" primaryKey="true" />
-			</column>
-			<column name="item_id" type="int"><constraints nullable="false"/></column>
-			<column name="price" type="decimal(10,2)"><constraints nullable="false"/></column>
-
-			<column defaultValue="" name="name" type="varchar(255)" />
-
-			<column name="creator" type="int" defaultValueNumeric="0" ><constraints nullable="false"/></column>
-			<column name="date_created" type="DATETIME"><constraints nullable="false"/></column>
-			<column name="changed_by" type="int"/>
-			<column name="date_changed" type="DATETIME"/>
-			<column defaultValueBoolean="false" name="voided" type="BOOLEAN"><constraints nullable="false"/></column>
-			<column name="voided_by" type="int"/>
-			<column name="date_voided" type="DATETIME"/>
-			<column name="void_reason" type="varchar(255)"/>
-			<column name="uuid" type="char(38)"><constraints nullable="false" unique="true" /></column>
-		</createTable>
-
-		<addForeignKeyConstraint constraintName="cashier_item_price_item_id_fk"
-								 baseTableName="cashier_item_price" baseColumnNames="item_id"
-								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id"
-								 onDelete="CASCADE" onUpdate="CASCADE"/>
-		<addForeignKeyConstraint constraintName="cashier_item_price_creator_fk"
-								 baseTableName="cashier_item_price" baseColumnNames="creator"
-								 referencedTableName="users" referencedColumnNames="user_id"/>
-		<addForeignKeyConstraint constraintName="cashier_item_price_changed_by_fk"
-								 baseTableName="cashier_item_price" baseColumnNames="changed_by"
-								 referencedTableName="users" referencedColumnNames="user_id"/>
-		<addForeignKeyConstraint constraintName="cashier_item_price_retired_by_fk"
-								 baseTableName="cashier_item_price" baseColumnNames="voided_by"
-								 referencedTableName="users" referencedColumnNames="user_id"/>
 	</changeSet>
 
 	<changeSet id="openhmis.cashier-001-v3.0.0-0" author="Aojwang">

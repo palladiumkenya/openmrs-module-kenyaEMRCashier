@@ -1,11 +1,9 @@
 package org.openmrs.module.kenyaemr.cashier.api.impl;
 
 import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
-import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.impl.BaseEntityDataServiceImpl;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAuthorizationPrivileges;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
-import org.openmrs.module.kenyaemr.cashier.api.model.ItemPrice;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional

@@ -21,7 +21,6 @@ import org.openmrs.annotation.Authorized;
 import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
-import org.openmrs.module.kenyaemr.cashier.api.model.ItemPrice;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.springframework.transaction.annotation.Transactional;

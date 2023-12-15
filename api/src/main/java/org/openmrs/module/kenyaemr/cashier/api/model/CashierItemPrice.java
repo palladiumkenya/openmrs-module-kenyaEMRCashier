@@ -1,13 +1,11 @@
 package org.openmrs.module.kenyaemr.cashier.api.model;
 
 import org.openmrs.BaseOpenmrsData;
-import org.openmrs.OpenmrsData;
-import org.openmrs.module.kenyaemr.cashier.api.base.entity.model.BaseSerializableOpenmrsMetadata;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
 
 import java.math.BigDecimal;
 
-public class ItemPrice extends BaseOpenmrsData {
+public class CashierItemPrice extends BaseOpenmrsData {
 	public static final long serialVersionUID = 0L;
 
 	private Integer itemPriceId;
@@ -15,12 +13,13 @@ public class ItemPrice extends BaseOpenmrsData {
 	private String name;
 	private BigDecimal price;
 	private StockItem item;
+	private BillableService billableService;
 
-	public ItemPrice() {
+	public CashierItemPrice() {
 		super();
 	}
 
-	public ItemPrice(BigDecimal price, String name) {
+	public CashierItemPrice(BigDecimal price, String name) {
 		super();
 
 		this.price = price;
@@ -59,5 +58,13 @@ public class ItemPrice extends BaseOpenmrsData {
 
 	public String getName() {
 		return name;
+	}
+
+	public BillableService getBillableService() {
+		return billableService;
+	}
+
+	public void setBillableService(BillableService billableService) {
+		this.billableService = billableService;
 	}
 }

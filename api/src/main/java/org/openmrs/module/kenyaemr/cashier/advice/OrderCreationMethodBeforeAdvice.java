@@ -8,7 +8,6 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.openmrs.*;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
@@ -110,7 +109,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             BillLineItem billLineItem = new BillLineItem();
             billLineItem.setItem(stockitem);
             System.out.println("Getting Item Price");
-            List<ItemPrice> itemPrices = priceService.getItemPrice(stockitem);
+            List<CashierItemPrice> itemPrices = priceService.getItemPrice(stockitem);
             System.out.println("Finished Getting Item Price");
             billLineItem.setPrice((itemPrices != null && itemPrices.size() > 0) ? itemPrices.get(0).getPrice() : new BigDecimal(0.0));
             billLineItem.setQuantity(quantity);
