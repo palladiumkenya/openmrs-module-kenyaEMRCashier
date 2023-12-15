@@ -21,6 +21,7 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.openmrs.Patient;
 import org.openmrs.annotation.Authorized;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IReceiptNumberGenerator;
@@ -32,8 +33,24 @@ import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
+import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.springframework.transaction.annotation.Transactional;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfNumber;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Text;
+import org.apache.commons.lang.WordUtils;
+import com.itextpdf.barcodes.Barcode128;
+import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.geom.Rectangle;
+import com.itextpdf.layout.element.Image;
+import com.itextpdf.layout.Document;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.AccessControlException;
 import java.util.List;
@@ -231,4 +248,78 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	public String getGetPrivilege() {
 		return PrivilegeConstants.VIEW_BILLS;
 	}
+
+	@Override
+	public File downloadBillReceipt(Bill bill) {
+
+		Patient patient = bill.getPatient();
+		String fullName = patient.getGivenName().concat(" ").concat(
+				patient.getFamilyName() != null ? bill.getPatient().getFamilyName() : ""
+		).concat(" ").concat(
+				patient.getMiddleName() != null ? bill.getPatient().getMiddleName() : ""
+		);
+		AdministrationService administrationService = Context.getAdministrationService();
+		final String isKDoD = (administrationService.getGlobalProperty("kenyaemr.isKDoD"));
+
+        File returnFile = null;
+        try {
+            returnFile = File.createTempFile("patientReceipt", ".pdf");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(returnFile);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
+        /**
+		 * https://kb.itextpdf.com/home/it7kb/faq/how-to-set-the-page-size-to-envelope-size-with-landscape-orientation
+		 * page size: 3.5inch length, 1.1 inch height
+		 * 1mm = 0.0394 inch
+		 * length = 450mm = 17.7165 inch = 127.5588 points
+		 * height = 300mm = 11.811 inch = 85.0392 points
+		 *
+		 * The measurement system in PDF doesn't use inches, but user units. By default, 1 user unit = 1 point, and 1 inch = 72 points.
+		 */
+
+		PdfDocument pdfDoc = new PdfDocument(new PdfWriter(fos));
+		Document doc = new Document(pdfDoc, new PageSize(72.0F, 110.0F).rotate());
+		doc.setMargins(6,0,0,18);
+//        String patientCCCNumber = patient.getPatientIdentifier(Utils.getUniquePatientNumberIdentifierType()) != null ? patient.getPatientIdentifier(Utils.getUniquePatientNumberIdentifierType()).getIdentifier() : "";
+//        String patientKDODNumber = patient.getPatientIdentifier(Utils.getKDODIdentifierType()) != null ? patient.getPatientIdentifier(Utils.getKDODIdentifierType()).getIdentifier() : "";
+
+		Text nameLabel = new Text(WordUtils.capitalizeFully(fullName));
+		Text cccNoLabel = new Text("");
+//        if(isKDoD.trim().equalsIgnoreCase("true")) {
+//            cccNoLabel = new Text(patientKDODNumber);
+//        } else {
+//            cccNoLabel = new Text(patientCCCNumber);
+//        }
+		Text specimenDateLabel = new Text(Utils.getSimpleDateFormat("dd/MM/yyyy").format(bill.getDateCreated()));
+
+		Paragraph paragraph = new Paragraph();
+		paragraph.setFontSize(7);
+		paragraph.add(cccNoLabel).add("\n"); // patient ccc/kdod number
+		paragraph.add(nameLabel).add("\n"); // patient name
+		paragraph.add(specimenDateLabel); // sample date
+
+		Barcode128 code128 = new Barcode128(pdfDoc);
+//        String code = patientCCCNumber;
+		String code = "CCC-1234";
+		code128.setBaseline(-1);
+		code128.setFont(null);
+		code128.setSize(12);
+		code128.setCode(code);
+		code128.setCodeType(Barcode128.CODE128);
+		Image code128Image = new Image(code128.createFormXObject(pdfDoc));
+
+
+		doc.add(code128Image);
+		doc.add(paragraph);
+		doc.close();
+		return returnFile;
+	}
+
 }
