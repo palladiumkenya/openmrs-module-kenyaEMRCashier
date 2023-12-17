@@ -13,8 +13,24 @@
  */
 package org.openmrs.module.kenyaemr.cashier.api.impl;
 
+import com.itextpdf.barcodes.Barcode128;
+import com.itextpdf.io.image.ImageData;
+import com.itextpdf.io.image.ImageDataFactory;
+import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.draw.DottedLine;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Image;
+import com.itextpdf.layout.element.LineSeparator;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Text;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.lowagie.text.Chunk;
+import com.lowagie.text.Element;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.lang.WordUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
@@ -34,6 +50,7 @@ import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAutho
 import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
@@ -41,23 +58,14 @@ import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.springframework.transaction.annotation.Transactional;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfNumber;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Text;
-import org.apache.commons.lang.WordUtils;
-import com.itextpdf.barcodes.Barcode128;
-import com.itextpdf.kernel.geom.PageSize;
-import com.itextpdf.kernel.geom.Rectangle;
-import com.itextpdf.layout.element.Image;
-import com.itextpdf.layout.Document;
+import org.openmrs.module.kenyaemr.cashier.api.util.ReceiptUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.security.AccessControlException;
 import java.util.Date;
 import java.util.List;
@@ -327,29 +335,59 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		 */
 
 		PdfDocument pdfDoc = new PdfDocument(new PdfWriter(fos));
-		Document doc = new Document(pdfDoc, new PageSize(72.0F, 110.0F).rotate());
-		doc.setMargins(6,0,0,18);
-//        String patientCCCNumber = patient.getPatientIdentifier(Utils.getUniquePatientNumberIdentifierType()) != null ? patient.getPatientIdentifier(Utils.getUniquePatientNumberIdentifierType()).getIdentifier() : "";
-//        String patientKDODNumber = patient.getPatientIdentifier(Utils.getKDODIdentifierType()) != null ? patient.getPatientIdentifier(Utils.getKDODIdentifierType()).getIdentifier() : "";
+		Document doc = new Document(pdfDoc, new PageSize(290.0F, 160.0F).rotate());
+		doc.setMargins(6,18,0,18);
+        String patientCCCNumber = patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()) != null ? patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()).getIdentifier() : "";
+        String patientKDODNumber = patient.getPatientIdentifier(ReceiptUtil.getKDODIdentifierType()) != null ? patient.getPatientIdentifier(ReceiptUtil.getKDODIdentifierType()).getIdentifier() : "";
 
-		Text nameLabel = new Text(WordUtils.capitalizeFully(fullName));
+		URL logoUrl = BillServiceImpl.class.getClassLoader().getResource("img/kenyaemr-primary-logo.png");
+		// Compose Paragraph
+		Image logiImage = new Image(ImageDataFactory.create(logoUrl));
+		logiImage.scaleToFit(80, 80);
+
+		Text nameLabel = new Text("Patient name : " + WordUtils.capitalizeFully(fullName));
 		Text cccNoLabel = new Text("");
-//        if(isKDoD.trim().equalsIgnoreCase("true")) {
-//            cccNoLabel = new Text(patientKDODNumber);
-//        } else {
-//            cccNoLabel = new Text(patientCCCNumber);
-//        }
-		Text specimenDateLabel = new Text(Utils.getSimpleDateFormat("dd/MM/yyyy").format(bill.getDateCreated()));
+		Text lineItem = new Text("");
+        if(isKDoD.trim().equalsIgnoreCase("true")) {
+            cccNoLabel = new Text(patientKDODNumber);
+        } else {
+            cccNoLabel = new Text(patientCCCNumber);
+        }
+		Text billDateLabel = new Text(Utils.getSimpleDateFormat("dd/MM/yyyy").format(bill.getDateCreated()));
+		Text receiptNumber = new Text("Receipt number :" + bill.getReceiptNumber());
+		Text patientAddress = new Text("Address :" + bill.getPatient().getPerson().getPersonAddress().getAddress2());
+		//Text paymemtMode = new Text(bill.);
+
+		Text totalAmount = new Text("Amount     " + bill.getTotal().toString());
+		Text amountPaid = new Text("Total     " + bill.getAmountPaid().toString());
+		Text cashierName = new Text("Opened by " + bill.getCashier().getName());
+		Text facilityName = new Text("Facility name : " + bill.getCashPoint().getLocation().getName());
+		Text footerText = new Text("All sales are final and are not subject for return, exchange or credit.");
 
 		Paragraph paragraph = new Paragraph();
 		paragraph.setFontSize(7);
-		paragraph.add(cccNoLabel).add("\n"); // patient ccc/kdod number
-		paragraph.add(nameLabel).add("\n"); // patient name
-		paragraph.add(specimenDateLabel); // sample date
+		paragraph.add(logiImage).add("\n");;
+		paragraph.add(facilityName).add("\n").add("\n"); // facility name
+		paragraph.add(billDateLabel).add("\n").add("\n");; // bill date
+		paragraph.setTextAlignment(TextAlignment.CENTER);
+
+		Paragraph paragraph1 = new Paragraph();
+		paragraph1.setFontSize(7);
+		paragraph1.add(receiptNumber).add("\n"); // receipt number
+		paragraph1.add(nameLabel).add("\n"); // patient name
+		paragraph1.add(patientAddress).add("\n"); // patient address
+
+		paragraph1.add("QTY" + "     " + "ITEM" + "     " + "PRICE" + "     "+"TOTAL").add("\n");
+		for (BillLineItem item : bill.getLineItems()) {
+			paragraph1.add(item.getQuantity() + "    " + item.getItem().getCommonName() + "   " + item.getPrice() + "   " + item.getTotal()).add("\n");
+		}
+		paragraph1.add(cashierName).add("\n"); // cashier name
+
+		paragraph1.add(totalAmount).add("\n"); // total paid
+		paragraph1.add(amountPaid).add("\n"); // total amount
 
 		Barcode128 code128 = new Barcode128(pdfDoc);
-//        String code = patientCCCNumber;
-		String code = "CCC-1234";
+        String code = patientCCCNumber;
 		code128.setBaseline(-1);
 		code128.setFont(null);
 		code128.setSize(12);
@@ -357,9 +395,20 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		code128.setCodeType(Barcode128.CODE128);
 		Image code128Image = new Image(code128.createFormXObject(pdfDoc));
 
+		Paragraph paragraph2 = new Paragraph();
+		paragraph2.setFontSize(7);
+		paragraph2.setFontSize(7);
+		paragraph2.add(footerText).add("\n").add("\n");
 
-		doc.add(code128Image);
+		Paragraph paragraph3 = new Paragraph();
+		paragraph3.setFontSize(7);
+		paragraph3.add(cccNoLabel);
+
 		doc.add(paragraph);
+		doc.add(paragraph1);
+		doc.add(paragraph2);
+		doc.add(code128Image);
+		doc.add(paragraph3);
 		doc.close();
 		return returnFile;
 	}

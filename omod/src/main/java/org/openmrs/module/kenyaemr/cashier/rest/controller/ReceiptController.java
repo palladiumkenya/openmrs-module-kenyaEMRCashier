@@ -20,6 +20,7 @@ import org.openmrs.module.jasperreport.ReportGenerator;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
+import org.openmrs.module.kenyaemr.cashier.web.controller.BillAddEditController;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.core.io.FileSystemResource;
@@ -45,27 +46,29 @@ import java.util.HashMap;
 @Controller
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE  + "/receipt")
 public class ReceiptController extends BaseRestController {
+
 	@RequestMapping(method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-	public ResponseEntity<Resource>  get(@RequestParam(value = "billId", required = false) Integer billId) throws IOException {
+	public ResponseEntity<byte[]> get(@RequestParam(value = "billId", required = false) Integer billId) throws IOException {
 
 		IBillService service = Context.getService(IBillService.class);
 		Bill bill = service.getById(billId);
 
-		File file = service.downloadBillReceipt(bill);
-		if (file != null) {
-			System.out.println("receipt report generated");
+		if (bill == null) {
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		if (file.exists()) {
+
+		File file = service.downloadBillReceipt(bill);
+		if (file != null && file.exists()) {
 			System.out.println("receipt report generated");
+
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 			headers.setContentDispositionFormData("attachment", file.getName());
+			headers.add("Access-Control-Allow-Origin", "*");
 
 			try {
-				Resource resource = new FileSystemResource(file);
 				byte[] fileContent = Files.readAllBytes(file.toPath());
-
-				return new ResponseEntity<>(resource, headers, HttpStatus.OK);
+				return new ResponseEntity<>(fileContent, headers, HttpStatus.OK);
 			} catch (IOException e) {
 				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 			}

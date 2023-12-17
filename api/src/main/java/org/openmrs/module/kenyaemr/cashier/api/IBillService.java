@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Transactional
 public interface IBillService extends IEntityDataService<Bill> {
+
 	/**
 	 * Gets the {@link Bill} with the specified receipt number or {@code null} if not found.
 	 * @param receiptNumber The receipt number to search for.
