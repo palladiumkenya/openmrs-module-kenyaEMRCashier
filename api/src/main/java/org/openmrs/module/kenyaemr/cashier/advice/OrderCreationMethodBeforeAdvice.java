@@ -42,8 +42,10 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
     ItemPriceService priceService = Context.getService(ItemPriceService.class);
     ICashPointService cashPointService = Context.getService(ICashPointService.class);
 
+    // todo remove static variables
     @Override
     public void before(Method method, Object[] args, Object target) throws Throwable {
+
         try {
             // Extract the Order object from the arguments
             ProgramWorkflowService workflowService = Context.getProgramWorkflowService();
@@ -148,6 +150,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
 
     /**
      * Adds a bill item to the cashier module
+     *
      * @param patient
      * @param cashierUUID
      * @param cashpointUUID
@@ -242,4 +245,3 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
         return isPaying;
     }
 }
-
