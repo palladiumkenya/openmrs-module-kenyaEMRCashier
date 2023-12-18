@@ -24,7 +24,7 @@ import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOp
 import java.util.ArrayList;
 import java.util.List;
 
-@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/billableservice", supportedClass = BillableService.class,
+@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/billableService", supportedClass = BillableService.class,
         supportedOpenmrsVersions = {"2.0 - 2.*"})
 public class BillableServiceResource extends BaseRestDataResource<BillableService> {
 
