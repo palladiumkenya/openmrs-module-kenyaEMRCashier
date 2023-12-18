@@ -333,7 +333,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		 */
 
 		PdfDocument pdfDoc = new PdfDocument(new PdfWriter(fos));
-		Document doc = new Document(pdfDoc, new PageSize(290.0F, 160.0F).rotate());
+		Document doc = new Document(pdfDoc, new PageSize(320.0F, 160.0F).rotate());
 		doc.setMargins(6,18,0,18);
         String patientOmrsNumber = patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()) != null ? patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()).getIdentifier() : "";
 
@@ -346,14 +346,15 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		Text cccNoLabel = new Text("");
 
 		Text billDateLabel = new Text(Utils.getSimpleDateFormat("dd/MM/yyyy").format(bill.getDateCreated()));
-		Text receiptNumber = new Text("Receipt number :" + bill.getReceiptNumber());
-		Text patientAddress = new Text("Address :" + bill.getPatient().getPerson().getPersonAddress().getAddress2());
-		//Text paymemtMode = new Text(bill.);
+		Text receiptNumber = new Text("Receipt number : " + bill.getReceiptNumber());
+		Text patientAddress = new Text("Address : " + bill.getPatient().getPerson().getPersonAddress().getAddress2());
 
-		Text totalAmount = new Text("Amount     " + bill.getTotal().toString());
-		Text amountPaid = new Text("Total     " + bill.getAmountPaid().toString());
-		Text cashierName = new Text("Opened by " + bill.getCashier().getName());
-		Text facilityName = new Text("Facility name : " + bill.getCashPoint().getLocation().getName());
+		Text totalAmount = new Text("Amount :    " + bill.getTotal().toString());
+		Text amountPaid = new Text("Total :    " + bill.getAmountPaid().toString());
+		Text openedBy = new Text("Opened by : " + bill.getCashier().getName());
+		Text insertedBy = new Text("Inserted by : " + bill.getCashier().getName());
+		//Text paymemtMode = new Text(bill.);
+		Text facilityName = new Text(bill.getCashPoint().getLocation().getName());
 		Text footerText = new Text("All sales are final and are not subject for return, exchange or credit.");
 
 		Paragraph paragraph = new Paragraph();
@@ -367,16 +368,18 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		paragraph1.setFontSize(7);
 		paragraph1.add(receiptNumber).add("\n"); // receipt number
 		paragraph1.add(nameLabel).add("\n"); // patient name
-		paragraph1.add(patientAddress).add("\n"); // patient address
+		paragraph1.add(patientAddress).add("\n").add("\n"); // patient address
 
 		paragraph1.add("QTY" + "     " + "ITEM" + "     " + "PRICE" + "     "+"TOTAL").add("\n");
 		for (BillLineItem item : bill.getLineItems()) {
-			paragraph1.add(item.getQuantity() + "    " + item.getItem().getCommonName() + "   " + item.getPrice() + "   " + item.getTotal()).add("\n");
+			paragraph1.add(item.getQuantity() + "          " + item.getItem().getCommonName() + "          " + item.getPrice() + "          " + item.getTotal()).add("\n").add("\n");
 		}
-		paragraph1.add(cashierName).add("\n"); // cashier name
 
 		paragraph1.add(totalAmount).add("\n"); // total paid
-		paragraph1.add(amountPaid).add("\n"); // total amount
+		paragraph1.add(amountPaid).add("\n").add("\n"); // total amount
+
+		paragraph1.add(openedBy).add("\n"); // cashier name
+		paragraph1.add(insertedBy).add("\n"); // cashier name
 
 		Barcode128 code128 = new Barcode128(pdfDoc);
         String code = patientOmrsNumber;
