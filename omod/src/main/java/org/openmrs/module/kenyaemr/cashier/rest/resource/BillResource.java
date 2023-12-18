@@ -13,7 +13,6 @@
  */
 package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
-//import com.google.common.collect.Iterators;
 
 import org.openmrs.Provider;
 import org.openmrs.User;
