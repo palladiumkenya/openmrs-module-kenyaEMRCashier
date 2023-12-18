@@ -14,6 +14,7 @@
 
 		<many-to-one name="item" class="org.openmrs.module.stockmanagement.api.model.StockItem" not-null="false" column="item_id" />
 		<many-to-one name="billableService" class="org.openmrs.module.kenyaemr.cashier.api.model.BillableService" not-null="false" column="service_id" />
+		<many-to-one name="paymentMode" class="org.openmrs.module.kenyaemr.cashier.api.model.PaymentMode" not-null="false" column="payment_mode" />
 
 		<property name="name" type="java.lang.String" column="name" not-null="false" length="255" />
 		<property name="price" type="java.math.BigDecimal" column="price" not-null="true" />

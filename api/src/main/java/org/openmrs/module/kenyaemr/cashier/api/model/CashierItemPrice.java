@@ -12,6 +12,7 @@ public class CashierItemPrice extends BaseOpenmrsData {
 
 	private String name;
 	private BigDecimal price;
+	private PaymentMode paymentMode;
 	private StockItem item;
 	private BillableService billableService;
 
@@ -41,6 +42,14 @@ public class CashierItemPrice extends BaseOpenmrsData {
 	@Override
 	public void setId(Integer id) {
 		itemPriceId = id;
+	}
+
+	public PaymentMode getPaymentMode() {
+		return paymentMode;
+	}
+
+	public void setPaymentMode(PaymentMode paymentMode) {
+		this.paymentMode = paymentMode;
 	}
 
 	public StockItem getItem() {

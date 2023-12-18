@@ -33,7 +33,8 @@
 		</createTable>
 	</changeSet>
 
-	<changeSet id="openhmis.cashier-001-v3.0.0-092" author="jecihjoy">
+
+	<changeSet id="openhmis.cashier-001-v3.0.0-231220" author="jecihjoy">
 		<preConditions onFail="MARK_RAN">
 			<not>
 				<tableExists tableName="cashier_item_price"/>
@@ -45,8 +46,9 @@
 			</column>
 			<column name="item_id" type="int"><constraints nullable="true"/></column>
 			<column name="service_id" type="int"><constraints nullable="true"/></column>
-			<column name="price" type="decimal(10,2)"><constraints nullable="false"/></column>
 
+			<column name="price" type="decimal(10,2)"><constraints nullable="false"/></column>
+			<column name="payment_mode" type="int"><constraints nullable="true"/></column>
 			<column defaultValue="" name="name" type="varchar(255)" />
 
 			<column name="creator" type="int" defaultValueNumeric="0" ><constraints nullable="false"/></column>
@@ -77,6 +79,10 @@
 		<addForeignKeyConstraint constraintName="cashier_item_price_retired_by_fk"
 								 baseTableName="cashier_item_price" baseColumnNames="voided_by"
 								 referencedTableName="users" referencedColumnNames="user_id"/>
+		<addForeignKeyConstraint constraintName="cashier_billable_service_payment_mode_fk"
+								 baseTableName="cashier_item_price" baseColumnNames="payment_mode"
+								 referencedTableName="cashier_payment_mode" referencedColumnNames="payment_mode_id"
+								 onDelete="CASCADE" onUpdate="CASCADE"/>
 	</changeSet>
 	<changeSet id="openhmis.cashier-001-v1.0-1" author="ibewes">
 		<createTable tableName="cashier_item">
