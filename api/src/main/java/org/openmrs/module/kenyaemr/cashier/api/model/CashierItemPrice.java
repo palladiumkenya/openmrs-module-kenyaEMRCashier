@@ -16,7 +16,14 @@ public class CashierItemPrice extends BaseOpenmrsData {
 	private BillableService billableService;
 
 	public CashierItemPrice() {
-		super();
+
+	}
+
+	public CashierItemPrice(String name, BigDecimal price, StockItem item, BillableService billableService) {
+		this.name = name;
+		this.price = price;
+		this.item = item;
+		this.billableService = billableService;
 	}
 
 	public CashierItemPrice(BigDecimal price, String name) {

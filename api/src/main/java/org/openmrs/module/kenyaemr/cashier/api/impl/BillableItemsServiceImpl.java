@@ -1,14 +1,32 @@
 package org.openmrs.module.kenyaemr.cashier.api.impl;
 
+import org.hibernate.Criteria;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.impl.BaseEntityDataServiceImpl;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAuthorizationPrivileges;
+import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
+import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
+import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Transactional
 public class BillableItemsServiceImpl extends BaseEntityDataServiceImpl<BillableService> implements IEntityAuthorizationPrivileges
         , IBillableItemsService {
+
+    @Override
+    public List<BillableService> findServices(final BillableServiceSearch serviceSearch) {
+        return executeCriteria(BillableService.class, null, new Action1<Criteria>() {
+            @Override
+            public void apply(Criteria criteria) {
+                serviceSearch.updateCriteria(criteria);
+            }
+        });
+    }
+
     @Override
     protected IEntityAuthorizationPrivileges getPrivileges() {
         return this;
