@@ -16,7 +16,7 @@ public class BillableService extends BaseOpenmrsData {
     private Concept serviceType;
     private Concept serviceCategory;
     private List<CashierItemPrice> servicePrices;
-    private ServiceStatus serviceStatus = ServiceStatus.ENABLED;
+    private BillableServiceStatus serviceStatus = BillableServiceStatus.ENABLED;
 
     public int getBillableServiceId() {
         return billableServiceId;
@@ -58,11 +58,11 @@ public class BillableService extends BaseOpenmrsData {
         this.serviceCategory = serviceCategory;
     }
 
-    public ServiceStatus getServiceStatus() {
+    public BillableServiceStatus getServiceStatus() {
         return serviceStatus;
     }
 
-    public void setServiceStatus(ServiceStatus serviceStatus) {
+    public void setServiceStatus(BillableServiceStatus serviceStatus) {
         this.serviceStatus = serviceStatus;
     }
 
