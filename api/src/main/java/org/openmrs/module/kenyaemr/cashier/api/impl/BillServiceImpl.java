@@ -266,8 +266,6 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		).concat(" ").concat(
 				patient.getMiddleName() != null ? bill.getPatient().getMiddleName() : ""
 		);
-		AdministrationService administrationService = Context.getAdministrationService();
-		final String isKDoD = (administrationService.getGlobalProperty("kenyaemr.isKDoD"));
 
         File returnFile = null;
         try {
@@ -295,8 +293,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		PdfDocument pdfDoc = new PdfDocument(new PdfWriter(fos));
 		Document doc = new Document(pdfDoc, new PageSize(290.0F, 160.0F).rotate());
 		doc.setMargins(6,18,0,18);
-        String patientCCCNumber = patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()) != null ? patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()).getIdentifier() : "";
-        String patientKDODNumber = patient.getPatientIdentifier(ReceiptUtil.getKDODIdentifierType()) != null ? patient.getPatientIdentifier(ReceiptUtil.getKDODIdentifierType()).getIdentifier() : "";
+        String patientOmrsNumber = patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()) != null ? patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()).getIdentifier() : "";
 
 		URL logoUrl = BillServiceImpl.class.getClassLoader().getResource("img/kenyaemr-primary-logo.png");
 		// Compose Paragraph
@@ -305,12 +302,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 
 		Text nameLabel = new Text("Patient name : " + WordUtils.capitalizeFully(fullName));
 		Text cccNoLabel = new Text("");
-		Text lineItem = new Text("");
-        if(isKDoD.trim().equalsIgnoreCase("true")) {
-            cccNoLabel = new Text(patientKDODNumber);
-        } else {
-            cccNoLabel = new Text(patientCCCNumber);
-        }
+
 		Text billDateLabel = new Text(Utils.getSimpleDateFormat("dd/MM/yyyy").format(bill.getDateCreated()));
 		Text receiptNumber = new Text("Receipt number :" + bill.getReceiptNumber());
 		Text patientAddress = new Text("Address :" + bill.getPatient().getPerson().getPersonAddress().getAddress2());
@@ -345,7 +337,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		paragraph1.add(amountPaid).add("\n"); // total amount
 
 		Barcode128 code128 = new Barcode128(pdfDoc);
-        String code = patientCCCNumber;
+        String code = patientOmrsNumber;
 		code128.setBaseline(-1);
 		code128.setFont(null);
 		code128.setSize(12);

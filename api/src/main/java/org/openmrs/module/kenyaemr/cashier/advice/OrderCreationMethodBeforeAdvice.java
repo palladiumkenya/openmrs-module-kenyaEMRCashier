@@ -47,29 +47,29 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                     String cashierUUID = Context.getAuthenticatedUser().getUuid();
                     String cashpointUUID = Utils.getDefaultLocation().getUuid();
                     System.out.println("Patient: " + patientUUID + " cashier: " + cashierUUID + " cash point: " + cashpointUUID);
-//                    if(order instanceof DrugOrder) {
-//                        System.out.println("Auto detect drug order");
-//                        System.out.println("This is a drug order");
-//                        DrugOrder drugOrder = (DrugOrder) order;
-//                        Integer drugID = drugOrder.getDrug() != null ? drugOrder.getDrug().getDrugId() : 0;
-//                        String drugUUID = drugOrder.getDrug() != null ? drugOrder.getDrug().getConcept().getUuid() : "";
-//                        Double drugQuantity = drugOrder.getQuantity() != null ? drugOrder.getQuantity() : 0.0;
-//                        StockItem stockitem = stockService.getStockItemByDrug(drugID);
-//                        System.out.println("Drug id: " + drugID + " Drug UUID: " + drugUUID + " Drug Quantity: " + drugQuantity);
-//                        addBillItemToBill(patient, cashierUUID, cashpointUUID, stockitem, drugQuantity.intValue(), order.getDateActivated());
-//                    } else if(order instanceof TestOrder) {
-//                        System.out.println("Auto detect lab order");
-//                        System.out.println("This is a lab order");
-//                        TestOrder testOrder = (TestOrder) order;
-//                        Integer testID = testOrder.getId() != null ? testOrder.getId() : 0;
-//                        String testUUID = testOrder.getUuid() != null ? testOrder.getUuid() : "";
-//                        StockItem stockitem = stockService.getStockItemByConcept(testOrder.getConcept().getConceptId());
-//                        System.out.println("Test id: " + testID + " Test UUID: " + testUUID);
-//                        addBillItemToBill(patient, cashierUUID, cashpointUUID, stockitem, 1, order.getDateActivated());
-//                    }
+                    if (order instanceof DrugOrder) {
+                        System.out.println("Auto detect drug order");
+                        System.out.println("This is a drug order");
+                        DrugOrder drugOrder = (DrugOrder) order;
+                        Integer drugID = drugOrder.getDrug() != null ? drugOrder.getDrug().getDrugId() : 0;
+                        String drugUUID = drugOrder.getDrug() != null ? drugOrder.getDrug().getConcept().getUuid() : "";
+                        Double drugQuantity = drugOrder.getQuantity() != null ? drugOrder.getQuantity() : 0.0;
+                        StockItem stockitem = stockService.getStockItemByDrug(drugID);
+                        System.out.println("Drug id: " + drugID + " Drug UUID: " + drugUUID + " Drug Quantity: " + drugQuantity);
+                        addBillItemToBill(patient, cashierUUID, cashpointUUID, stockitem, drugQuantity.intValue(), order.getDateActivated());
+                    } else if (order instanceof TestOrder) {
+                        System.out.println("Auto detect lab order");
+                        System.out.println("This is a lab order");
+                        TestOrder testOrder = (TestOrder) order;
+                        Integer testID = testOrder.getId() != null ? testOrder.getId() : 0;
+                        String testUUID = testOrder.getUuid() != null ? testOrder.getUuid() : "";
+                        StockItem stockitem = stockService.getStockItemByConcept(testOrder.getConcept().getConceptId());
+                        System.out.println("Test id: " + testID + " Test UUID: " + testUUID);
+                        addBillItemToBill(patient, cashierUUID, cashpointUUID, stockitem, 1, order.getDateActivated());
+                    }
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.err.println("Error intercepting order before creation: " + e.getMessage());
             e.printStackTrace();
         }
@@ -77,6 +77,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
 
     /**
      * Adds a bill item to the cashier module
+     *
      * @param patient
      * @param cashierUUID
      * @param cashpointUUID
@@ -95,14 +96,14 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             //search for any pending bill for today
             for (Bill currentBill : bills) {
                 //Get the bill date
-                if(DateUtils.isSameDay(currentBill.getDateCreated(), orderDate)) {
+                if (DateUtils.isSameDay(currentBill.getDateCreated(), orderDate)) {
                     activeBill = currentBill;
                     break;
                 }
             }
 
             // if there is no active bill for today, we create one
-            if(activeBill == null){
+            if (activeBill == null) {
                 activeBill = searchBill;
             }
 
@@ -118,7 +119,6 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             billLineItem.setLineItemOrder(0);
 
 
-            
             // Bill
             User user = Context.getAuthenticatedUser();
             List<Provider> providers = new ArrayList<>(Context.getProviderService().getProvidersByPerson(user.getPerson()));
@@ -129,7 +129,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                 activeBill.setCashPoint(cashPoints.get(0));
                 activeBill.addLineItem(billLineItem);
                 activeBill.setStatus(BillStatus.PENDING);
-                    billService.save(activeBill);
+                billService.save(activeBill);
             } else {
                 System.out.println("User is not a provider");
             }
@@ -138,7 +138,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             System.err.println("Error sending the bill item: " + ex.getMessage());
             ex.printStackTrace();
         }
-        return(ret);
+        return (ret);
     }
 }
 
