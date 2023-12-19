@@ -9,8 +9,10 @@ import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
+import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
 import org.openmrs.module.webservices.rest.web.representation.DefaultRepresentation;
@@ -77,15 +79,18 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
             description.addProperty("shortName");
             description.addProperty("serviceType");
             description.addProperty("serviceCategory");
-//            description.addProperty("servicePrices");
+            description.addProperty("servicePrices");
             description.addProperty("serviceStatus");
         }
         return description;
     }
 
+   @PropertyGetter(value = "servicePrices")
+   public List<CashierItemPrice> getServicePrices(BillableService instance) {
+       return new ArrayList<>(instance.getServicePrices());
+   }
     @PropertySetter("servicePrices")
     public void setServicePrices(BillableService instance, List<CashierItemPrice> itemPrices) {
-        System.out.println("Calling setter");
         if (instance.getServicePrices() == null) {
             instance.setServicePrices(new ArrayList<CashierItemPrice>(itemPrices.size()));
         }
@@ -97,15 +102,7 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
 
     @Override
     public DelegatingResourceDescription getCreatableProperties() {
-        DelegatingResourceDescription description = new DelegatingResourceDescription();
-        description.addProperty("name");
-        description.addProperty("shortName");
-        description.addProperty("serviceType");
-        description.addProperty("serviceCategory");
-        description.addProperty("servicePrices");
-        description.addProperty("serviceStatus");
-
-        return description;
+        return getRepresentationDescription(new DefaultRepresentation());
     }
 
     @Override

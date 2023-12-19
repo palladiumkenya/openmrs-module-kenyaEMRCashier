@@ -4,7 +4,8 @@
 		"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.openmrs.module.kenyaemr.cashier.api.model">
 
-	<class name="CashierItemPrice" table="cashier_item_price">
+	<class name="org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice" table="cashier_item_price">
+		<cache usage="read-write"/>
 		<id name="id" type="int" column="item_price_id">
 			<generator class="native">
 				<param name="sequence">inv_item_price_item_price_id_seq</param>
@@ -50,11 +51,10 @@
 		<many-to-one name="serviceType" class="org.openmrs.Concept" not-null="false" column="service_type" />
 		<many-to-one name="serviceCategory" class="org.openmrs.Concept" not-null="false" column="service_category" />
 
-		<list name="servicePrices" lazy="false" inverse="true" cascade="all-delete-orphan">
+		<bag name="servicePrices" lazy="false" inverse="true" cascade="all-delete-orphan">
 			<key column="service_id" />
-			<list-index column="item_price_id" />
 			<one-to-many class="org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice" />
-		</list>
+		</bag>
 		<property name="serviceStatus" column="service_status" not-null="true">
 			<type name="org.hibernate.type.EnumType">
 				<param name="enumClass">org.openmrs.module.kenyaemr.cashier.api.model.BillableServiceStatus</param>
