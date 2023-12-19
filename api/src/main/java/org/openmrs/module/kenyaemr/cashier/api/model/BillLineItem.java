@@ -28,6 +28,7 @@ public class BillLineItem extends BaseOpenmrsData {
 	private int billLineItemId;
 	private Bill bill;
 	private StockItem item;
+	private BillableService billableService;
 	private BigDecimal price;
 	private String priceName;
 	private CashierItemPrice itemPrice;
@@ -62,6 +63,14 @@ public class BillLineItem extends BaseOpenmrsData {
 
 	public void setItemPrice(CashierItemPrice itemPrice) {
 		this.itemPrice = itemPrice;
+	}
+
+	public BillableService getBillableService() {
+		return billableService;
+	}
+
+	public void setBillableService(BillableService billableService) {
+		this.billableService = billableService;
 	}
 
 	public Integer getQuantity() {

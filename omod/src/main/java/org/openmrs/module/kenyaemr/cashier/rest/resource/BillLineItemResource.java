@@ -50,6 +50,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 		DelegatingResourceDescription description = super.getRepresentationDescription(rep);
 		if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
 			description.addProperty("item");
+			description.addProperty("billableService", Representation.REF);
 			description.addProperty("quantity");
 			description.addProperty("price");
 			description.addProperty("priceName");
@@ -73,7 +74,6 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 			StockItem stockItem = instance.getItem();
 			return stockItem.getConcept().getDisplayString();
 		} catch (Exception e) {
-			LOG.warn("Item probably was deleted", e);
 			return "";
 		}
 	}
