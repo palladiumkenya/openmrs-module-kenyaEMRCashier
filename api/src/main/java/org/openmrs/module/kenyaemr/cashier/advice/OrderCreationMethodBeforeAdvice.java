@@ -47,24 +47,24 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                     String cashpointUUID = Utils.getDefaultLocation().getUuid();
                     System.out.println("Patient: " + patientUUID + " cashier: " + cashierUUID + " cash point: " + cashpointUUID);
                     if(order instanceof DrugOrder) {
-                        System.out.println("Auto detect drug order");
-                        System.out.println("This is a drug order");
                         DrugOrder drugOrder = (DrugOrder) order;
                         Integer drugID = drugOrder.getDrug() != null ? drugOrder.getDrug().getDrugId() : 0;
                         String drugUUID = drugOrder.getDrug() != null ? drugOrder.getDrug().getConcept().getUuid() : "";
-                        Double drugQuantity = drugOrder.getQuantity() != null ? drugOrder.getQuantity() : 0.0;
-                        StockItem stockitem = stockService.getStockItemByDrug(drugID);
+                        double drugQuantity = drugOrder.getQuantity() != null ? drugOrder.getQuantity() : 0.0;
+                        List<StockItem> stockItems = stockService.getStockItemByDrug(drugID);
                         System.out.println("Drug id: " + drugID + " Drug UUID: " + drugUUID + " Drug Quantity: " + drugQuantity);
-                        addBillItemToBill(patient, cashierUUID, cashpointUUID, stockitem, drugQuantity.intValue(), order.getDateActivated());
+                        if (!stockItems.isEmpty()) {
+                            addBillItemToBill(patient, cashierUUID, cashpointUUID, stockItems.get(0), (int) drugQuantity, order.getDateActivated());
+                        }
                     } else if(order instanceof TestOrder) {
-                        System.out.println("Auto detect lab order");
-                        System.out.println("This is a lab order");
                         TestOrder testOrder = (TestOrder) order;
-                        Integer testID = testOrder.getId() != null ? testOrder.getId() : 0;
+                        int testID = testOrder.getId() != null ? testOrder.getId() : 0;
                         String testUUID = testOrder.getUuid() != null ? testOrder.getUuid() : "";
-                        StockItem stockitem = stockService.getStockItemByConcept(testOrder.getConcept().getConceptId());
+                        List<StockItem> stockItems = stockService.getStockItemByConcept(testOrder.getConcept().getConceptId());
                         System.out.println("Test id: " + testID + " Test UUID: " + testUUID);
-                        addBillItemToBill(patient, cashierUUID, cashpointUUID, stockitem, 1, order.getDateActivated());
+                        if (!stockItems.isEmpty()) {
+                            addBillItemToBill(patient, cashierUUID, cashpointUUID, stockItems.get(0), 1, order.getDateActivated());
+                        }
                     }
                 }
             }
@@ -81,7 +81,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
      * @param cashpointUUID
      */
     public Boolean addBillItemToBill(Patient patient, String cashierUUID, String cashpointUUID, StockItem stockitem, Integer quantity, Date orderDate) {
-        Boolean ret = false;
+        boolean ret = false;
         try {
             // Search for a bill
             Bill searchBill = new Bill();
@@ -108,16 +108,12 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             // Bill Item
             BillLineItem billLineItem = new BillLineItem();
             billLineItem.setItem(stockitem);
-            System.out.println("Getting Item Price");
             List<CashierItemPrice> itemPrices = priceService.getItemPrice(stockitem);
-            System.out.println("Finished Getting Item Price");
-            billLineItem.setPrice((itemPrices != null && itemPrices.size() > 0) ? itemPrices.get(0).getPrice() : new BigDecimal(0.0));
+            billLineItem.setPrice((itemPrices != null && !itemPrices.isEmpty()) ? itemPrices.get(0).getPrice() : new BigDecimal(0.0));
             billLineItem.setQuantity(quantity);
             billLineItem.setPaymentStatus(BillStatus.PENDING);
             billLineItem.setLineItemOrder(0);
 
-
-            
             // Bill
             User user = Context.getAuthenticatedUser();
             List<Provider> providers = new ArrayList<>(Context.getProviderService().getProvidersByPerson(user.getPerson()));
@@ -128,7 +124,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                 activeBill.setCashPoint(cashPoints.get(0));
                 activeBill.addLineItem(billLineItem);
                 activeBill.setStatus(BillStatus.PENDING);
-                    billService.save(activeBill);
+                billService.save(activeBill);
             } else {
                 System.out.println("User is not a provider");
             }
