@@ -20,7 +20,7 @@ import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ProviderService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
-import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
+import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.ModuleSettings;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.ITimesheetService;

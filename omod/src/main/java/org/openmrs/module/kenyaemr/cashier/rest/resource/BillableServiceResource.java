@@ -8,13 +8,13 @@ import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
-import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
-import org.openmrs.module.stockmanagement.api.model.StockItem;
+import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
+import org.openmrs.module.webservices.rest.web.representation.CustomRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.DefaultRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.FullRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
@@ -81,14 +81,19 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
             description.addProperty("serviceCategory");
             description.addProperty("servicePrices");
             description.addProperty("serviceStatus");
+        } else if (rep instanceof CustomRepresentation) {
+            //For custom representation, must be null
+            // - let the user decide which properties should be included in the response
+            description = null;
         }
         return description;
     }
 
-   @PropertyGetter(value = "servicePrices")
-   public List<CashierItemPrice> getServicePrices(BillableService instance) {
-       return new ArrayList<>(instance.getServicePrices());
-   }
+    @PropertyGetter(value = "servicePrices")
+    public List<CashierItemPrice> getServicePrices(BillableService instance) {
+        return new ArrayList<>(instance.getServicePrices());
+    }
+
     @PropertySetter("servicePrices")
     public void setServicePrices(BillableService instance, List<CashierItemPrice> itemPrices) {
         if (instance.getServicePrices() == null) {

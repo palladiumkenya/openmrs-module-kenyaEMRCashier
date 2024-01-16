@@ -20,7 +20,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
-import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
+import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.stockmanagement.api.StockManagementService;

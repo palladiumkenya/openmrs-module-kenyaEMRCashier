@@ -14,16 +14,19 @@
 package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestInstanceTypeResource;
-import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
+import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.api.IPaymentModeService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IMetadataDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentMode;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentModeAttributeType;
+import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
+import org.openmrs.module.webservices.rest.web.representation.CustomRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.RefRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
+import org.openmrs.module.webservices.rest.web.resource.api.PageableResult;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
 
 import java.util.List;
@@ -40,6 +43,11 @@ public class PaymentModeResource extends BaseRestInstanceTypeResource<PaymentMod
 	}
 
 	@Override
+	protected PageableResult doGetAll(RequestContext context) {
+		return super.doGetAll(context);
+	}
+
+	@Override
 	public Class<? extends IMetadataDataService<PaymentMode>> getServiceClass() {
 		return IPaymentModeService.class;
 	}
@@ -49,6 +57,10 @@ public class PaymentModeResource extends BaseRestInstanceTypeResource<PaymentMod
 		DelegatingResourceDescription description = super.getRepresentationDescription(rep);
 		if (!(rep instanceof RefRepresentation)) {
 			description.addProperty("sortOrder");
+		}else if (rep instanceof CustomRepresentation) {
+			//For custom representation, must be null
+			// - let the user decide which properties should be included in the response
+			description = null;
 		}
 
 		return description;

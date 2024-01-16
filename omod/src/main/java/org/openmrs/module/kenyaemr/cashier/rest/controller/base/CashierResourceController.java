@@ -11,22 +11,22 @@
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
  */
-package org.openmrs.module.kenyaemr.cashier.rest.controller;
+package org.openmrs.module.kenyaemr.cashier.rest.controller.base;
 
 import org.openmrs.module.webservices.rest.web.RestConstants;
-import org.openmrs.module.webservices.rest.web.v1_0.controller.MainSubResourceController;
+import org.openmrs.module.webservices.rest.web.v1_0.controller.MainResourceController;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
- * REST sub controller for Cashier resources.
+ * REST controller for cashier resources.
  */
 @Controller
-@RequestMapping("/rest/" + RestConstants.VERSION_1 + CashierSubResourceController.KENYAEMR_CASHIER_NAMESPACE)
-public class CashierSubResourceController extends MainSubResourceController {
+@RequestMapping("/rest/" + RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE)
+public class CashierResourceController extends MainResourceController {
 	public static final String KENYAEMR_CASHIER_NAMESPACE = "/cashier";
 	@Override
 	public String getNamespace() {
-		return RestConstants.VERSION_1 + CashierSubResourceController.KENYAEMR_CASHIER_NAMESPACE;
+		return RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE;
 	}
 }

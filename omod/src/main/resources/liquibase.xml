@@ -34,7 +34,7 @@
 	</changeSet>
 
 
-	<changeSet id="openhmis.cashier-001-v3.0.0-231220" author="jecihjoy">
+	<changeSet id="openhmis.cashier-001-v3.0.0-241220" author="jecihjoy">
 		<preConditions onFail="MARK_RAN">
 			<not>
 				<tableExists tableName="cashier_item_price"/>

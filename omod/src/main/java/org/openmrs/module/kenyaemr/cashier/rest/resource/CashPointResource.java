@@ -14,7 +14,7 @@
 package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestMetadataResource;
-import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
+import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IMetadataDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;

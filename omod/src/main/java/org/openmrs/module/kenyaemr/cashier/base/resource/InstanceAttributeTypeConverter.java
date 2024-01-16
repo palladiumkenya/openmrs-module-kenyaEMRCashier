@@ -15,7 +15,7 @@ package org.openmrs.module.kenyaemr.cashier.base.resource;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.proxy.HibernateProxy;
-import org.openmrs.module.kenyaemr.cashier.rest.controller.CashierResourceController;
+import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.model.IInstanceAttributeType;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
