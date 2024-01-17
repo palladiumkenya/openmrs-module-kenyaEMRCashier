@@ -18,6 +18,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
+import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
@@ -68,6 +70,13 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 		instance.setItem(service.getStockItemByUuid(itemUuid));
 	}
 
+	@PropertySetter(value = "billableService")
+	public void setBillableService(BillLineItem instance, Object item) {
+		IBillableItemsService service = Context.getService(IBillableItemsService.class);
+		String serviceUuid = (String) item;
+		instance.setBillableService(service.getByUuid(serviceUuid));
+	}
+
 	@PropertyGetter(value = "item")
 	public String getItem(BillLineItem instance) {
 		try {
@@ -77,10 +86,26 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 			return "";
 		}
 	}
-	
+
+	@PropertyGetter(value = "billableService")
+	public String getBillableService(BillLineItem instance) {
+		try {
+			BillableService service = instance.getBillableService();
+			return service.getName();
+		} catch (Exception e) {
+			return "";
+		}
+	}
+
+
 	@PropertySetter(value = "price")
 	public void setPriceValue(BillLineItem instance, Object price) {
-		instance.setPrice(BigDecimal.valueOf((Double) price));
+		if (price instanceof Double || price instanceof Integer) {
+			double priceValue = ((Number) price).doubleValue();
+			instance.setPrice(BigDecimal.valueOf(priceValue));
+		} else {
+			throw new IllegalArgumentException("Unsupported price type: " + price.getClass().getName());
+		}
 	}
 
 	@PropertySetter(value = "priceName")
