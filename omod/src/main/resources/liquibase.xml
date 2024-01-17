@@ -883,5 +883,3 @@
 								 referencedTableName="concept" referencedColumnNames="concept_id"/>
 	</changeSet>
 </databaseChangeLog>
-
-<!--		nullable="false" unique="true"-->

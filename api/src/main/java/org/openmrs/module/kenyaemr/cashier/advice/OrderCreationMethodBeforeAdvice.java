@@ -3,16 +3,19 @@ package org.openmrs.module.kenyaemr.cashier.advice;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.openmrs.*;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
+import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
 import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
+import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
@@ -54,17 +57,27 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                         List<StockItem> stockItems = stockService.getStockItemByDrug(drugID);
                         System.out.println("Drug id: " + drugID + " Drug UUID: " + drugUUID + " Drug Quantity: " + drugQuantity);
                         if (!stockItems.isEmpty()) {
-                            addBillItemToBill(patient, cashierUUID, cashpointUUID, stockItems.get(0), (int) drugQuantity, order.getDateActivated());
+                            addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) drugQuantity, order.getDateActivated());
                         }
                     } else if(order instanceof TestOrder) {
                         TestOrder testOrder = (TestOrder) order;
                         int testID = testOrder.getId() != null ? testOrder.getId() : 0;
                         String testUUID = testOrder.getUuid() != null ? testOrder.getUuid() : "";
-                        List<StockItem> stockItems = stockService.getStockItemByConcept(testOrder.getConcept().getConceptId());
-                        System.out.println("Test id: " + testID + " Test UUID: " + testUUID);
-                        if (!stockItems.isEmpty()) {
-                            addBillItemToBill(patient, cashierUUID, cashpointUUID, stockItems.get(0), 1, order.getDateActivated());
+                        BillableService searchTemplate = new BillableService();
+                        searchTemplate.setConcept(testOrder.getConcept());
+                        searchTemplate.setServiceStatus(BillableServiceStatus.ENABLED);
+
+                        IBillableItemsService service = Context.getService(IBillableItemsService.class);
+                        List<BillableService> searchResult = service.findServices(new BillableServiceSearch(searchTemplate));
+                        if (!searchResult.isEmpty()) {
+                            System.out.println("service was found");
+                            System.out.println(searchResult.get(0).getConcept().getUuid());
+                            addBillItemToBill(order, patient, cashierUUID, cashpointUUID, null, searchResult.get(0), 1, order.getDateActivated());
+
+                        } else {
+                            System.out.println("concept was not found");
                         }
+                        System.out.println("Test id: " + testID + " Test UUID: " + testUUID);
                     }
                 }
             }
@@ -80,7 +93,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
      * @param cashierUUID
      * @param cashpointUUID
      */
-    public Boolean addBillItemToBill(Patient patient, String cashierUUID, String cashpointUUID, StockItem stockitem, Integer quantity, Date orderDate) {
+    public void addBillItemToBill(Order order, Patient patient, String cashierUUID, String cashpointUUID, StockItem stockitem, BillableService service, Integer quantity, Date orderDate) {
         boolean ret = false;
         try {
             // Search for a bill
@@ -94,7 +107,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             //search for any pending bill for today
             for (Bill currentBill : bills) {
                 //Get the bill date
-                if(DateUtils.isSameDay(currentBill.getDateCreated(), orderDate)) {
+                if(DateUtils.isSameDay(currentBill.getDateCreated(), orderDate != null ? orderDate : new Date())) {
                     activeBill = currentBill;
                     break;
                 }
@@ -107,9 +120,21 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
 
             // Bill Item
             BillLineItem billLineItem = new BillLineItem();
-            billLineItem.setItem(stockitem);
-            List<CashierItemPrice> itemPrices = priceService.getItemPrice(stockitem);
-            billLineItem.setPrice((itemPrices != null && !itemPrices.isEmpty()) ? itemPrices.get(0).getPrice() : new BigDecimal(0.0));
+            List<CashierItemPrice> itemPrices = new ArrayList<>();
+            if (stockitem != null) {
+                billLineItem.setItem(stockitem);
+                itemPrices = priceService.getItemPrice(stockitem);
+            } else if (service != null) {
+                billLineItem.setBillableService(service);
+                itemPrices = priceService.getServicePrice(service);
+            }
+
+            if (!itemPrices.isEmpty()) {
+                List<CashierItemPrice> matchingPrices = itemPrices.stream().filter(p -> p.getPaymentMode().getUuid().equals(fetchPatientPayment(order))).collect(Collectors.toList());
+                billLineItem.setPrice(matchingPrices.isEmpty() ? itemPrices.get(0).getPrice() : matchingPrices.get(0).getPrice());
+            } else {
+                billLineItem.setPrice(new BigDecimal(0.0));
+            }
             billLineItem.setQuantity(quantity);
             billLineItem.setPaymentStatus(BillStatus.PENDING);
             billLineItem.setLineItemOrder(0);
@@ -133,7 +158,18 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             System.err.println("Error sending the bill item: " + ex.getMessage());
             ex.printStackTrace();
         }
-        return(ret);
+    }
+
+    private String fetchPatientPayment(Order order) {
+        String patientPayingMethod = "";
+        Collection<VisitAttribute> visitAttributeList = order.getEncounter().getVisit().getActiveAttributes();
+
+        for (VisitAttribute attribute : visitAttributeList) {
+            if (attribute.getAttributeType().getUuid().equals("c39b684c-250f-4781-a157-d6ad7353bc90") && !attribute.getVoided()) {
+                patientPayingMethod = attribute.getValueReference();
+            }
+        }
+        return patientPayingMethod;
     }
 }
 

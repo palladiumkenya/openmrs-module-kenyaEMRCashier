@@ -8,6 +8,7 @@ import org.hibernate.criterion.Restrictions;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.impl.BaseEntityDataServiceImpl;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAuthorizationPrivileges;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +63,15 @@ public class ItemPriceServiceImpl extends BaseEntityDataServiceImpl<CashierItemP
 
 		// List<ItemPrice> results = getRepository().select(getEntityClass(), criteria);
 		// return(results);
+		return criteria.list();
+	}
+
+	@Override
+	public List<CashierItemPrice> getServicePrice(BillableService billableService) {
+		Criteria criteria = getRepository().createCriteria(CashierItemPrice.class);
+
+		criteria.add(Restrictions.eq("billableService", billableService));
+		criteria.addOrder(Order.desc("id"));
 		return criteria.list();
 	}
 }
