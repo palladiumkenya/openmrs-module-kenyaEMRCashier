@@ -77,6 +77,7 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
         if (rep instanceof DefaultRepresentation || rep instanceof FullRepresentation) {
             description.addProperty("name");
             description.addProperty("shortName");
+            description.addProperty("concept");
             description.addProperty("serviceType");
             description.addProperty("serviceCategory");
             description.addProperty("servicePrices");

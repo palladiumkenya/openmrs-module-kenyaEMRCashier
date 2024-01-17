@@ -12,6 +12,7 @@ import java.util.List;
 public class BillableServiceMapper {
     private String name;
     private String shortName;
+    private String concept;
     private String serviceType;
     private String serviceCategory;
     private List<CashierItemPriceMapper> servicePrices;
@@ -65,11 +66,20 @@ public class BillableServiceMapper {
         this.serviceStatus = serviceStatus;
     }
 
+    public String getConcept() {
+        return concept;
+    }
+
+    public void setConcept(String concept) {
+        this.concept = concept;
+    }
+
     public BillableService billableServiceMapper(BillableServiceMapper mapper) {
         BillableService service = new BillableService();
         List<CashierItemPrice> servicePrices = new ArrayList<>();
         service.setName(mapper.getName());
         service.setShortName(mapper.getShortName());
+        service.setConcept(Context.getConceptService().getConceptByUuid(mapper.getConcept()));
         service.setServiceType(Context.getConceptService().getConceptByUuid(mapper.getServiceType()));
         service.setServiceCategory(Context.getConceptService().getConceptByUuid(mapper.getServiceCategory()));
         service.setServiceStatus(mapper.getServiceStatus());

@@ -13,6 +13,7 @@ public class BillableService extends BaseOpenmrsData {
     private int billableServiceId;
     private String name;
     private String shortName;
+    private Concept concept;
     private Concept serviceType;
     private Concept serviceCategory;
     private List<CashierItemPrice> servicePrices;
@@ -83,6 +84,14 @@ public class BillableService extends BaseOpenmrsData {
 
     public void setServicePrices(List<CashierItemPrice> servicePrices) {
         this.servicePrices = servicePrices;
+    }
+
+    public Concept getConcept() {
+        return concept;
+    }
+
+    public void setConcept(Concept concept) {
+        this.concept = concept;
     }
 
     public void addServicePrice(CashierItemPrice price) {

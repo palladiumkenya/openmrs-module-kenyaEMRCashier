@@ -32,5 +32,8 @@ public class BillableServiceSearch extends BaseDataTemplateSearch<BillableServic
         if (billableService.getServiceType() != null) {
             criteria.add(Restrictions.eq("serviceType", billableService.getServiceType()));
         }
+        if (billableService.getConcept() != null) {
+            criteria.add(Restrictions.eq("concept", billableService.getConcept()));
+        }
     }
 }

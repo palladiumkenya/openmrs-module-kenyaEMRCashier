@@ -870,4 +870,18 @@
 								 referencedTableName="cashier_billable_service" referencedColumnNames="service_id"
 								 onDelete="CASCADE" onUpdate="CASCADE"/>
 	</changeSet>
+	<changeSet id="openhmis.cashier-001-v3.0.0-01172024" author="jecihjoy">
+		<comment>Add concept_id column in billable services</comment>
+		<addColumn tableName="cashier_billable_service">
+			<column name="concept_id" type="int">
+				<constraints nullable="true"/>
+			</column>
+		</addColumn>
+
+		<addForeignKeyConstraint constraintName="cashier_cashier_billable_service_concept_id_fk"
+								 baseTableName="cashier_billable_service" baseColumnNames="concept_id"
+								 referencedTableName="concept" referencedColumnNames="concept_id"/>
+	</changeSet>
 </databaseChangeLog>
+
+<!--		nullable="false" unique="true"-->
