@@ -14,11 +14,13 @@
 package org.openmrs.module.kenyaemr.cashier.api.impl;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
+import org.joda.time.DateTime;
 import org.openmrs.Patient;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.context.Context;
@@ -30,12 +32,17 @@ import org.openmrs.module.kenyaemr.cashier.api.base.entity.impl.BaseEntityDataSe
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAuthorizationPrivileges;
 import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
+import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.security.AccessControlException;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -86,6 +93,18 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 			if (StringUtils.isEmpty(bill.getReceiptNumber())) {
 				bill.setReceiptNumber(generator.generateNumber(bill));
 			}
+		}
+
+		List<Bill> bills = searchBill(bill.getPatient());
+		if(!bills.isEmpty()) {
+			Bill billToUpdate = bills.get(0);
+			billToUpdate.setStatus(BillStatus.PENDING);
+			for (BillLineItem item: bill.getLineItems()) {
+				item.setBill(billToUpdate);
+				billToUpdate.getLineItems().add(item);
+			}
+			// appending items to existing pending bill if available
+			return super.save(billToUpdate);
 		}
 
 		return super.save(bill);
@@ -230,5 +249,28 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	@Override
 	public String getGetPrivilege() {
 		return PrivilegeConstants.VIEW_BILLS;
+	}
+
+	public List<Bill> searchBill(Patient patient) {
+		Criteria criteria = getRepository().createCriteria(Bill.class);
+
+		DateTime currentDate = new DateTime();
+		DateTime startOfDay = currentDate.withTimeAtStartOfDay();
+
+		Date startOfDayDate = startOfDay.toDate();
+
+		DateTime endOfDay = currentDate.plusDays(1);
+		endOfDay = endOfDay.withTimeAtStartOfDay();
+
+		Date endOfDayDate = endOfDay.toDate();
+
+		criteria.add(Restrictions.eq("status", BillStatus.PENDING));
+		criteria.add(Restrictions.eq("patient", patient));
+		criteria.add(Restrictions.ge("dateCreated", startOfDayDate));
+
+		criteria.add(Restrictions.lt("dateCreated", endOfDayDate));
+		criteria.addOrder(Order.desc("id"));
+
+		return criteria.list();
 	}
 }
