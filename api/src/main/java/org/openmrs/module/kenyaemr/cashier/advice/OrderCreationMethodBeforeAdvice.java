@@ -29,12 +29,16 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
     ItemPriceService priceService = Context.getService(ItemPriceService.class);
     ICashPointService cashPointService = Context.getService(ICashPointService.class);
 
+    // todo remove static variables
     @Override
     public void before(Method method, Object[] args, Object target) throws Throwable {
         try {
             // Extract the Order object from the arguments
             if (method.getName().equals("saveOrder") && args.length > 0 && args[0] instanceof Order) {
                 Order order = (Order) args[0];
+                if (!fetchPatientPayingCategory(order)) {
+                    return;
+                }
 
                 // Check if the order already exists by looking at the database
                 if (orderService.getOrderByUuid(order.getUuid()) != null) {
@@ -97,26 +101,26 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
         boolean ret = false;
         try {
             // Search for a bill
-            Bill searchBill = new Bill();
-            searchBill.setPatient(patient);
-            searchBill.setStatus(BillStatus.PENDING);
-            BillSearch billSearch = new BillSearch(searchBill);
-            List<Bill> bills = billService.getBills(billSearch);
-            Bill activeBill = null;
-
-            //search for any pending bill for today
-            for (Bill currentBill : bills) {
-                //Get the bill date
-                if(DateUtils.isSameDay(currentBill.getDateCreated(), orderDate != null ? orderDate : new Date())) {
-                    activeBill = currentBill;
-                    break;
-                }
-            }
-
-            // if there is no active bill for today, we create one
-            if(activeBill == null){
-                activeBill = searchBill;
-            }
+            Bill activeBill = new Bill();
+            activeBill.setPatient(patient);
+            activeBill.setStatus(BillStatus.PENDING);
+//            BillSearch billSearch = new BillSearch(searchBill);
+//            List<Bill> bills = billService.getBills(billSearch);
+//            Bill activeBill = null;
+//
+//            //search for any pending bill for today
+//            for (Bill currentBill : bills) {
+//                //Get the bill date
+//                if(DateUtils.isSameDay(currentBill.getDateCreated(), orderDate != null ? orderDate : new Date())) {
+//                    activeBill = currentBill;
+//                    break;
+//                }
+//            }
+//
+//            // if there is no active bill for today, we create one
+//            if(activeBill == null){
+//                activeBill = searchBill;
+//            }
 
             // Bill Item
             BillLineItem billLineItem = new BillLineItem();
@@ -170,6 +174,19 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             }
         }
         return patientPayingMethod;
+    }
+
+    private boolean fetchPatientPayingCategory(Order order) {
+        boolean isPaying = false;
+        Collection<VisitAttribute> visitAttributeList = order.getEncounter().getVisit().getActiveAttributes();
+
+        for (VisitAttribute attribute : visitAttributeList) {
+            if (attribute.getAttributeType().getUuid().equals("caf2124f-00a9-4620-a250-efd8535afd6d") && attribute.getValueReference().equals("1c30ee58-82d4-4ea4-a8c1-4bf2f9dfc8cf")) {
+               return true;
+            }
+        }
+
+        return isPaying;
     }
 }
 
