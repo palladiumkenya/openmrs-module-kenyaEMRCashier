@@ -14,11 +14,15 @@
 package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
 
+import org.apache.logging.log4j.util.Strings;
+import org.openmrs.Patient;
 import org.openmrs.Provider;
 import org.openmrs.User;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ProviderService;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
+import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.ModuleSettings;
@@ -27,12 +31,14 @@ import org.openmrs.module.kenyaemr.cashier.api.ITimesheetService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.util.RoundingUtil;
+import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
 import org.openmrs.module.webservices.rest.web.representation.DefaultRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.RefRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
+import org.openmrs.module.webservices.rest.web.resource.impl.AlreadyPaged;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
 import org.springframework.web.client.RestClientException;
 
@@ -46,7 +52,7 @@ import java.util.Set;
  * REST resource representing a {@link Bill}.
  */
 @Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/bill", supportedClass = Bill.class,
-        supportedOpenmrsVersions = { "2.0 - 2.*" })
+		supportedOpenmrsVersions = {"2.0 - 2.*"})
 public class BillResource extends BaseRestDataResource<Bill> {
 	@Override
 	public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
@@ -129,7 +135,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 				Provider cashier = getCurrentCashier(bill);
 				if (cashier == null) {
 					throw new RestClientException("Couldn't find Provider for the current user ("
-					        + Context.getAuthenticatedUser().getUsername() + ")");
+							+ Context.getAuthenticatedUser().getUsername() + ")");
 				}
 
 				bill.setCashier(cashier);
@@ -150,10 +156,30 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		return super.save(bill);
 	}
 
+	@Override
+	protected AlreadyPaged<Bill> doSearch(RequestContext context) {
+		String patientUuid = context.getRequest().getParameter("patientUuid");
+		String status = context.getRequest().getParameter("status");
+		String cashPointUuid = context.getRequest().getParameter("cashPointUuid");
+
+		Patient patient = Strings.isNotEmpty(patientUuid) ? Context.getPatientService().getPatientByUuid(patientUuid) : null;
+		BillStatus billStatus = Strings.isNotEmpty(status) ? BillStatus.valueOf(status.toUpperCase()) : null;
+		CashPoint cashPoint = Strings.isNotEmpty(cashPointUuid) ? Context.getService(ICashPointService.class).getByUuid(cashPointUuid) : null;
+
+		Bill searchTemplate = new Bill();
+		searchTemplate.setPatient(patient);
+		searchTemplate.setStatus(billStatus);
+		searchTemplate.setCashPoint(cashPoint);
+		IBillService service = Context.getService(IBillService.class);
+
+		List<Bill> result = service.getBills(new BillSearch(searchTemplate, false));
+		return new AlreadyPaged<>(context, result, false);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public Class<IEntityDataService<Bill>> getServiceClass() {
-		return (Class<IEntityDataService<Bill>>)(Object)IBillService.class;
+		return (Class<IEntityDataService<Bill>>) (Object) IBillService.class;
 	}
 
 	public String getDisplayString(Bill instance) {
@@ -183,7 +209,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			boolean timesheetRequired;
 			try {
 				timesheetRequired =
-				        Boolean.parseBoolean(adminService.getGlobalProperty(ModuleSettings.TIMESHEET_REQUIRED_PROPERTY));
+						Boolean.parseBoolean(adminService.getGlobalProperty(ModuleSettings.TIMESHEET_REQUIRED_PROPERTY));
 			} catch (Exception e) {
 				timesheetRequired = false;
 			}

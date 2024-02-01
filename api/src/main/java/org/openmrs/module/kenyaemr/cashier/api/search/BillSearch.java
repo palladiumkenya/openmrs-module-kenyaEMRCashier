@@ -14,6 +14,7 @@
 package org.openmrs.module.kenyaemr.cashier.api.search;
 
 import org.hibernate.Criteria;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.search.BaseDataTemplateSearch;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
@@ -51,5 +52,6 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 		if (bill.getStatus() != null) {
 			criteria.add(Restrictions.eq("status", bill.getStatus()));
 		}
+		criteria.addOrder(Order.desc("id"));
 	}
 }
