@@ -41,8 +41,7 @@ import java.math.BigDecimal;
 /**
  * REST resource representing a {@link BillLineItem}.
  */
-@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/billLineItem", supportedClass = BillLineItem.class,
-        supportedOpenmrsVersions = {"2.0 - 2.*"})
+@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/billLineItem", supportedClass = BillLineItem.class, supportedOpenmrsVersions = {"2.0 - 2.*"})
 public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 
     private static final Log LOG = LogFactory.getLog(BillLineItemResource.class);
@@ -81,7 +80,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
     public String getItem(BillLineItem instance) {
         try {
             StockItem stockItem = instance.getItem();
-            return stockItem.getUuid() + " : " + stockItem.getConcept().getDisplayString();
+            return stockItem.getUuid() + ":" + stockItem.getConcept().getDisplayString();
         } catch (Exception e) {
             return "";
         }
@@ -91,7 +90,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
     public String getBillableService(BillLineItem instance) {
         try {
             BillableService service = instance.getBillableService();
-            return service.getUuid() + " : " + service.getName();
+            return service.getUuid() + ":" + service.getName();
         } catch (Exception e) {
             return "";
         }

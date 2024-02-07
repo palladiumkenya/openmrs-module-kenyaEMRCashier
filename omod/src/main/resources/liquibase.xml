@@ -831,7 +831,12 @@
 								 referencedTableName="cashier_billable_service" referencedColumnNames="service_id"
 								 onDelete="CASCADE" onUpdate="CASCADE"/>
 	</changeSet>
-	<changeSet id="openhmis.cashier-001-v3.0.0-01172024" author="jecihjoy">
+	<changeSet id="openhmis.cashier-001-v3.0.0-01992024" author="jecihjoy">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<columnExists tableName="cashier_billable_service" columnName="concept_id"/>
+			</not>
+		</preConditions>
 		<comment>Add concept_id column in billable services</comment>
 		<addColumn tableName="cashier_billable_service">
 			<column name="concept_id" type="int">
