@@ -19,6 +19,8 @@ import org.openmrs.module.BaseModuleActivator;
 import org.openmrs.module.Module;
 import org.openmrs.module.ModuleFactory;
 import org.openmrs.module.kenyaemr.cashier.api.util.RoundingUtil;
+import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptionsConfiguration;
+import org.openmrs.module.kenyaemr.cashier.exemptions.DefaultExemptionListBuilder;
 import org.openmrs.module.kenyaemr.cashier.web.CashierWebConstants;
 import org.openmrs.module.web.WebModuleUtil;
 
@@ -41,9 +43,12 @@ public class CashierModuleActivator extends BaseModuleActivator {
 	 */
 	@Override
 	public void started() {
-		//		RoundingUtil.setupRoundingDeptAndItem(LOG);
-
 		LOG.info("OpenHMIS Cashier Module Module started");
+		DefaultExemptionListBuilder exemptionListBuilder = new DefaultExemptionListBuilder();
+		exemptionListBuilder.buildExemptionList();
+
+		System.out.println("Exemption services list: " + BillingExemptionsConfiguration.SERVICES.toString());
+		System.out.println("Exemption commodities list: " + BillingExemptionsConfiguration.COMMODITIES.toString());
 	}
 
 	/**

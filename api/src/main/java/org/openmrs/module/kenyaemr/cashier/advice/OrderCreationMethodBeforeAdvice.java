@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.time.DateUtils;
 import org.openmrs.*;
 import org.openmrs.api.OrderService;
+import org.openmrs.api.PatientService;
+import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
@@ -16,6 +18,7 @@ import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
 import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
+import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptionsConfiguration;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
@@ -34,6 +37,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
     public void before(Method method, Object[] args, Object target) throws Throwable {
         try {
             // Extract the Order object from the arguments
+            ProgramWorkflowService workflowService = Context.getProgramWorkflowService();
             if (method.getName().equals("saveOrder") && args.length > 0 && args[0] instanceof Order) {
                 Order order = (Order) args[0];
                 if (!fetchPatientPayingCategory(order)) {
@@ -61,7 +65,16 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                         List<StockItem> stockItems = stockService.getStockItemByDrug(drugID);
                         System.out.println("Drug id: " + drugID + " Drug UUID: " + drugUUID + " Drug Quantity: " + drugQuantity);
                         if (!stockItems.isEmpty()) {
-                            addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) drugQuantity, order.getDateActivated());
+                            // check from the list for all exemptions
+                            boolean isExempted;
+                            if (BillingExemptionsConfiguration.COMMODITIES.get("all").contains(order.getConcept().getConceptId())) {
+                                isExempted = true;
+                            } else {
+                                isExempted = checkIfExempted(workflowService, order, BillingExemptionsConfiguration.COMMODITIES);
+                            }
+                            BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
+
+                            addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) drugQuantity, order.getDateActivated(), lineItemStatus);
                         }
                     } else if(order instanceof TestOrder) {
                         TestOrder testOrder = (TestOrder) order;
@@ -76,7 +89,15 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                         if (!searchResult.isEmpty()) {
                             System.out.println("service was found");
                             System.out.println(searchResult.get(0).getConcept().getUuid());
-                            addBillItemToBill(order, patient, cashierUUID, cashpointUUID, null, searchResult.get(0), 1, order.getDateActivated());
+
+                            boolean isExempted;
+                            if (BillingExemptionsConfiguration.SERVICES.get("all").contains(order.getConcept().getConceptId())) {
+                                isExempted = true;
+                            } else {
+                                isExempted = checkIfExempted(workflowService, order, BillingExemptionsConfiguration.SERVICES);
+                            }
+                            BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
+                            addBillItemToBill(order, patient, cashierUUID, cashpointUUID, null, searchResult.get(0), 1, order.getDateActivated(), lineItemStatus);
 
                         } else {
                             System.out.println("concept was not found");
@@ -91,13 +112,43 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
         }
     }
 
+    private boolean checkIfExempted(ProgramWorkflowService workflowService, Order order, Map<String, Set<Integer>> config) {
+        boolean isExempted = false;
+        // check in programs list
+        List<String> programExemptions = config.keySet().stream().filter(key -> key.startsWith("program:")).collect(Collectors.toList());
+        if (programExemptions.size() > 0) {
+            List<PatientProgram> programs = workflowService.getPatientPrograms(order.getPatient(), null, null, null, new Date(), null, false);
+            Set<String> activeEnrollments = new HashSet<>();
+            programs.forEach(patientProgram -> {
+                if (patientProgram.getActive()) {
+                    activeEnrollments.add(patientProgram.getProgram().getName());
+                }
+            });
+
+            for (String programEntry: programExemptions) {
+                if (programEntry.contains(":")) { // this is our convention to distinguish program exemption
+                    String programName = programEntry.substring(programEntry.indexOf(":") + 1);
+                    //check if patient is active in the program
+                    if (activeEnrollments.contains(programName)) {
+                        // check if order is exempted
+                        if (config.get(programEntry).contains(order.getConcept().getConceptId())) {
+                            isExempted = true;
+                        }
+
+                    }
+                }
+            }
+        }
+        return isExempted;
+    }
+
     /**
      * Adds a bill item to the cashier module
      * @param patient
      * @param cashierUUID
      * @param cashpointUUID
      */
-    public void addBillItemToBill(Order order, Patient patient, String cashierUUID, String cashpointUUID, StockItem stockitem, BillableService service, Integer quantity, Date orderDate) {
+    public void addBillItemToBill(Order order, Patient patient, String cashierUUID, String cashpointUUID, StockItem stockitem, BillableService service, Integer quantity, Date orderDate, BillStatus lineItemStatus) {
         boolean ret = false;
         try {
             // Search for a bill
@@ -140,7 +191,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                 billLineItem.setPrice(new BigDecimal(0.0));
             }
             billLineItem.setQuantity(quantity);
-            billLineItem.setPaymentStatus(BillStatus.PENDING);
+            billLineItem.setPaymentStatus(lineItemStatus);
             billLineItem.setLineItemOrder(0);
 
             // Bill
