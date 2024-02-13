@@ -18,6 +18,7 @@ package org.openmrs.module.kenyaemr.cashier.api.util;
  */
 public class CashierModuleConstants {
 	public static final String MODULE_NAME = "cashier";
+	public static final String BILLING_EXEMPTIONS_CONFIG_FILE_PATH = "kenyaemr.cashier.billing.exemptions.config";
 
 	protected CashierModuleConstants() {}
 }

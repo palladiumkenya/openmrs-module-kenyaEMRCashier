@@ -1,10 +1,26 @@
+/*
+ * The contents of this file are subject to the OpenMRS Public License
+ * Version 1.1 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ * http://license.openmrs.org
+ *
+ * Software distributed under the License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+ * License for the specific language governing rights and limitations
+ * under the License.
+ *
+ * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
+ */
 package org.openmrs.module.kenyaemr.cashier.exemptions;
 
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.openmrs.GlobalProperty;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.util.CashierModuleConstants;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -26,17 +42,28 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
 
     /**
      * It is good practice to adopt a convention that will make it easy to read the config.
-     * You can prefix all program lists with Program, and age based lists with Age
      */
     @Override
-    public void buildExemptionList() {
-        String configurationFilePath = "/opt/tomcat/.OpenMRS/billing/billingConfig.json";
+    public void buildBillingExemptionList() {
+        GlobalProperty gpConfiguredFilePath = Context.getAdministrationService().getGlobalPropertyObject(CashierModuleConstants.BILLING_EXEMPTIONS_CONFIG_FILE_PATH);
+        if (gpConfiguredFilePath == null) {
+            System.out.println("Could not find global property for billing exemptions...");
+            return;
+        }
+        String configurationFilePath = gpConfiguredFilePath.getPropertyValue();
+        if (StringUtils.isBlank(configurationFilePath)) {
+            System.out.println("The configuration file for billing exemptions was found, but is blank");
+            return;
+        }
+
         FileInputStream fileInputStream;
         ObjectNode config = null;
         try {
             fileInputStream = new FileInputStream(configurationFilePath);
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            System.out.println("The configuration file for billing exemptions was found, but could not be read");
+            return;
         }
 
         if (fileInputStream != null) {
@@ -45,6 +72,8 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
                 config = mapper.readValue(fileInputStream, ObjectNode.class);
             } catch (IOException e) {
                 e.printStackTrace();
+                System.out.println("The configuration file for billing exemptions was found, but could not be understood. Check that the JSON object is well formed");
+                return;
             }
         }
 
@@ -65,7 +94,7 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
     }
 
     /**
-     * Organize concepts to a map
+     * Map exemption list in maps for fast access
      * @param node
      * @return
      */

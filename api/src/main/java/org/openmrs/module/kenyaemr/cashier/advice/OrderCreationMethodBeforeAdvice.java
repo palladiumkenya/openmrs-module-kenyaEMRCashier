@@ -2,10 +2,23 @@ package org.openmrs.module.kenyaemr.cashier.advice;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.openmrs.*;
+import org.openmrs.DrugOrder;
+import org.openmrs.Order;
+import org.openmrs.Patient;
+import org.openmrs.PatientProgram;
+import org.openmrs.Provider;
+import org.openmrs.TestOrder;
+import org.openmrs.User;
+import org.openmrs.VisitAttribute;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
@@ -108,7 +121,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
      * @return
      */
     private boolean checkIfOrderIsExempted(ProgramWorkflowService workflowService, Order order, Map<String, Set<Integer>> config) {
-        if (config == null || order == null) {
+        if (config == null || order == null || config.size() == 0) {
             return false;
         }
         if (config.get("all") != null && config.get("all").contains(order.getConcept().getConceptId())) {

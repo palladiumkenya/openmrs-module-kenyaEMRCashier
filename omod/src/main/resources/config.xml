@@ -145,6 +145,13 @@
 		</description>
 	</globalProperty>
 
+	<globalProperty>
+		<property>${project.parent.artifactId}.billing.exemptions.config</property>
+		<description>
+			Absolute path to the exemptions config file
+		</description>
+	</globalProperty>
+
 	<!-- Extensions -->
 <!--	<extension>-->
 <!--		<point>org.openmrs.admin.list</point>-->

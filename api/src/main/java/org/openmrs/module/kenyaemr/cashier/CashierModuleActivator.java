@@ -44,10 +44,7 @@ public class CashierModuleActivator extends BaseModuleActivator {
 	public void started() {
 		LOG.info("OpenHMIS Cashier Module Module started");
 		SampleBillingExemptionBuilder exemptionListBuilder = new SampleBillingExemptionBuilder();
-		exemptionListBuilder.buildExemptionList();
-
-		System.out.println("Exemption services list: " + BillingExemptions.SERVICES.toString());
-		System.out.println("Exemption commodities list: " + BillingExemptions.COMMODITIES.toString());
+		exemptionListBuilder.buildBillingExemptionList();
 	}
 
 	/**
