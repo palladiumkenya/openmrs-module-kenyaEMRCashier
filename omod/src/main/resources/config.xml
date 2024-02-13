@@ -35,12 +35,7 @@
 
 	<advice>
 		<point>org.openmrs.api.OrderService</point>
-		<class>${project.parent.groupId}.${project.parent.artifactId}.advice.OrderCreationAfterReturningAdvice</class>
-	</advice>
-
-	<advice>
-		<point>org.openmrs.api.OrderService</point>
-		<class>${project.parent.groupId}.${project.parent.artifactId}.advice.OrderCreationMethodBeforeAdvice</class>
+		<class>${project.parent.groupId}.${project.parent.artifactId}.advice.GenerateBillFromOrderAdvice</class>
 	</advice>
 
 	<globalProperty>
