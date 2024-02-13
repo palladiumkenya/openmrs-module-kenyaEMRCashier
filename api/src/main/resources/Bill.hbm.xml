@@ -158,6 +158,7 @@
 				<param name="type">12</param>
 			</type>
 		</property>
+		<many-to-one name="order" class="org.openmrs.Order" column="order_id" not-null="false"/>
 		<!-- bi-directional many-to-one association to User -->
 		<many-to-one name="creator" class="org.openmrs.User" not-null="true" column="creator" />
 		<property name="dateCreated" type="java.util.Date" column="date_created" not-null="true" length="19" />

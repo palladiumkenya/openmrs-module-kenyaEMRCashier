@@ -848,4 +848,17 @@
 								 baseTableName="cashier_billable_service" baseColumnNames="concept_id"
 								 referencedTableName="concept" referencedColumnNames="concept_id"/>
 	</changeSet>
+	<changeSet id="openhmis.cashier-001-v3.0.0-202402131429" author="jecihjoy">
+		<comment>Adding the column order_id to the table cashier_bill_line_item</comment>
+		<addColumn tableName="cashier_bill_line_item">
+			<column name="order_id" type="int">
+				<constraints nullable="true"/>
+			</column>
+		</addColumn>
+
+		<addForeignKeyConstraint constraintName="cashier_bill_line_item_order_id_fk"
+								 baseTableName="cashier_bill_line_item" baseColumnNames="order_id"
+								 referencedTableName="orders" referencedColumnNames="order_id"
+								 onDelete="CASCADE" onUpdate="CASCADE"/>
+	</changeSet>
 </databaseChangeLog>
