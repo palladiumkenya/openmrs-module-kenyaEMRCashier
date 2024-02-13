@@ -45,69 +45,56 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
     // todo remove static variables
     @Override
     public void before(Method method, Object[] args, Object target) throws Throwable {
+
         try {
             // Extract the Order object from the arguments
             ProgramWorkflowService workflowService = Context.getProgramWorkflowService();
             if (method.getName().equals("saveOrder") && args.length > 0 && args[0] instanceof Order) {
                 Order order = (Order) args[0];
-                if (!fetchPatientPayingCategory(order)) {
+
+                // Check if the order already exists by looking at the database
+                // Exclude discontinuation orders as well
+                if (orderService.getOrderByUuid(order.getUuid()) != null
+                        || order.getAction().equals(Order.Action.DISCONTINUE)
+                        || order.getAction().equals(Order.Action.REVISE)
+                        || order.getAction().equals(Order.Action.RENEW)) {
+                    // Do nothing unless order is new
                     return;
                 }
 
-                // Check if the order already exists by looking at the database
-                if (orderService.getOrderByUuid(order.getUuid()) != null) {
-                    // This is an existing order being updated
-                    System.out.println("Order is being updated: " + order.getOrderId());
-                } else {
-                    // This is a new order
-                    System.out.println("New order is being created");
-                    // Add bill item to Bill
-                    Patient patient = order.getPatient();
-                    String patientUUID = patient.getUuid();
-                    String cashierUUID = Context.getAuthenticatedUser().getUuid();
-                    String cashpointUUID = Utils.getDefaultLocation().getUuid();
-                    System.out.println("Patient: " + patientUUID + " cashier: " + cashierUUID + " cash point: " + cashpointUUID);
-                    if(order instanceof DrugOrder) {
-                        DrugOrder drugOrder = (DrugOrder) order;
-                        Integer drugID = drugOrder.getDrug() != null ? drugOrder.getDrug().getDrugId() : 0;
-                        String drugUUID = drugOrder.getDrug() != null ? drugOrder.getDrug().getConcept().getUuid() : "";
-                        double drugQuantity = drugOrder.getQuantity() != null ? drugOrder.getQuantity() : 0.0;
-                        List<StockItem> stockItems = stockService.getStockItemByDrug(drugID);
-                        System.out.println("Drug id: " + drugID + " Drug UUID: " + drugUUID + " Drug Quantity: " + drugQuantity);
-                        if (!stockItems.isEmpty()) {
-                            // check from the list for all exemptions
-                            boolean isExempted = checkIfOrderIsExempted(workflowService, order, BillingExemptions.COMMODITIES);
+                // This is a new order
+                Patient patient = order.getPatient();
+                String cashierUUID = Context.getAuthenticatedUser().getUuid();
+                String cashpointUUID = Utils.getDefaultLocation().getUuid();
+                if (order instanceof DrugOrder) {
+                    DrugOrder drugOrder = (DrugOrder) order;
+                    Integer drugID = drugOrder.getDrug() != null ? drugOrder.getDrug().getDrugId() : 0;
+                    double drugQuantity = drugOrder.getQuantity() != null ? drugOrder.getQuantity() : 0.0;
+                    List<StockItem> stockItems = stockService.getStockItemByDrug(drugID);
 
-                            BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
+                    if (!stockItems.isEmpty()) {
+                        // check from the list for all exemptions
+                        boolean isExempted = checkIfOrderIsExempted(workflowService, order, BillingExemptions.COMMODITIES);
+                        BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
+                        addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) drugQuantity, order.getDateActivated(), lineItemStatus);
+                    }
+                } else if (order instanceof TestOrder) {
+                    TestOrder testOrder = (TestOrder) order;
+                    BillableService searchTemplate = new BillableService();
+                    searchTemplate.setConcept(testOrder.getConcept());
+                    searchTemplate.setServiceStatus(BillableServiceStatus.ENABLED);
 
-                            addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) drugQuantity, order.getDateActivated(), lineItemStatus);
-                        }
-                    } else if(order instanceof TestOrder) {
-                        TestOrder testOrder = (TestOrder) order;
-                        int testID = testOrder.getId() != null ? testOrder.getId() : 0;
-                        String testUUID = testOrder.getUuid() != null ? testOrder.getUuid() : "";
-                        BillableService searchTemplate = new BillableService();
-                        searchTemplate.setConcept(testOrder.getConcept());
-                        searchTemplate.setServiceStatus(BillableServiceStatus.ENABLED);
+                    IBillableItemsService service = Context.getService(IBillableItemsService.class);
+                    List<BillableService> searchResult = service.findServices(new BillableServiceSearch(searchTemplate));
+                    if (!searchResult.isEmpty()) {
+                        boolean isExempted = checkIfOrderIsExempted(workflowService, order, BillingExemptions.SERVICES);
+                        BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
+                        addBillItemToBill(order, patient, cashierUUID, cashpointUUID, null, searchResult.get(0), 1, order.getDateActivated(), lineItemStatus);
 
-                        IBillableItemsService service = Context.getService(IBillableItemsService.class);
-                        List<BillableService> searchResult = service.findServices(new BillableServiceSearch(searchTemplate));
-                        if (!searchResult.isEmpty()) {
-                            System.out.println("service was found");
-                            System.out.println(searchResult.get(0).getConcept().getUuid());
-
-                            boolean isExempted = checkIfOrderIsExempted(workflowService, order, BillingExemptions.SERVICES);
-                            BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
-                            addBillItemToBill(order, patient, cashierUUID, cashpointUUID, null, searchResult.get(0), 1, order.getDateActivated(), lineItemStatus);
-
-                        } else {
-                            System.out.println("concept was not found");
-                        }
-                        System.out.println("Test id: " + testID + " Test UUID: " + testUUID);
                     }
                 }
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             System.err.println("Error intercepting order before creation: " + e.getMessage());
             e.printStackTrace();
         }
@@ -115,6 +102,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
 
     /**
      * Checks if an order concept is in the exemptions list
+     *
      * @param workflowService
      * @param order
      * @param config
@@ -138,7 +126,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                 }
             });
 
-            for (String programEntry: programExemptions) {
+            for (String programEntry : programExemptions) {
                 if (programEntry.contains(":")) { // this is our convention to distinguish program exemption
                     String programName = programEntry.substring(programEntry.indexOf(":") + 1);
                     //check if patient is active in the program
@@ -162,12 +150,12 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
 
     /**
      * Adds a bill item to the cashier module
+     *
      * @param patient
      * @param cashierUUID
      * @param cashpointUUID
      */
     public void addBillItemToBill(Order order, Patient patient, String cashierUUID, String cashpointUUID, StockItem stockitem, BillableService service, Integer quantity, Date orderDate, BillStatus lineItemStatus) {
-        boolean ret = false;
         try {
             // Search for a bill
             Bill activeBill = new Bill();
@@ -203,8 +191,9 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             }
 
             if (!itemPrices.isEmpty()) {
-                List<CashierItemPrice> matchingPrices = itemPrices.stream().filter(p -> p.getPaymentMode().getUuid().equals(fetchPatientPayment(order))).collect(Collectors.toList());
-                billLineItem.setPrice(matchingPrices.isEmpty() ? itemPrices.get(0).getPrice() : matchingPrices.get(0).getPrice());
+                //List<CashierItemPrice> matchingPrices = itemPrices.stream().filter(p -> p.getPaymentMode().getUuid().equals(fetchPatientPayment(order))).collect(Collectors.toList());
+                // billLineItem.setPrice(matchingPrices.isEmpty() ? itemPrices.get(0).getPrice() : matchingPrices.get(0).getPrice());
+                billLineItem.setPrice(itemPrices.get(0).getPrice());
             } else {
                 billLineItem.setPrice(new BigDecimal(0.0));
             }
@@ -232,7 +221,6 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             ex.printStackTrace();
         }
     }
-
     private String fetchPatientPayment(Order order) {
         String patientPayingMethod = "";
         Collection<VisitAttribute> visitAttributeList = order.getEncounter().getVisit().getActiveAttributes();
@@ -244,14 +232,13 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
         }
         return patientPayingMethod;
     }
-
     private boolean fetchPatientPayingCategory(Order order) {
         boolean isPaying = false;
         Collection<VisitAttribute> visitAttributeList = order.getEncounter().getVisit().getActiveAttributes();
 
         for (VisitAttribute attribute : visitAttributeList) {
             if (attribute.getAttributeType().getUuid().equals("caf2124f-00a9-4620-a250-efd8535afd6d") && attribute.getValueReference().equals("1c30ee58-82d4-4ea4-a8c1-4bf2f9dfc8cf")) {
-               return true;
+                return true;
             }
         }
 
