@@ -18,9 +18,8 @@ import org.apache.commons.logging.LogFactory;
 import org.openmrs.module.BaseModuleActivator;
 import org.openmrs.module.Module;
 import org.openmrs.module.ModuleFactory;
-import org.openmrs.module.kenyaemr.cashier.api.util.RoundingUtil;
-import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptionsConfiguration;
-import org.openmrs.module.kenyaemr.cashier.exemptions.DefaultExemptionListBuilder;
+import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptions;
+import org.openmrs.module.kenyaemr.cashier.exemptions.SampleBillingExemptionBuilder;
 import org.openmrs.module.kenyaemr.cashier.web.CashierWebConstants;
 import org.openmrs.module.web.WebModuleUtil;
 
@@ -44,11 +43,11 @@ public class CashierModuleActivator extends BaseModuleActivator {
 	@Override
 	public void started() {
 		LOG.info("OpenHMIS Cashier Module Module started");
-		DefaultExemptionListBuilder exemptionListBuilder = new DefaultExemptionListBuilder();
+		SampleBillingExemptionBuilder exemptionListBuilder = new SampleBillingExemptionBuilder();
 		exemptionListBuilder.buildExemptionList();
 
-		System.out.println("Exemption services list: " + BillingExemptionsConfiguration.SERVICES.toString());
-		System.out.println("Exemption commodities list: " + BillingExemptionsConfiguration.COMMODITIES.toString());
+		System.out.println("Exemption services list: " + BillingExemptions.SERVICES.toString());
+		System.out.println("Exemption commodities list: " + BillingExemptions.COMMODITIES.toString());
 	}
 
 	/**

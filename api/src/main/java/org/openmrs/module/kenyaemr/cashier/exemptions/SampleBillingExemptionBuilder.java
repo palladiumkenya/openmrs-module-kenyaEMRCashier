@@ -4,6 +4,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
+import org.openmrs.api.context.Context;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,9 +19,9 @@ import java.util.Set;
 /**
  * Builds a list of exemptions from json file
  */
-public class DefaultExemptionListBuilder extends BillingExemptionsConfiguration {
+public class SampleBillingExemptionBuilder extends BillingExemptions {
 
-    public DefaultExemptionListBuilder() {
+    public SampleBillingExemptionBuilder() {
     }
 
     /**
@@ -53,12 +54,12 @@ public class DefaultExemptionListBuilder extends BillingExemptionsConfiguration 
 
             if (configuredServices != null) {
                 Map<String, Set<Integer>> exemptedServices = mapConcepts(configuredServices);
-                BillingExemptionsConfiguration.setSERVICES(exemptedServices);
+                BillingExemptions.setSERVICES(exemptedServices);
             }
 
             if (commodities != null) {
                 Map<String, Set<Integer>> exemptedCommodities = mapConcepts(commodities);
-                BillingExemptionsConfiguration.setCOMMODITIES(exemptedCommodities);
+                BillingExemptions.setCOMMODITIES(exemptedCommodities);
             }
         }
     }

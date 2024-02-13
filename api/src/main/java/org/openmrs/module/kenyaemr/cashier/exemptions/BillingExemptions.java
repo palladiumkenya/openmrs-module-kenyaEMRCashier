@@ -9,10 +9,10 @@ import java.util.Set;
  * If this list grows big, we should think of a separate way to keep this.
  *
  */
-public abstract class BillingExemptionsConfiguration {
+public abstract class BillingExemptions {
     /**
      * Should contain a list of unique concept ids which are exempted from billing.
-     * The convention is to have:
+     * The convention is to have keys
      * 1. all - those exempted for everyone
      * 2. program-name (as defined in the program metadata) - those exempted for those in a particular program
      * 3. age category i.e. <5
@@ -25,10 +25,10 @@ public abstract class BillingExemptionsConfiguration {
     public abstract void buildExemptionList();
 
     public static void setSERVICES(Map<String, Set<Integer>> SERVICES) {
-        BillingExemptionsConfiguration.SERVICES = SERVICES;
+        BillingExemptions.SERVICES = SERVICES;
     }
 
     public static void setCOMMODITIES(Map<String, Set<Integer>> COMMODITIES) {
-        BillingExemptionsConfiguration.COMMODITIES = COMMODITIES;
+        BillingExemptions.COMMODITIES = COMMODITIES;
     }
 }

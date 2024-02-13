@@ -5,10 +5,8 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.time.DateUtils;
 import org.openmrs.*;
 import org.openmrs.api.OrderService;
-import org.openmrs.api.PatientService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
@@ -16,9 +14,8 @@ import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
 import org.openmrs.module.kenyaemr.cashier.api.model.*;
-import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
-import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptionsConfiguration;
+import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptions;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
@@ -66,12 +63,8 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                         System.out.println("Drug id: " + drugID + " Drug UUID: " + drugUUID + " Drug Quantity: " + drugQuantity);
                         if (!stockItems.isEmpty()) {
                             // check from the list for all exemptions
-                            boolean isExempted;
-                            if (BillingExemptionsConfiguration.COMMODITIES.get("all").contains(order.getConcept().getConceptId())) {
-                                isExempted = true;
-                            } else {
-                                isExempted = checkIfExempted(workflowService, order, BillingExemptionsConfiguration.COMMODITIES);
-                            }
+                            boolean isExempted = checkIfOrderIsExempted(workflowService, order, BillingExemptions.COMMODITIES);
+
                             BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
 
                             addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) drugQuantity, order.getDateActivated(), lineItemStatus);
@@ -90,12 +83,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                             System.out.println("service was found");
                             System.out.println(searchResult.get(0).getConcept().getUuid());
 
-                            boolean isExempted;
-                            if (BillingExemptionsConfiguration.SERVICES.get("all").contains(order.getConcept().getConceptId())) {
-                                isExempted = true;
-                            } else {
-                                isExempted = checkIfExempted(workflowService, order, BillingExemptionsConfiguration.SERVICES);
-                            }
+                            boolean isExempted = checkIfOrderIsExempted(workflowService, order, BillingExemptions.SERVICES);
                             BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
                             addBillItemToBill(order, patient, cashierUUID, cashpointUUID, null, searchResult.get(0), 1, order.getDateActivated(), lineItemStatus);
 
@@ -112,8 +100,20 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
         }
     }
 
-    private boolean checkIfExempted(ProgramWorkflowService workflowService, Order order, Map<String, Set<Integer>> config) {
-        boolean isExempted = false;
+    /**
+     * Checks if an order concept is in the exemptions list
+     * @param workflowService
+     * @param order
+     * @param config
+     * @return
+     */
+    private boolean checkIfOrderIsExempted(ProgramWorkflowService workflowService, Order order, Map<String, Set<Integer>> config) {
+        if (config == null || order == null) {
+            return false;
+        }
+        if (config.get("all") != null && config.get("all").contains(order.getConcept().getConceptId())) {
+            return true;
+        }
         // check in programs list
         List<String> programExemptions = config.keySet().stream().filter(key -> key.startsWith("program:")).collect(Collectors.toList());
         if (programExemptions.size() > 0) {
@@ -132,14 +132,19 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                     if (activeEnrollments.contains(programName)) {
                         // check if order is exempted
                         if (config.get(programEntry).contains(order.getConcept().getConceptId())) {
-                            isExempted = true;
+                            return true;
                         }
 
                     }
                 }
             }
         }
-        return isExempted;
+
+        // check age category
+        if (order.getPatient().getAge() < 5 && config.get("age<5") != null && config.get("age<5").contains(order.getConcept().getConceptId())) {
+            return true;
+        }
+        return false;
     }
 
     /**
