@@ -46,23 +46,21 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
     @Override
     public void buildBillingExemptionList() {
         GlobalProperty gpConfiguredFilePath = Context.getAdministrationService().getGlobalPropertyObject(CashierModuleConstants.BILLING_EXEMPTIONS_CONFIG_FILE_PATH);
-        if (gpConfiguredFilePath == null) {
-            System.out.println("Could not find global property for billing exemptions...");
+        if (gpConfiguredFilePath == null || StringUtils.isBlank(gpConfiguredFilePath.getPropertyValue())) {
+            // initialize null sets for services and commodities
+            initializeExemptionsConfig();
+            System.out.println("Billing exemptions have not been configured...");
             return;
         }
         String configurationFilePath = gpConfiguredFilePath.getPropertyValue();
-        if (StringUtils.isBlank(configurationFilePath)) {
-            System.out.println("The configuration file for billing exemptions was found, but is blank");
-            return;
-        }
-
         FileInputStream fileInputStream;
         ObjectNode config = null;
         try {
             fileInputStream = new FileInputStream(configurationFilePath);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            System.out.println("The configuration file for billing exemptions was found, but could not be read");
+            initializeExemptionsConfig();
+            System.out.println("The configuration file for billing exemptions was found, but could not be processed");
             return;
         }
 
@@ -72,6 +70,7 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
                 config = mapper.readValue(fileInputStream, ObjectNode.class);
             } catch (IOException e) {
                 e.printStackTrace();
+                initializeExemptionsConfig();
                 System.out.println("The configuration file for billing exemptions was found, but could not be understood. Check that the JSON object is well formed");
                 return;
             }
@@ -90,6 +89,8 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
                 Map<String, Set<Integer>> exemptedCommodities = mapConcepts(commodities);
                 BillingExemptions.setCOMMODITIES(exemptedCommodities);
             }
+        } else {
+            initializeExemptionsConfig();
         }
     }
 
@@ -117,5 +118,13 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
             });
         }
         return exemptionList;
+    }
+
+    /**
+     * Setting these to empty sets which are easy to work with than nulls
+     */
+    private void initializeExemptionsConfig() {
+        BillingExemptions.setCOMMODITIES(new HashMap<>());
+        BillingExemptions.setSERVICES(new HashMap<>());
     }
 }

@@ -1,16 +1,5 @@
 package org.openmrs.module.kenyaemr.cashier.advice;
 
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.openmrs.DrugOrder;
 import org.openmrs.Order;
 import org.openmrs.Patient;
@@ -18,7 +7,6 @@ import org.openmrs.PatientProgram;
 import org.openmrs.Provider;
 import org.openmrs.TestOrder;
 import org.openmrs.User;
-import org.openmrs.VisitAttribute;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
@@ -26,26 +14,44 @@ import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
-import org.openmrs.module.kenyaemr.cashier.api.model.*;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillableServiceStatus;
+import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
+import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptions;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
-import org.springframework.aop.MethodBeforeAdvice;
+import org.springframework.aop.AfterReturningAdvice;
 
-public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+
+public class GenerateBillFromOrderAdvice implements AfterReturningAdvice {
 
     OrderService orderService = Context.getOrderService();
     IBillService billService = Context.getService(IBillService.class);
     StockManagementService stockService = Context.getService(StockManagementService.class);
     ItemPriceService priceService = Context.getService(ItemPriceService.class);
     ICashPointService cashPointService = Context.getService(ICashPointService.class);
-
-    // todo remove static variables
+    /**
+     * This is called immediately an order is saved
+     */
     @Override
-    public void before(Method method, Object[] args, Object target) throws Throwable {
-
+    public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
+        // This advice will be executed after the saveOrder method is successfully called
         try {
             // Extract the Order object from the arguments
             ProgramWorkflowService workflowService = Context.getProgramWorkflowService();
@@ -54,8 +60,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
 
                 // Check if the order already exists by looking at the database
                 // Exclude discontinuation orders as well
-                if (orderService.getOrderByUuid(order.getUuid()) != null
-                        || order.getAction().equals(Order.Action.DISCONTINUE)
+                if (order.getAction().equals(Order.Action.DISCONTINUE)
                         || order.getAction().equals(Order.Action.REVISE)
                         || order.getAction().equals(Order.Action.RENEW)) {
                     // Do nothing unless order is new
@@ -221,28 +226,4 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             ex.printStackTrace();
         }
     }
-    private String fetchPatientPayment(Order order) {
-        String patientPayingMethod = "";
-        Collection<VisitAttribute> visitAttributeList = order.getEncounter().getVisit().getActiveAttributes();
-
-        for (VisitAttribute attribute : visitAttributeList) {
-            if (attribute.getAttributeType().getUuid().equals("c39b684c-250f-4781-a157-d6ad7353bc90") && !attribute.getVoided()) {
-                patientPayingMethod = attribute.getValueReference();
-            }
-        }
-        return patientPayingMethod;
-    }
-    private boolean fetchPatientPayingCategory(Order order) {
-        boolean isPaying = false;
-        Collection<VisitAttribute> visitAttributeList = order.getEncounter().getVisit().getActiveAttributes();
-
-        for (VisitAttribute attribute : visitAttributeList) {
-            if (attribute.getAttributeType().getUuid().equals("caf2124f-00a9-4620-a250-efd8535afd6d") && attribute.getValueReference().equals("1c30ee58-82d4-4ea4-a8c1-4bf2f9dfc8cf")) {
-                return true;
-            }
-        }
-
-        return isPaying;
-    }
 }
-
