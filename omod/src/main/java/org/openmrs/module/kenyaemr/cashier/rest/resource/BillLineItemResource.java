@@ -16,17 +16,23 @@ package org.openmrs.module.kenyaemr.cashier.rest.resource;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.logging.log4j.util.Strings;
+import org.openmrs.Order;
+import org.openmrs.Patient;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
+import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
+import org.openmrs.module.kenyaemr.cashier.api.search.BillItemSearch;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
+import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
@@ -34,9 +40,11 @@ import org.openmrs.module.webservices.rest.web.annotation.Resource;
 import org.openmrs.module.webservices.rest.web.representation.DefaultRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.FullRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
+import org.openmrs.module.webservices.rest.web.resource.impl.AlreadyPaged;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * REST resource representing a {@link BillLineItem}.
@@ -58,7 +66,7 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
             description.addProperty("priceUuid");
             description.addProperty("lineItemOrder");
             description.addProperty("paymentStatus");
-            description.addProperty("order");
+            description.addProperty("order", Representation.REF);
         }
         return description;
     }
@@ -148,6 +156,20 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
     @Override
     public BillLineItem newDelegate() {
         return new BillLineItem();
+    }
+
+    @Override
+    protected AlreadyPaged<BillLineItem> doSearch(RequestContext context) {
+        String orderUuid = context.getRequest().getParameter("orderUuid");
+        Order order = Strings.isNotEmpty(orderUuid) ? Context.getOrderService().getOrderByUuid(orderUuid) : null;
+        if (order != null) {
+            BillLineItem billItemSearch = new BillLineItem();
+            billItemSearch.setOrder(order);
+            BillLineItemService service = Context.getService(BillLineItemService.class);
+            List<BillLineItem> result = service.fetchBillItemByOrder(new BillItemSearch(billItemSearch, false));
+            return new AlreadyPaged<>(context, result, false);
+        }
+        return super.doSearch(context);
     }
 
     @Override
