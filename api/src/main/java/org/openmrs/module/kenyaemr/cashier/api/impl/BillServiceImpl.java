@@ -13,23 +13,25 @@
  */
 package org.openmrs.module.kenyaemr.cashier.api.impl;
 
-import com.itextpdf.barcodes.Barcode128;
-import com.itextpdf.io.image.ImageData;
+import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageDataFactory;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.kernel.pdf.canvas.draw.DottedLine;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.borders.Border;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.IElement;
 import com.itextpdf.layout.element.Image;
-import com.itextpdf.layout.element.LineSeparator;
 import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.element.Text;
 import com.itextpdf.layout.properties.TextAlignment;
-import com.lowagie.text.Chunk;
-import com.lowagie.text.Element;
+import com.itextpdf.layout.properties.UnitValue;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang.WordUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,7 +41,6 @@ import org.hibernate.criterion.Restrictions;
 import org.joda.time.DateTime;
 import org.openmrs.Patient;
 import org.openmrs.annotation.Authorized;
-import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IReceiptNumberGenerator;
@@ -50,15 +51,11 @@ import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAutho
 import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
-import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
-import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.springframework.transaction.annotation.Transactional;
-import org.openmrs.module.kenyaemr.cashier.api.util.ReceiptUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -67,6 +64,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.security.AccessControlException;
+import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -84,6 +82,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	protected IEntityAuthorizationPrivileges getPrivileges() {
 		return this;
 	}
+	DecimalFormat df = new DecimalFormat("0.00");
 
 	@Override
 	protected void validate(Bill bill) {}
@@ -299,6 +298,11 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		return criteria.list();
 	}
 
+	/**
+	 * Generate a pdf receipt
+	 * @param bill The bill search settings.
+	 * @return
+	 */
 	@Override
 	public File downloadBillReceipt(Bill bill) {
 
@@ -330,82 +334,129 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		 * height = 300mm = 11.811 inch = 85.0392 points
 		 *
 		 * The measurement system in PDF doesn't use inches, but user units. By default, 1 user unit = 1 point, and 1 inch = 72 points.
+		 *
+		 * Thermal printer: 4 x 10 inches paper
+		 * 4 inches = 4 x 72 = 288
+		 * 5 inches = 10 x 72 = 720
 		 */
 
 		PdfDocument pdfDoc = new PdfDocument(new PdfWriter(fos));
-		Document doc = new Document(pdfDoc, new PageSize(320.0F, 160.0F).rotate());
-		doc.setMargins(6,18,0,18);
-        String patientOmrsNumber = patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()) != null ? patient.getPatientIdentifier(ReceiptUtil.getUniquePatientNumberIdentifierType()).getIdentifier() : "";
+		Rectangle thermalPrinterPageSize = new Rectangle(288, 720);
+		Document doc = new Document(pdfDoc, new PageSize(thermalPrinterPageSize));
+		PdfFont timesRoman;
+		PdfFont courier;
+		PdfFont courierBold;
+		try {
+			timesRoman = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
+			courierBold = PdfFontFactory.createFont(StandardFonts.COURIER_BOLD);
+			courier = PdfFontFactory.createFont(StandardFonts.COURIER);
 
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 		URL logoUrl = BillServiceImpl.class.getClassLoader().getResource("img/kenyaemr-primary-logo.png");
-		// Compose Paragraph
+
 		Image logiImage = new Image(ImageDataFactory.create(logoUrl));
 		logiImage.scaleToFit(80, 80);
 
-		Text nameLabel = new Text("Patient name : " + WordUtils.capitalizeFully(fullName));
-		Text cccNoLabel = new Text("");
+		Text billDateLabel = new Text(Utils.getSimpleDateFormat("dd-MMM-yyyy H:m:s").format(bill.getDateCreated()));
 
-		Text billDateLabel = new Text(Utils.getSimpleDateFormat("dd/MM/yyyy").format(bill.getDateCreated()));
-		Text receiptNumber = new Text("Receipt number : " + bill.getReceiptNumber());
-		Text patientAddress = new Text("Address : " + bill.getPatient().getPerson().getPersonAddress().getAddress2());
-
-		Text totalAmount = new Text("Amount :    " + bill.getTotal().toString());
-		Text amountPaid = new Text("Total :    " + bill.getAmountPaid().toString());
-		Text openedBy = new Text("Opened by : " + bill.getCashier().getName());
-		Text insertedBy = new Text("Inserted by : " + bill.getCashier().getName());
-		//Text paymemtMode = new Text(bill.);
 		Text facilityName = new Text(bill.getCashPoint().getLocation().getName());
-		Text footerText = new Text("All sales are final and are not subject for return, exchange or credit.");
 
-		Paragraph paragraph = new Paragraph();
-		paragraph.setFontSize(7);
-		paragraph.add(logiImage).add("\n");;
-		paragraph.add(facilityName).add("\n").add("\n"); // facility name
-		paragraph.add(billDateLabel).add("\n").add("\n");; // bill date
-		paragraph.setTextAlignment(TextAlignment.CENTER);
+		Paragraph logoSection = new Paragraph();
+		logoSection.setFontSize(12);
+		logoSection.add(logiImage).add("\n");;
+		logoSection.add(facilityName).add("\n");
+		logoSection.setTextAlignment(TextAlignment.CENTER);
+		logoSection.setFont(courierBold);
 
-		Paragraph paragraph1 = new Paragraph();
-		paragraph1.setFontSize(7);
-		paragraph1.add(receiptNumber).add("\n"); // receipt number
-		paragraph1.add(nameLabel).add("\n"); // patient name
-		paragraph1.add(patientAddress).add("\n").add("\n"); // patient address
+		float [] headerColWidth = {3f, 5f};
+		Table receiptHeader = new Table(headerColWidth);
+		receiptHeader.setWidth(UnitValue.createPercentValue(100f));
 
-		paragraph1.add("QTY" + "     " + "ITEM" + "     " + "PRICE" + "     "+"TOTAL").add("\n");
+		receiptHeader.addCell(new Paragraph("Date:")).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
+		receiptHeader.addCell(new Paragraph(billDateLabel.getText())).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
+
+		receiptHeader.addCell(new Paragraph("Receipt No:")).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
+		receiptHeader.addCell(new Paragraph(bill.getReceiptNumber())).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
+
+		receiptHeader.addCell(new Paragraph("Patient:")).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
+		receiptHeader.addCell(new Paragraph(WordUtils.capitalizeFully(fullName))).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
+
+		// -------------------------
+		float[] columnWidths = { 1f, 5f, 2f, 2f };
+		//create PDF table with the given widths
+		Table billLineItemstable = new Table(columnWidths);
+		billLineItemstable.setBorder(Border.NO_BORDER);
+
+		// set table width a percentage of the page width
+		billLineItemstable.setWidth(UnitValue.createPercentValue(100f));
+
+		//insert column headings
+		billLineItemstable.addCell(new Paragraph("Qty")).setFontSize(10).setTextAlignment(TextAlignment.LEFT);
+		billLineItemstable.addCell(new Paragraph("Item")).setFontSize(10).setTextAlignment(TextAlignment.LEFT);
+		billLineItemstable.addCell(new Paragraph("Price")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT);
+		billLineItemstable.addCell(new Paragraph("Total")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT);
+
 		for (BillLineItem item : bill.getLineItems()) {
-			paragraph1.add(item.getQuantity() + "          " + item.getItem().getCommonName() + "          " + item.getPrice() + "          " + item.getTotal()).add("\n").add("\n");
+			addBillLineItem(item, billLineItemstable, courier);
 		}
 
-		paragraph1.add(totalAmount).add("\n"); // total paid
-		paragraph1.add(amountPaid).add("\n").add("\n"); // total amount
+		float [] totalColWidth = {1f, 5f, 2f, 2f};
+		Table totalsSection = new Table(totalColWidth);
+		totalsSection.setWidth(UnitValue.createPercentValue(100f));
 
-		paragraph1.add(openedBy).add("\n"); // cashier name
-		paragraph1.add(insertedBy).add("\n"); // cashier name
+		totalsSection.addCell(new Paragraph(""));
+		totalsSection.addCell(new Paragraph(""));
+		totalsSection.addCell(new Paragraph("Total")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT).setFont(courier).setBold();
+		totalsSection.addCell(new Paragraph(df.format(bill.getTotal()))).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier).setBold();
 
-		Barcode128 code128 = new Barcode128(pdfDoc);
-        String code = patientOmrsNumber;
-		code128.setBaseline(-1);
-		code128.setFont(null);
-		code128.setSize(12);
-		code128.setCode(code);
-		code128.setCodeType(Barcode128.CODE128);
-		Image code128Image = new Image(code128.createFormXObject(pdfDoc));
+		totalsSection.addCell(new Paragraph(""));
+		totalsSection.addCell(new Paragraph(""));
+		totalsSection.addCell(new Paragraph("Paid:")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT).setFont(courier).setBold();
+		totalsSection.addCell(new Paragraph(df.format(bill.getAmountPaid()))).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier).setBold();
 
-		Paragraph paragraph2 = new Paragraph();
-		paragraph2.setFontSize(7);
-		paragraph2.setFontSize(7);
-		paragraph2.add(footerText).add("\n").add("\n");
+		setInnerCellBorder(receiptHeader, Border.NO_BORDER);
+		setInnerCellBorder(billLineItemstable, Border.NO_BORDER);
+		setInnerCellBorder(totalsSection, Border.NO_BORDER);
+		doc.add(logoSection);
+		doc.add(receiptHeader);
+		doc.add(new Paragraph("------------------------------------------------------"));
+		doc.add(billLineItemstable);
+		doc.add(new Paragraph("------------------------------------------------------"));
+		doc.add(totalsSection);
+		doc.add(new Paragraph("You were served by " + bill.getCashier().getName()).setFont(courier).setFontSize(6).setTextAlignment(TextAlignment.CENTER));
 
-		Paragraph paragraph3 = new Paragraph();
-		paragraph3.setFontSize(7);
-		paragraph3.add(cccNoLabel);
-
-		doc.add(paragraph);
-		doc.add(paragraph1);
-		doc.add(paragraph2);
-		doc.add(code128Image);
-		doc.add(paragraph3);
 		doc.close();
 		return returnFile;
 	}
 
+	private void addBillLineItem(BillLineItem item, Table table, PdfFont font) {
+		String itemName = "";
+		if (item.getItem() != null) {
+			itemName = item.getItem().getCommonName();
+		} else if (item.getBillableService() != null) {
+			itemName = item.getBillableService().getName();
+		}
+		addFormattedCell(table, item.getQuantity().toString(), font, TextAlignment.LEFT);
+		addFormattedCell(table, itemName, font, TextAlignment.LEFT);
+		addFormattedCell(table, df.format(item.getPrice()), font, TextAlignment.RIGHT);
+		addFormattedCell(table, df.format(item.getTotal()), font, TextAlignment.RIGHT);
+	}
+
+	private void addFormattedCell(Table table, String cellValue, PdfFont font, TextAlignment alignment) {
+		table.addCell(new Paragraph(cellValue)).setFontSize(10).
+				setTextAlignment(alignment).
+				setBorder(Border.NO_BORDER).
+				setFont(font);
+
+	}
+
+	private static void setInnerCellBorder(Table table, Border border) {
+		for (IElement child : table.getChildren()) {
+			if (child instanceof Cell) {
+				((Cell) child).setBorder(border);
+			}
+		}
+	}
 }

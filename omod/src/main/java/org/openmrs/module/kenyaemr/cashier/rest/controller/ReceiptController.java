@@ -20,11 +20,8 @@ import org.openmrs.module.jasperreport.ReportGenerator;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
-import org.openmrs.module.kenyaemr.cashier.web.controller.BillAddEditController;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,7 +41,7 @@ import java.util.HashMap;
  * Controller to manage the Receipt Generation Page
  */
 @Controller
-@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE  + "/receipt")
+@RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + "/cashier/receipt")
 public class ReceiptController extends BaseRestController {
 
 	@RequestMapping(method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
