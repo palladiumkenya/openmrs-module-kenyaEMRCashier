@@ -39,6 +39,8 @@ import org.hibernate.Criteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.joda.time.DateTime;
+import org.openmrs.GlobalProperty;
+import org.openmrs.Location;
 import org.openmrs.Patient;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.context.Context;
@@ -52,6 +54,7 @@ import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
@@ -77,6 +80,8 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 
 	private static final int MAX_LENGTH_RECEIPT_NUMBER = 255;
 	private static final Log LOG = LogFactory.getLog(BillServiceImpl.class);
+	private static final String GP_DEFAULT_LOCATION = "kenyaemr.defaultLocation";
+	private static final String GP_FACILITY_ADDRESS_DETAILS = "kenyaemr.cashier.receipt.facilityAddress";
 
 	@Override
 	protected IEntityAuthorizationPrivileges getPrivileges() {
@@ -340,92 +345,124 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		 * 5 inches = 10 x 72 = 720
 		 */
 
+		int FONT_SIZE_10 = 10;
+		int FONT_SIZE_8 = 8;
+		int FONT_SIZE_12 = 12;
 		PdfDocument pdfDoc = new PdfDocument(new PdfWriter(fos));
-		Rectangle thermalPrinterPageSize = new Rectangle(288, 720);
+		Rectangle thermalPrinterPageSize = new Rectangle(288, 14400);
 		Document doc = new Document(pdfDoc, new PageSize(thermalPrinterPageSize));
+		doc.setMargins(6,12,2,12);
 		PdfFont timesRoman;
 		PdfFont courier;
 		PdfFont courierBold;
+		PdfFont helvetica;
+		PdfFont helveticaBold;
 		try {
 			timesRoman = PdfFontFactory.createFont(StandardFonts.TIMES_ROMAN);
 			courierBold = PdfFontFactory.createFont(StandardFonts.COURIER_BOLD);
 			courier = PdfFontFactory.createFont(StandardFonts.COURIER);
+			helvetica = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+			helveticaBold = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+
+		PdfFont headerSectionFont = helveticaBold;
+		PdfFont billItemSectionFont = helvetica;
+		PdfFont footerSectionFont = courierBold;
 		URL logoUrl = BillServiceImpl.class.getClassLoader().getResource("img/kenyaemr-primary-logo.png");
 
 		Image logiImage = new Image(ImageDataFactory.create(logoUrl));
 		logiImage.scaleToFit(80, 80);
+		Paragraph divider = new Paragraph("------------------------------------------------------------------");
+		Text billDateLabel = new Text(Utils.getSimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(bill.getDateCreated()));
 
-		Text billDateLabel = new Text(Utils.getSimpleDateFormat("dd-MMM-yyyy H:m:s").format(bill.getDateCreated()));
+		GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(GP_DEFAULT_LOCATION);
+		GlobalProperty gpFacilityAddress = Context.getAdministrationService().getGlobalPropertyObject(GP_FACILITY_ADDRESS_DETAILS);
+		Text facilityName = new Text(gp != null && gp.getValue() != null ? ((Location) gp.getValue()).getName() : bill.getCashPoint().getLocation().getName());
 
-		Text facilityName = new Text(bill.getCashPoint().getLocation().getName());
-
+		Text facilityAddressDetails = new Text(gpFacilityAddress != null && gpFacilityAddress.getValue() != null ? gpFacilityAddress.getPropertyValue() : "");
 		Paragraph logoSection = new Paragraph();
-		logoSection.setFontSize(12);
-		logoSection.add(logiImage).add("\n");;
+		logoSection.setFontSize(14);
+		//logoSection.add(logiImage).add("\n");
 		logoSection.add(facilityName).add("\n");
 		logoSection.setTextAlignment(TextAlignment.CENTER);
-		logoSection.setFont(courierBold);
+		logoSection.setFont(timesRoman).setBold();
 
-		float [] headerColWidth = {3f, 5f};
+		Paragraph addressSection = new Paragraph();
+		addressSection.add(facilityAddressDetails).setTextAlignment(TextAlignment.CENTER).setFont(helvetica).setFontSize(12);
+
+
+		float [] headerColWidth = {2f, 7f};
 		Table receiptHeader = new Table(headerColWidth);
 		receiptHeader.setWidth(UnitValue.createPercentValue(100f));
 
-		receiptHeader.addCell(new Paragraph("Date:")).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
-		receiptHeader.addCell(new Paragraph(billDateLabel.getText())).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
+		receiptHeader.addCell(new Paragraph("Date:")).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(headerSectionFont);
+		receiptHeader.addCell(new Paragraph(billDateLabel.getText())).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(helvetica);
 
-		receiptHeader.addCell(new Paragraph("Receipt No:")).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
-		receiptHeader.addCell(new Paragraph(bill.getReceiptNumber())).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
+		receiptHeader.addCell(new Paragraph("Receipt No:")).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(headerSectionFont);
+		receiptHeader.addCell(new Paragraph(bill.getReceiptNumber())).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(helvetica);
 
-		receiptHeader.addCell(new Paragraph("Patient:")).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
-		receiptHeader.addCell(new Paragraph(WordUtils.capitalizeFully(fullName))).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier);
+		receiptHeader.addCell(new Paragraph("Patient:")).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(headerSectionFont);
+		receiptHeader.addCell(new Paragraph(WordUtils.capitalizeFully(fullName))).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(helvetica);
 
-		// -------------------------
 		float[] columnWidths = { 1f, 5f, 2f, 2f };
-		//create PDF table with the given widths
 		Table billLineItemstable = new Table(columnWidths);
 		billLineItemstable.setBorder(Border.NO_BORDER);
-
-		// set table width a percentage of the page width
 		billLineItemstable.setWidth(UnitValue.createPercentValue(100f));
 
-		//insert column headings
-		billLineItemstable.addCell(new Paragraph("Qty")).setFontSize(10).setTextAlignment(TextAlignment.LEFT);
-		billLineItemstable.addCell(new Paragraph("Item")).setFontSize(10).setTextAlignment(TextAlignment.LEFT);
-		billLineItemstable.addCell(new Paragraph("Price")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT);
-		billLineItemstable.addCell(new Paragraph("Total")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT);
+		billLineItemstable.addCell(new Paragraph("Qty").setTextAlignment(TextAlignment.LEFT)).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT);
+		billLineItemstable.addCell(new Paragraph("Item").setTextAlignment(TextAlignment.LEFT)).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT);
+		billLineItemstable.addCell(new Paragraph("Price")).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.RIGHT);
+		billLineItemstable.addCell(new Paragraph("Total")).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.RIGHT);
 
 		for (BillLineItem item : bill.getLineItems()) {
-			addBillLineItem(item, billLineItemstable, courier);
+			addBillLineItem(item, billLineItemstable, billItemSectionFont);
 		}
 
 		float [] totalColWidth = {1f, 5f, 2f, 2f};
 		Table totalsSection = new Table(totalColWidth);
 		totalsSection.setWidth(UnitValue.createPercentValue(100f));
 
-		totalsSection.addCell(new Paragraph(""));
-		totalsSection.addCell(new Paragraph(""));
-		totalsSection.addCell(new Paragraph("Total")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT).setFont(courier).setBold();
-		totalsSection.addCell(new Paragraph(df.format(bill.getTotal()))).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier).setBold();
+		totalsSection.addCell(new Paragraph(" "));
+		totalsSection.addCell(new Paragraph(" "));
+		totalsSection.addCell(new Paragraph("Total")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT).setFont(helvetica).setBold();
+		totalsSection.addCell(new Paragraph(df.format(bill.getTotal()))).setFontSize(10).setTextAlignment(TextAlignment.RIGHT).setFont(helvetica).setBold();
 
-		totalsSection.addCell(new Paragraph(""));
-		totalsSection.addCell(new Paragraph(""));
-		totalsSection.addCell(new Paragraph("Paid:")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT).setFont(courier).setBold();
-		totalsSection.addCell(new Paragraph(df.format(bill.getAmountPaid()))).setFontSize(10).setTextAlignment(TextAlignment.LEFT).setFont(courier).setBold();
+
 
 		setInnerCellBorder(receiptHeader, Border.NO_BORDER);
 		setInnerCellBorder(billLineItemstable, Border.NO_BORDER);
+
+		float [] paymentColWidth = {1f, 5f, 2f, 2f};
+		Table paymentSection = new Table(paymentColWidth);
+		paymentSection.setWidth(UnitValue.createPercentValue(100f));
+		paymentSection.addCell(new Paragraph("  "));
+		paymentSection.addCell(new Paragraph("  "));
+		paymentSection.addCell(new Paragraph("Payment").setTextAlignment(TextAlignment.RIGHT).setBold());
+		paymentSection.addCell(new Paragraph(""));
+		// append payment rows
+		for (Payment payment : bill.getPayments()) {
+			paymentSection.addCell(new Paragraph(" "));
+			paymentSection.addCell(new Paragraph(" "));
+			paymentSection.addCell(new Paragraph(payment.getInstanceType().getName()).setTextAlignment(TextAlignment.RIGHT)).setFontSize(10).setFont(helvetica);
+			paymentSection.addCell(new Paragraph(df.format(payment.getAmount())).setTextAlignment(TextAlignment.RIGHT)).setFontSize(10).setFont(helvetica);
+		}
+
+		setInnerCellBorder(paymentSection, Border.NO_BORDER);
 		setInnerCellBorder(totalsSection, Border.NO_BORDER);
 		doc.add(logoSection);
+		doc.add(addressSection);
 		doc.add(receiptHeader);
-		doc.add(new Paragraph("------------------------------------------------------"));
+		doc.add(divider);
 		doc.add(billLineItemstable);
-		doc.add(new Paragraph("------------------------------------------------------"));
+		doc.add(divider);
 		doc.add(totalsSection);
-		doc.add(new Paragraph("You were served by " + bill.getCashier().getName()).setFont(courier).setFontSize(6).setTextAlignment(TextAlignment.CENTER));
+		doc.add(divider);
+		doc.add(paymentSection);
+		doc.add(divider);
+		doc.add(new Paragraph("You were served by " + bill.getCashier().getName()).setFont(footerSectionFont).setFontSize(8).setTextAlignment(TextAlignment.CENTER));
 
 		doc.close();
 		return returnFile;
@@ -445,7 +482,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	}
 
 	private void addFormattedCell(Table table, String cellValue, PdfFont font, TextAlignment alignment) {
-		table.addCell(new Paragraph(cellValue)).setFontSize(10).
+		table.addCell(new Paragraph(cellValue).setTextAlignment(alignment)).setFontSize(12).
 				setTextAlignment(alignment).
 				setBorder(Border.NO_BORDER).
 				setFont(font);

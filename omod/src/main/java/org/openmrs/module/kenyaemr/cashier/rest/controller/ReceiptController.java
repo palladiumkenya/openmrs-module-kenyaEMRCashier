@@ -56,8 +56,6 @@ public class ReceiptController extends BaseRestController {
 
 		File file = service.downloadBillReceipt(bill);
 		if (file != null && file.exists()) {
-			System.out.println("receipt report generated");
-
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 			headers.setContentDispositionFormData("attachment", file.getName());

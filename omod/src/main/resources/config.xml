@@ -147,24 +147,25 @@
 		</description>
 	</globalProperty>
 
-	<!-- Extensions -->
-<!--	<extension>-->
-<!--		<point>org.openmrs.admin.list</point>-->
-<!--		<class>org.openmrs.module.kenyaemr.cashier.html.extension.cashier.AdminList</class>-->
-<!--	</extension>-->
-<!--	<extension>-->
-<!--		<point>org.openmrs.gutter.tools</point>-->
-<!--		<class>org.openmrs.module.kenyaemr.cashier.html.extension.cashier.CashierMenuItem</class>-->
-<!--	</extension>-->
-<!--	<extension>-->
-<!--		<point>org.openmrs.patientDashboardTab</point>-->
-<!--		<class>org.openmrs.module.kenyaemr.cashier.html.extension.cashier.CashierPatientBilHistoryExt</class>-->
-<!--	</extension>-->
-<!--	<extension>-->
-<!--		<point>org.openmrs.headerFull.userBar</point>-->
-<!--		<class>org.openmrs.module.kenyaemr.cashier.html.extension.cashier.CashierLinkExt</class>-->
-<!--	</extension>-->
-
+	<globalProperty>
+		<property>${project.parent.artifactId}.receipt.showLogo</property>
+		<description>
+			Renders a logo/image on the receipt
+		</description>
+		<defaultValue>false</defaultValue>
+	</globalProperty>
+	<globalProperty>
+		<property>${project.parent.artifactId}.receipt.logo.path</property>
+		<description>
+			Full path to the receipt logo image
+		</description>
+	</globalProperty>
+	<globalProperty>
+		<property>${project.parent.artifactId}.receipt.facilityAddress</property>
+		<description>
+			Full address and contact details to put in the receipt. Use "\n" for line break
+		</description>
+	</globalProperty>
 	<!-- Privileges -->
 	<!--  Bills  -->
 	<privilege>
