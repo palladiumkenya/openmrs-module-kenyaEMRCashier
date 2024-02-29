@@ -39,6 +39,36 @@
 	</advice>
 
 	<globalProperty>
+		<property>${project.parent.artifactId}.payment.integration.gateway</property>
+		<description>Integration gateway endpoint</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>${project.parent.artifactId}.mpesa.daraja.api.key</property>
+		<description>Mpesa Daraja api key</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>${project.parent.artifactId}.mpesa.daraja.api.secret</property>
+		<description>Mpesa Daraja api secret</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>${project.parent.artifactId}.mpesa.businessShortCode</property>
+		<description>Mpesa business short code</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>${project.parent.artifactId}.mpesa.daraja.api.passKey</property>
+		<description>Mpesa Daraja api pass key</description>
+	</globalProperty>
+
+	<globalProperty>
+		<property>${project.parent.artifactId}.mpesa.daraja.api.callback.url</property>
+		<description>Mpesa Daraja api callback url</description>
+	</globalProperty>
+
+	<globalProperty>
 		<property>${project.parent.artifactId}.defaultReceiptReportId</property>
 		<description>ID of the default Jasper report to use for generating a receipt on the Bill page</description>
 	</globalProperty>

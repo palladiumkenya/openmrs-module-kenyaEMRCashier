@@ -19,6 +19,12 @@ package org.openmrs.module.kenyaemr.cashier.api.util;
 public class CashierModuleConstants {
 	public static final String MODULE_NAME = "cashier";
 	public static final String BILLING_EXEMPTIONS_CONFIG_FILE_PATH = "kenyaemr.cashier.billing.exemptions.config";
+	public static final String PAYMENT_INTEGRATION_GATEWAY_ENDPOINT = "kenyaemr.cashier.payment.integration.gateway";
+	public static final String MPESA_DARAJA_API_KEY = "kenyaemr.cashier.mpesa.daraja.api.key";
+	public static final String MPESA_DARAJA_API_SECRET = "kenyaemr.cashier.mpesa.daraja.api.secret";
+	public static final String MPESA_BUSINESS_SHORT_CODE = "kenyaemr.cashier.mpesa.businessShortCode";
+	public static final String MPESA_DARAJA_API_PASS_KEY = "kenyaemr.cashier.mpesa.daraja.api.passKey";
+	public static final String MPESA_DARAJA_API_CALLBACK_URL= "kenyaemr.cashier.mpesa.daraja.api.callback.url";
 
 	protected CashierModuleConstants() {}
 }

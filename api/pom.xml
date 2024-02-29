@@ -117,11 +117,16 @@
 			<groupId>com.itextpdf</groupId>
 			<artifactId>font-asian</artifactId>
 		</dependency>
-<!--		<dependency>
-			<groupId>com.itextpdf</groupId>
-			<artifactId>itext-core</artifactId>
-			<type>pom</type>
-		</dependency>-->
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <!--		<dependency>
+                    <groupId>com.itextpdf</groupId>
+                    <artifactId>itext-core</artifactId>
+                    <type>pom</type>
+                </dependency>-->
 	</dependencies>
 	
 	<build>
