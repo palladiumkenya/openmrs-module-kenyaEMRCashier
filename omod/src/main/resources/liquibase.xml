@@ -861,4 +861,21 @@
 								 referencedTableName="orders" referencedColumnNames="order_id"
 								 onDelete="CASCADE" onUpdate="CASCADE"/>
 	</changeSet>
+
+	<changeSet id="openhmis.cashier-001-v3.0.0-20240227111111" author="jecihjoy">
+		<createTable tableName="cashier_bill_payment_request">
+			<column name="bill_payment_request_id" type="int" autoIncrement="true">
+				<constraints primaryKey="true" nullable="false" />
+			</column>
+			<column name="bill_id" type="int"><constraints nullable="false" /></column>
+			<column name="merchant_request_id" type="varchar(255)"/>
+			<column name="checkout_request_id" type="varchar(255)"/>
+			<column name="is_processed" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+
+			<column name="creator" type="int"><constraints nullable="false"/></column>
+			<column name="date_created" type="datetime"><constraints nullable="false"/></column>
+			<column name="uuid" type="char(38)"><constraints nullable="false" unique="true" /></column>
+		</createTable>
+	</changeSet>
+
 </databaseChangeLog>
