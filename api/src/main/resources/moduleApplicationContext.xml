@@ -37,6 +37,14 @@
 	<bean parent="serviceContext">
 		<property name="moduleService">
 			<list merge="true">
+				<value>org.openmrs.module.kenyaemr.cashier.api.BillPaymentRequestService</value>
+				<ref bean="billPaymentRequestService" />
+			</list>
+		</property>
+	</bean>
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list merge="true">
 				<value>org.openmrs.module.kenyaemr.cashier.api.IBillService</value>
 				<ref bean="cashierBillService" />
 			</list>
@@ -122,6 +130,16 @@
 		<property name="transactionManager" ref="transactionManager" />
 		<property name="target">
 			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.BillLineItemServiceImpl">
+				<property name="repository" ref="genericRepositoryDao" />
+			</bean>
+		</property>
+		<property name="preInterceptors" ref="serviceInterceptors" />
+		<property name="transactionAttributeSource" ref="transactionAttributeSource" />
+	</bean>
+	<bean id="billPaymentRequestService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="target">
+			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.BillPaymentRequestServiceImpl">
 				<property name="repository" ref="genericRepositoryDao" />
 			</bean>
 		</property>
