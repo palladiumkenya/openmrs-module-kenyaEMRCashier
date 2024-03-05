@@ -3,12 +3,16 @@ package org.openmrs.module.kenyaemr.cashier.rest.controller;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.json.simple.parser.ParseException;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
 import org.openmrs.module.kenyaemr.cashier.mpesaIntegration.MpesaIntegration;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.rest.restmapper.BillableServiceMapper;
 import org.openmrs.module.kenyaemr.cashier.rest.restmapper.StkPushRequestMapper;
+import org.openmrs.module.kenyaemr.cashier.util.BillUtil;
+import org.openmrs.module.kenyaemr.cashier.util.FulfilledPaymentRequestDTO;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;
 import org.springframework.stereotype.Controller;
@@ -19,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
+import java.util.List;
 
 @Controller
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/api")
@@ -49,6 +54,13 @@ public class CashierRestController extends BaseRestController {
         String response = MpesaIntegration.STKPushSimulation("CustomerPayBillOnline", Integer.parseInt(request.getAmount()),
                 request.getPhoneNumber(), request.getReferenceNumber(), request.getBillUuid());
         return response;
+    }
+
+    @RequestMapping(method = RequestMethod.GET, path = "/payment-transaction-status")
+    @ResponseBody
+    public Object checkPaymentStatus(@RequestParam String billUuid) throws IOException, ParseException {
+        List<FulfilledPaymentRequestDTO> paymentRequests = BillUtil.processRequestedPayment(billUuid);
+        return paymentRequests;
     }
 
     /* Client initiated request*/
