@@ -41,6 +41,8 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
     StockManagementService stockService = Context.getService(StockManagementService.class);
     ItemPriceService priceService = Context.getService(ItemPriceService.class);
     ICashPointService cashPointService = Context.getService(ICashPointService.class);
+    public static String PROCEDURE_CLASS_CONCEPT_UUID = "8d490bf4-c2cc-11de-8d13-0010c6dffd0f";
+    public static String IMAGING_CLASS_CONCEPT_UUID = "8caa332c-efe4-4025-8b18-3398328e1323";
 
     // todo remove static variables
     @Override
@@ -78,7 +80,9 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                         BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
                         addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) drugQuantity, order.getDateActivated(), lineItemStatus);
                     }
-                } else if (order instanceof TestOrder) {
+                } else if (order instanceof TestOrder
+                        || PROCEDURE_CLASS_CONCEPT_UUID.equals(order.getConcept().getConceptClass().getUuid())
+                        || IMAGING_CLASS_CONCEPT_UUID.equals(order.getConcept().getConceptClass().getUuid())) {
                     TestOrder testOrder = (TestOrder) order;
                     BillableService searchTemplate = new BillableService();
                     searchTemplate.setConcept(testOrder.getConcept());
