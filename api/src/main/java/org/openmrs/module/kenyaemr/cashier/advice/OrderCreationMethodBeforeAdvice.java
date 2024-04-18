@@ -62,7 +62,10 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                         || order.getAction().equals(Order.Action.DISCONTINUE)
                         || order.getAction().equals(Order.Action.REVISE)
                         || order.getAction().equals(Order.Action.RENEW)) {
-                    // Do nothing unless order is new
+                    // Do void bill-item-line if DISCONTINUE
+                    if (order.getAction().equals(Order.Action.DISCONTINUE)){
+                        voidOrderBillItem(order);
+                    }
                     return;
                 }
 
@@ -271,8 +274,8 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
             billLineItemService.fetchBillItemByOrder(billItemSearch);
 
             // void the bill line item
-            billLineItem.setPaymentStatus(BillStatus.CANCELLED);
-            billLineItem.setVoidReason(order.getVoidReason() + " Order No:" + order.getOrderNumber());
+//            billLineItem.setPaymentStatus(BillStatus.CANCELLED); client may have already paid at the time of order cancellation thus need to retain payment status
+            billLineItem.setVoidReason(order.getAction() + " Order No:" + order.getOrderNumber());
             billLineItem.setVoided(true);
             billLineItemService.save(billLineItem);
 
