@@ -22,11 +22,13 @@ import org.openmrs.VisitAttribute;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
 import org.openmrs.module.kenyaemr.cashier.api.model.*;
+import org.openmrs.module.kenyaemr.cashier.api.search.BillItemSearch;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptions;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
@@ -94,6 +96,14 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                         addBillItemToBill(order, patient, cashierUUID, cashpointUUID, null, searchResult.get(0), 1, order.getDateActivated(), lineItemStatus);
 
                     }
+                }
+            }else if (method.getName().equals("voidOrder") && args.length > 0 && args[0] instanceof Order){
+                //if cancel order then check existing bill and set it  voided
+                Order order = (Order) args[0];
+                if (orderService.getOrderByUuid(order.getUuid()) != null){
+                    voidOrderBillItem(order);
+                }else {
+                    System.out.println("Order does not exist");
                 }
             }
         } catch (Exception e) {
@@ -245,5 +255,40 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
         }
 
         return isPaying;
+    }
+
+    /**
+     * cancel a given @BillLineItem whose order has been cancelled
+     */
+    private boolean voidOrderBillItem(Order order) {
+        try {
+            // Search for a bill line item for this order
+            BillLineItem billLineItem = new BillLineItem();
+            billLineItem.setOrder(order);
+            BillItemSearch billItemSearch = new BillItemSearch(billLineItem);
+
+            BillLineItemService billLineItemService = Context.getService(BillLineItemService.class);
+            billLineItemService.fetchBillItemByOrder(billItemSearch);
+
+            // void the bill line item
+            billLineItem.setPaymentStatus(BillStatus.CANCELLED);
+            billLineItem.setVoidReason(order.getVoidReason() + " Order No:" + order.getOrderNumber());
+            billLineItem.setVoided(true);
+            billLineItemService.save(billLineItem);
+
+            //check if the bill has any other bill line items if not void or close the bill
+            Bill bill = billLineItem.getBill();
+            if (bill.getLineItems().isEmpty()) {
+                bill.setStatus(BillStatus.CANCELLED);
+                billService.save(bill);
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("Error voiding bill line item: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }
