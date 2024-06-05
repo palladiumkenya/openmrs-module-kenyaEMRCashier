@@ -14,6 +14,7 @@
 package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.openmrs.Patient;
 import org.openmrs.Provider;
@@ -31,6 +32,7 @@ import org.openmrs.module.kenyaemr.cashier.api.ITimesheetService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.util.RoundingUtil;
+import org.openmrs.module.webservices.rest.web.ConversionUtil;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
@@ -44,6 +46,7 @@ import org.springframework.web.client.RestClientException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -161,10 +164,16 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		String patientUuid = context.getRequest().getParameter("patientUuid");
 		String status = context.getRequest().getParameter("status");
 		String cashPointUuid = context.getRequest().getParameter("cashPointUuid");
+		String createdOnOrBeforeDateStr = context.getRequest().getParameter("createdOnOrBefore");
+		String createdOnOrAfterDateStr = context.getRequest().getParameter("createdOnOrAfter");
 
 		Patient patient = Strings.isNotEmpty(patientUuid) ? Context.getPatientService().getPatientByUuid(patientUuid) : null;
 		BillStatus billStatus = Strings.isNotEmpty(status) ? BillStatus.valueOf(status.toUpperCase()) : null;
 		CashPoint cashPoint = Strings.isNotEmpty(cashPointUuid) ? Context.getService(ICashPointService.class).getByUuid(cashPointUuid) : null;
+		Date createdOnOrBeforeDate = StringUtils.isNotBlank(createdOnOrBeforeDateStr) ?
+				(Date) ConversionUtil.convert(createdOnOrBeforeDateStr, Date.class) : null;
+		Date createdOnOrAfterDate = StringUtils.isNotBlank(createdOnOrAfterDateStr) ?
+				(Date) ConversionUtil.convert(createdOnOrAfterDateStr, Date.class) : null;
 
 		Bill searchTemplate = new Bill();
 		searchTemplate.setPatient(patient);
@@ -172,7 +181,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		searchTemplate.setCashPoint(cashPoint);
 		IBillService service = Context.getService(IBillService.class);
 
-		List<Bill> result = service.getBills(new BillSearch(searchTemplate, false));
+		List<Bill> result = service.getBills(new BillSearch(searchTemplate, createdOnOrAfterDate, createdOnOrBeforeDate, false));
 		return new AlreadyPaged<>(context, result, false);
 	}
 

@@ -861,4 +861,9 @@
 								 referencedTableName="orders" referencedColumnNames="order_id"
 								 onDelete="CASCADE" onUpdate="CASCADE"/>
 	</changeSet>
+	<changeSet author="aojwang" id="cashier_create_index_on_date_created_202406051539">
+		<createIndex indexName="cashier_date_created" tableName="cashier_bill">
+			<column name="date_created"/>
+		</createIndex>
+	</changeSet>
 </databaseChangeLog>

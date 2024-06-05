@@ -13,6 +13,13 @@
  */
 package org.openmrs.module.kenyaemr.cashier.api.model;
 
+import org.openmrs.BaseOpenmrsData;
+import org.openmrs.Patient;
+import org.openmrs.Provider;
+import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
+
 import java.math.BigDecimal;
 import java.security.AccessControlException;
 import java.text.SimpleDateFormat;
@@ -20,13 +27,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.openmrs.BaseOpenmrsData;
-import org.openmrs.Patient;
-import org.openmrs.Provider;
-import org.openmrs.api.context.Context;
-import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
-import org.openmrs.module.stockmanagement.api.model.StockItem;
 
 /**
  * Model class that represents a list of {@link BillLineItem}s and {@link Payment}s created by a cashier for a patient.
@@ -46,7 +46,6 @@ public class Bill extends BaseOpenmrsData {
 	private Set<Bill> adjustedBy;
 	private Boolean receiptPrinted = false;
 	private String adjustmentReason;
-
 	public String getAdjustmentReason() {
 		return adjustmentReason;
 	}
@@ -171,7 +170,6 @@ public class Bill extends BaseOpenmrsData {
 	public void setLineItems(List<BillLineItem> lineItems) {
 		this.lineItems = lineItems;
 	}
-
 	public BillLineItem addLineItem(StockItem item, CashierItemPrice price, int quantity) {
 		if (item == null) {
 			throw new NullPointerException("The item to add must be defined.");

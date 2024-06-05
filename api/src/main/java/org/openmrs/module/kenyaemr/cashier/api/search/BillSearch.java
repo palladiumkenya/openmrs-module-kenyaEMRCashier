@@ -18,11 +18,17 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.search.BaseDataTemplateSearch;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.util.OpenmrsUtil;
+
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * A search template class for the {@link Bill} model.
  */
 public class BillSearch extends BaseDataTemplateSearch<Bill> {
+	private Date createdOnOrBefore;
+	private Date createdOnOrAfter;
 	public BillSearch() {
 		this(new Bill(), false);
 	}
@@ -33,6 +39,12 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 
 	public BillSearch(Bill template, Boolean includeRetired) {
 		super(template, includeRetired);
+	}
+
+	public BillSearch(Bill template, Date createdOnOrAfter, Date createdOnOrBefore, Boolean includeRetired) {
+		super(template, includeRetired);
+		this.createdOnOrAfter = createdOnOrAfter;
+		this.createdOnOrBefore = createdOnOrBefore;
 	}
 
 	@Override
@@ -52,6 +64,34 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 		if (bill.getStatus() != null) {
 			criteria.add(Restrictions.eq("status", bill.getStatus()));
 		}
-		criteria.addOrder(Order.desc("id"));
+
+		if (getCreatedOnOrBefore() != null) {
+			// set the date's time to the last millisecond of the date
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(getCreatedOnOrBefore());
+			criteria.add(Restrictions.le("dateCreated", OpenmrsUtil.getLastMomentOfDay(cal.getTime())));
+		}
+		if (getCreatedOnOrAfter() != null) {
+			// set the date's time to 00:00:00.000
+			Calendar cal = Calendar.getInstance();
+			cal.setTime(getCreatedOnOrAfter());
+			criteria.add(Restrictions.ge("dateCreated", OpenmrsUtil.firstSecondOfDay(cal.getTime())));
+		}
+	}
+
+	public Date getCreatedOnOrBefore() {
+		return createdOnOrBefore;
+	}
+
+	public void setCreatedOnOrBefore(Date createdOnOrBefore) {
+		this.createdOnOrBefore = createdOnOrBefore;
+	}
+
+	public Date getCreatedOnOrAfter() {
+		return createdOnOrAfter;
+	}
+
+	public void setCreatedOnOrAfter(Date createdOnOrAfter) {
+		this.createdOnOrAfter = createdOnOrAfter;
 	}
 }
