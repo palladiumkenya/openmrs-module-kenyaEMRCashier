@@ -447,7 +447,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 			paymentSection.addCell(new Paragraph(" "));
 			paymentSection.addCell(new Paragraph(" "));
 			paymentSection.addCell(new Paragraph(payment.getInstanceType().getName()).setTextAlignment(TextAlignment.RIGHT)).setFontSize(10).setFont(helvetica);
-			paymentSection.addCell(new Paragraph(df.format(payment.getAmount())).setTextAlignment(TextAlignment.RIGHT)).setFontSize(10).setFont(helvetica);
+			paymentSection.addCell(new Paragraph(df.format(payment.getAmountTendered())).setTextAlignment(TextAlignment.RIGHT)).setFontSize(10).setFont(helvetica);
 		}
 
 		setInnerCellBorder(paymentSection, Border.NO_BORDER);
