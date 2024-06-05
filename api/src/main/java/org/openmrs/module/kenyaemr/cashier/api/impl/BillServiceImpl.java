@@ -201,7 +201,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 			public void apply(Criteria criteria) {
 				billSearch.updateCriteria(criteria);
 			}
-		});
+		}, Order.desc("id"));
 	}
 
 	/*
