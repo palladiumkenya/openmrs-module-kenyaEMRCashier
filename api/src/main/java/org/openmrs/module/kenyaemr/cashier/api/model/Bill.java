@@ -33,7 +33,6 @@ import java.util.Set;
  */
 public class Bill extends BaseOpenmrsData {
 	public static final long serialVersionUID = 0L;
-
 	private Integer billId;
 	private String receiptNumber;
 	private Provider cashier;
@@ -86,7 +85,7 @@ public class Bill extends BaseOpenmrsData {
 		if (payments != null) {
 			for (Payment payment : payments) {
 				if (payment != null && !payment.getVoided()) {
-					total = total.add(payment.getAmount());
+					total = total.add(payment.getAmountTendered());
 				}
 			}
 		}
@@ -250,9 +249,7 @@ public class Bill extends BaseOpenmrsData {
 				attribute.setOwner(payment);
 			}
 		}
-
 		addPayment(payment);
-
 		return payment;
 	}
 
@@ -264,25 +261,20 @@ public class Bill extends BaseOpenmrsData {
 		if (this.payments == null) {
 			this.payments = new HashSet<Payment>();
 		}
-
 		this.payments.add(payment);
 		payment.setBill(this);
-
-		this.checkPaidAndUpdateStatus();
+		this.synchronizeBillStatus();
 	}
 
-	public boolean checkPaidAndUpdateStatus() {
-		if (this.getPayments().size() > 0) {
-			if (this.status == BillStatus.PENDING || this.status == BillStatus.POSTED) {
-				if (getTotalPayments().compareTo(getTotal()) >= 0) {
-					this.setStatus(BillStatus.PAID);
-					return true;
-				} else if (this.status == BillStatus.PENDING) {
-					this.status = BillStatus.POSTED;
-				}
+	public void synchronizeBillStatus() {
+		if (this.getPayments().size() > 0  && getTotalPayments().compareTo(BigDecimal.ZERO) > 0) {
+			boolean billFullySettled = getTotalPayments().compareTo(getTotal()) >= 0;
+			if (billFullySettled) {
+				this.setStatus(BillStatus.PAID);
+			} else if (!billFullySettled) {
+				this.setStatus(BillStatus.POSTED);
 			}
 		}
-		return false;
 	}
 
 	public void removePayment(Payment payment) {
