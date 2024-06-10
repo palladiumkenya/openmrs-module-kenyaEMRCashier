@@ -1,16 +1,5 @@
 package org.openmrs.module.kenyaemr.cashier.advice;
 
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.openmrs.DrugOrder;
 import org.openmrs.Order;
 import org.openmrs.Patient;
@@ -27,16 +16,33 @@ import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
-import org.openmrs.module.kenyaemr.cashier.api.model.*;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillableServiceStatus;
+import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
+import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillItemSearch;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptions;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
-import org.springframework.aop.MethodBeforeAdvice;
+import org.springframework.aop.AfterReturningAdvice;
 
-public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+public class GenerateBillFromOrderable implements AfterReturningAdvice {
 
     OrderService orderService = Context.getOrderService();
     IBillService billService = Context.getService(IBillService.class);
@@ -48,7 +54,7 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
 
     // todo remove static variables
     @Override
-    public void before(Method method, Object[] args, Object target) throws Throwable {
+    public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
 
         try {
             // Extract the Order object from the arguments
@@ -172,29 +178,8 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
      */
     public void addBillItemToBill(Order order, Patient patient, String cashierUUID, String cashpointUUID, StockItem stockitem, BillableService service, Integer quantity, Date orderDate, BillStatus lineItemStatus) {
         try {
-            // Search for a bill
-            Bill activeBill = new Bill();
-            activeBill.setPatient(patient);
-            activeBill.setStatus(BillStatus.PENDING);
-//            BillSearch billSearch = new BillSearch(searchBill);
-//            List<Bill> bills = billService.getBills(billSearch);
-//            Bill activeBill = null;
-//
-//            //search for any pending bill for today
-//            for (Bill currentBill : bills) {
-//                //Get the bill date
-//                if(DateUtils.isSameDay(currentBill.getDateCreated(), orderDate != null ? orderDate : new Date())) {
-//                    activeBill = currentBill;
-//                    break;
-//                }
-//            }
-//
-//            // if there is no active bill for today, we create one
-//            if(activeBill == null){
-//                activeBill = searchBill;
-//            }
 
-            // Bill Item
+            //TODO: move these checks up before this method call
             BillLineItem billLineItem = new BillLineItem();
             List<CashierItemPrice> itemPrices = new ArrayList<>();
             if (stockitem != null) {
@@ -204,14 +189,24 @@ public class OrderCreationMethodBeforeAdvice implements MethodBeforeAdvice {
                 billLineItem.setBillableService(service);
                 itemPrices = priceService.getServicePrice(service);
             }
+            if (itemPrices.size() < 1) {
+                return;
+            }
+
+            if (itemPrices.get(0).getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                return;
+            }
+            Bill activeBill = new Bill();
+            activeBill.setPatient(patient);
+            activeBill.setStatus(BillStatus.PENDING);
+            // Bill Item
+
+
 
             if (!itemPrices.isEmpty()) {
-                //List<CashierItemPrice> matchingPrices = itemPrices.stream().filter(p -> p.getPaymentMode().getUuid().equals(fetchPatientPayment(order))).collect(Collectors.toList());
-                // billLineItem.setPrice(matchingPrices.isEmpty() ? itemPrices.get(0).getPrice() : matchingPrices.get(0).getPrice());
                 billLineItem.setPrice(itemPrices.get(0).getPrice());
-            } else {
-                billLineItem.setPrice(new BigDecimal(0.0));
             }
+
             billLineItem.setQuantity(quantity);
             billLineItem.setPaymentStatus(lineItemStatus);
             billLineItem.setLineItemOrder(0);

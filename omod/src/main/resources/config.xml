@@ -35,7 +35,7 @@
 
 	<advice>
 		<point>org.openmrs.api.OrderService</point>
-		<class>${project.parent.groupId}.${project.parent.artifactId}.advice.GenerateBillFromOrderAdvice</class>
+		<class>${project.parent.groupId}.${project.parent.artifactId}.advice.GenerateBillFromOrderable</class>
 	</advice>
 
 	<globalProperty>
