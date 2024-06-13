@@ -1,6 +1,7 @@
 package org.openmrs.module.kenyaemr.cashier.rest.restmapper;
 
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.IPaymentModeService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableServiceStatus;
@@ -17,6 +18,7 @@ public class BillableServiceMapper {
     private String serviceCategory;
     private List<CashierItemPriceMapper> servicePrices;
     private BillableServiceStatus serviceStatus = BillableServiceStatus.ENABLED;
+    private String uuid;
 
     public String getName() {
         return name;
@@ -74,8 +76,18 @@ public class BillableServiceMapper {
         this.concept = concept;
     }
 
+    public String getUuid() {
+        return uuid;
+    }
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
     public BillableService billableServiceMapper(BillableServiceMapper mapper) {
         BillableService service = new BillableService();
+        if (mapper.getUuid() != null) {
+            service = Context.getService(IBillableItemsService.class).getByUuid(mapper.getUuid());
+        }
         List<CashierItemPrice> servicePrices = new ArrayList<>();
         service.setName(mapper.getName());
         service.setShortName(mapper.getShortName());
