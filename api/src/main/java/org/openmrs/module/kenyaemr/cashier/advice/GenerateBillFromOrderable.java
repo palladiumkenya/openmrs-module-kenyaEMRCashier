@@ -52,7 +52,6 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
     public static String PROCEDURE_CLASS_CONCEPT_UUID = "8d490bf4-c2cc-11de-8d13-0010c6dffd0f";
     public static String IMAGING_CLASS_CONCEPT_UUID = "8caa332c-efe4-4025-8b18-3398328e1323";
 
-    // todo remove static variables
     @Override
     public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
 
@@ -62,20 +61,15 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
             if (method.getName().equals("saveOrder") && args.length > 0 && args[0] instanceof Order) {
                 Order order = (Order) args[0];
 
-                // Check if the order already exists by looking at the database
-                // Exclude discontinuation orders as well
-                if (orderService.getOrderByUuid(order.getUuid()) != null
-                        || order.getAction().equals(Order.Action.DISCONTINUE)
-                        || order.getAction().equals(Order.Action.REVISE)
-                        || order.getAction().equals(Order.Action.RENEW)) {
-                    // Do void bill-item-line if DISCONTINUE
-                    if (order.getAction().equals(Order.Action.DISCONTINUE)){
-                        voidOrderBillItem(order);
-                    }
+                if (order == null) {
                     return;
                 }
-
-                // This is a new order
+                // Exclude discontinuation orders as well
+                if (order.getAction().equals(Order.Action.DISCONTINUE)
+                        || order.getAction().equals(Order.Action.REVISE)
+                        || order.getAction().equals(Order.Action.RENEW)) {
+                    return;
+                }
                 Patient patient = order.getPatient();
                 String cashierUUID = Context.getAuthenticatedUser().getUuid();
                 String cashpointUUID = Utils.getDefaultLocation().getUuid();
@@ -99,11 +93,11 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
 
                     IBillableItemsService service = Context.getService(IBillableItemsService.class);
                     List<BillableService> searchResult = service.findServices(new BillableServiceSearch(searchTemplate));
+
                     if (!searchResult.isEmpty()) {
                         boolean isExempted = checkIfOrderIsExempted(workflowService, order, BillingExemptions.SERVICES);
                         BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
                         addBillItemToBill(order, patient, cashierUUID, cashpointUUID, null, searchResult.get(0), 1, order.getDateActivated(), lineItemStatus);
-
                     }
                 }
             }else if (method.getName().equals("voidOrder") && args.length > 0 && args[0] instanceof Order){
@@ -156,7 +150,6 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                         if (config.get(programEntry).contains(order.getConcept().getConceptId())) {
                             return true;
                         }
-
                     }
                 }
             }
@@ -189,23 +182,24 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                 billLineItem.setBillableService(service);
                 itemPrices = priceService.getServicePrice(service);
             }
+
             if (itemPrices.size() < 1) {
                 return;
             }
 
-            if (itemPrices.get(0).getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            if (itemPrices.get(0).getPrice().compareTo(BigDecimal.ZERO) <= 0) { // we avoid billing anything with zero price
                 return;
             }
+
+            if (!itemPrices.isEmpty()) {
+                billLineItem.setPrice(itemPrices.get(0).getPrice());// defaulting to the first item price
+            }
+
+            // Check if patient has an active bill
             Bill activeBill = new Bill();
             activeBill.setPatient(patient);
             activeBill.setStatus(BillStatus.PENDING);
             // Bill Item
-
-
-
-            if (!itemPrices.isEmpty()) {
-                billLineItem.setPrice(itemPrices.get(0).getPrice());
-            }
 
             billLineItem.setQuantity(quantity);
             billLineItem.setPaymentStatus(lineItemStatus);
