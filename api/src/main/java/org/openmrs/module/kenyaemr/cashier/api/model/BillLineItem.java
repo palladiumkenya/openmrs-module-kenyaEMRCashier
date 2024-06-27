@@ -30,6 +30,7 @@ public class BillLineItem extends BaseOpenmrsData {
 	private Bill bill;
 	private StockItem item;
 	private BillableService billableService;
+	private String itemOrServiceConceptUuid;
 	private BigDecimal price;
 	private String priceName;
 	private CashierItemPrice itemPrice;
@@ -135,5 +136,18 @@ public class BillLineItem extends BaseOpenmrsData {
 
 	public void setOrder(Order order) {
 		this.order = order;
+	}
+
+	public void setItemOrServiceConceptUuid(String itemOrServiceConceptUuid) {
+		this.itemOrServiceConceptUuid = itemOrServiceConceptUuid;
+	}
+
+	public String getItemOrServiceConceptUuid() {
+		if (billableService != null) {
+			itemOrServiceConceptUuid = billableService.getConcept().getUuid();
+		} else if (item != null) {
+			itemOrServiceConceptUuid = item.getConcept().getUuid();
+		}
+		return itemOrServiceConceptUuid;
 	}
 }
