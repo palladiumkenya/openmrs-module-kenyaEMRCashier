@@ -6,7 +6,7 @@ public class CashierItemPriceMapper {
     private String name;
     private BigDecimal price;
     private String paymentMode;
-
+    private String uuid;
     public CashierItemPriceMapper() {
     }
 
@@ -32,5 +32,12 @@ public class CashierItemPriceMapper {
 
     public void setPaymentMode(String paymentMode) {
         this.paymentMode = paymentMode;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }
