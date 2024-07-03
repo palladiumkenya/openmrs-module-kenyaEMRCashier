@@ -146,7 +146,6 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                     String programName = programEntry.substring(programEntry.indexOf(":") + 1);
                     //check if patient is active in the program
                     if (activeEnrollments.contains(programName)) {
-                        // check if order is exempted
                         if (config.get(programEntry).contains(order.getConcept().getConceptId())) {
                             return true;
                         }
@@ -172,26 +171,20 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
     public void addBillItemToBill(Order order, Patient patient, String cashierUUID, String cashpointUUID, StockItem stockitem, BillableService service, Integer quantity, Date orderDate, BillStatus lineItemStatus) {
         try {
 
-            //TODO: move these checks up before this method call
             BillLineItem billLineItem = new BillLineItem();
-            List<CashierItemPrice> itemPrices = new ArrayList<>();
             if (stockitem != null) {
-                billLineItem.setItem(stockitem);
-                itemPrices = priceService.getItemPrice(stockitem);
+                if (stockitem.getPurchasePrice().compareTo(BigDecimal.ZERO) <= 0) { // we want to get the price set for the stock item
+                    return;
+                } else {
+                    billLineItem.setItem(stockitem);
+                    billLineItem.setPrice(stockitem.getPurchasePrice());
+                }
             } else if (service != null) {
+                List<CashierItemPrice> itemPrices = priceService.getServicePrice(service);
+                if ( itemPrices.size() < 1 || itemPrices.get(0).getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+                    return;
+                }
                 billLineItem.setBillableService(service);
-                itemPrices = priceService.getServicePrice(service);
-            }
-
-            if (itemPrices.size() < 1) {
-                return;
-            }
-
-            if (itemPrices.get(0).getPrice().compareTo(BigDecimal.ZERO) <= 0) { // we avoid billing anything with zero price
-                return;
-            }
-
-            if (!itemPrices.isEmpty()) {
                 billLineItem.setPrice(itemPrices.get(0).getPrice());// defaulting to the first item price
             }
 
