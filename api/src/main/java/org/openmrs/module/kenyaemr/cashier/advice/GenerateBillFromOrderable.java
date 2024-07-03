@@ -86,9 +86,8 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                         addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) drugQuantity, order.getDateActivated(), lineItemStatus);
                     }
                 } else if (order instanceof TestOrder || PROCEDURE_CLASS_CONCEPT_UUID.equals(order.getConcept().getConceptClass().getUuid()) || IMAGING_CLASS_CONCEPT_UUID.equals(order.getConcept().getConceptClass().getUuid())) {
-                    TestOrder testOrder = (TestOrder) order;
                     BillableService searchTemplate = new BillableService();
-                    searchTemplate.setConcept(testOrder.getConcept());
+                    searchTemplate.setConcept(order.getConcept());
                     searchTemplate.setServiceStatus(BillableServiceStatus.ENABLED);
 
                     IBillableItemsService service = Context.getService(IBillableItemsService.class);
