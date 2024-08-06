@@ -1,13 +1,40 @@
 {
   "services": {
-    "all": [111,112,113],
-    "program:HIV": [211,212,213],
-    "program:TB": [220,220,220],
-    "age<5": [311,312,313],
-    "visitAttribute:prisoner": [711,712,713]
+    "all": [
+      {"concept":111, "description": "Malaria"},
+      {"concept":112, "description": "Typhoid"},
+      {"concept":113, "description": "X-ray"}
+    ],
+    "program:HIV": [
+      {"concept":111, "description": "Malaria"},
+      {"concept":112, "description": "Typhoid"},
+      {"concept":113, "description": "X-ray"}
+    ],
+    "program:TB": [
+      {"concept":111, "description": "Malaria"},
+      {"concept":112, "description": "Typhoid"},
+      {"concept":113, "description": "X-ray"}
+    ],
+    "age<5": [
+      {"concept":111, "description": "Malaria"},
+      {"concept":112, "description": "Typhoid"},
+      {"concept":113, "description": "X-ray"}
+    ],
+    "visitAttribute:prisoner": [
+      {"concept":111, "description": "Malaria"},
+      {"concept":112, "description": "Typhoid"},
+      {"concept":113, "description": "X-ray"}
+    ]
   },
   "commodities": {
-    "all": [511,512,513],
-    "program:HIV": [611,612,613]
+    "all": [
+      {"concept":111, "description": "Malaria"},
+      {"concept":112, "description": "Typhoid"},
+      {"concept":113, "description": "X-ray"}
+    ],
+    "program:HIV": [
+      {"concept":111, "description": "Malaria"},
+      {"concept":112, "description": "Typhoid"},
+      {"concept":113, "description": "X-ray"}]
   }
 }
