@@ -106,17 +106,41 @@ public class BillableServiceMapper {
         service.setServicePrices(servicePrices);
         return service;
     }
-    private void syncCollection(List<CashierItemPrice> existingPrices, List<CashierItemPrice> newPrices) {
+    public BillableService billableServiceUpdateMapper(BillableServiceMapper mapper) {
+        BillableService service = Context.getService(IBillableItemsService.class).getByUuid(mapper.getUuid());
+        service.setName(mapper.getName());
+        service.setShortName(mapper.getShortName());
+        service.setConcept(Context.getConceptService().getConceptByUuid(mapper.getConcept()));
+        service.setServiceType(Context.getConceptService().getConceptByUuid(mapper.getServiceType()));
+        service.setServiceCategory(Context.getConceptService().getConceptByUuid(mapper.getServiceCategory()));
+        service.setServiceStatus(mapper.getServiceStatus());
+
+        // Pass the new prices from the mapper to syncCollection
+        List<CashierItemPrice> updatedPrices = mapper.getServicePrices().stream().map(itemPrice -> {
+            CashierItemPrice price = new CashierItemPrice();
+            price.setName(itemPrice.getName());
+            price.setPrice(itemPrice.getPrice());
+            price.setPaymentMode(Context.getService(IPaymentModeService.class).getByUuid(itemPrice.getPaymentMode()));
+            price.setBillableService(service);
+            return price;
+        }).collect(Collectors.toList());
+
+        service.setServicePrices(syncCollection(service.getServicePrices(), updatedPrices));
+        return service;
+    }
+
+    private List<CashierItemPrice> syncCollection(List<CashierItemPrice> existingPrices, List<CashierItemPrice> newPrices) {
         Map<String, CashierItemPrice> newPricesMap = newPrices.stream()
                 .collect(Collectors.toMap(
-                        price -> price.getUuid(),
-                        price -> price
+                        price -> price.getPaymentMode().getUuid(),
+                        price -> price,
+                        (existing, replacement) -> replacement
                 ));
 
         Iterator<CashierItemPrice> iterator = existingPrices.iterator();
         while (iterator.hasNext()) {
             CashierItemPrice existingPrice = iterator.next();
-            CashierItemPrice newPrice = newPricesMap.remove(existingPrice.getUuid());
+            CashierItemPrice newPrice = newPricesMap.remove(existingPrice.getPaymentMode().getUuid());
 
             if (newPrice == null) {
                 iterator.remove();
@@ -127,21 +151,10 @@ public class BillableServiceMapper {
                 existingPrice.setBillableService(newPrice.getBillableService());
             }
         }
+
+        // Add all new prices that weren't matched with existing ones
         existingPrices.addAll(newPricesMap.values());
         System.out.printf("Synchronized Collection: %s%n", existingPrices);
+        return existingPrices;
     }
-
-    public BillableService billableServiceUpdateMapper(BillableServiceMapper mapper) {
-
-        BillableService service = Context.getService(IBillableItemsService.class).getByUuid(mapper.getUuid());
-        service.setName(mapper.getName());
-        service.setShortName(mapper.getShortName());
-        service.setConcept(Context.getConceptService().getConceptByUuid(mapper.getConcept()));
-        service.setServiceType(Context.getConceptService().getConceptByUuid(mapper.getServiceType()));
-        service.setServiceCategory(Context.getConceptService().getConceptByUuid(mapper.getServiceCategory()));
-        service.setServiceStatus(mapper.getServiceStatus());
-        syncCollection(service.getServicePrices(), service.getServicePrices());
-        return service;
-    }
-
 }
