@@ -32,6 +32,43 @@
 			<column name="uuid" type="char(38)"><constraints nullable="false" unique="true" /></column>
 		</createTable>
 	</changeSet>
+	<changeSet id="openhmis.cashier-001-v3.0.0-02-15082024" author="makombe">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<tableExists tableName="insurance_benefits_package"/>
+			</not>
+		</preConditions>
+		<createTable tableName="insurance_benefits_package">
+			<column name="benefit_id" type="int" autoIncrement="true">
+				<constraints primaryKey="true" nullable="false" />
+			</column>
+			<column name="intervention_name"  type="varchar(255)"><constraints nullable="false"/></column>
+			<column name="sha_code"  type="varchar(255)"></column>
+			<column name="intervention_type" type="varchar(255)"></column>
+			<column name="description" type="varchar(255)"><constraints nullable="true" /></column>
+			<column name="requires_pre_auth" type="boolean"><constraints nullable="true" /></column>
+			<column name="gender" type="varchar(10)"></column>
+			<column name="benefit_distribution" type="varchar(50)"></column>
+			<column name="tariff" type="int"></column>
+			<column name="lower_age_limit" type="int"></column>
+			<column name="upper_age_limit" type="int"></column>
+			<column name="needs_referral" type="boolean"></column>
+			<column name="package_name" type="varchar(255)"></column>
+			<column name="package_code" type="varchar(255)"></column>
+			<column name="insurer" type="int"></column>
+			<column name="access_point" type="varchar(100)"></column>
+			<column name="sub_category" type="varchar(255)"></column>
+			<column name="creator" type="int"><constraints nullable="false"/></column>
+			<column name="date_created" type="datetime"><constraints nullable="false"/></column>
+			<column name="changed_by" type="int"/>
+			<column name="date_changed" type="datetime" />
+			<column name="voided" type="boolean" defaultValueBoolean="false"><constraints nullable="false"/></column>
+			<column name="voided_by" type="int" />
+			<column name="date_voided" type="datetime" />
+			<column name="void_reason" type="varchar(255)" defaultValue="null"/>
+			<column name="uuid" type="char(38)"><constraints nullable="false" unique="true" /></column>
+		</createTable>
+	</changeSet>
 
 	<changeSet id="openhmis.cashier-v1.0-1" author="ibewes">
 		<createTable tableName="cashier_item">

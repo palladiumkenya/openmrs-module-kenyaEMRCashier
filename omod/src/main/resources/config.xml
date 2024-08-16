@@ -276,6 +276,7 @@
 		Bill.hbm.xml
 		Cashier.hbm.xml
 		SequentialReceiptNumberGenerator.hbm.xml
+		InsurancePackage.hbm.xml
 	</mappingFiles>
 
 	<!-- Internationalization -->
