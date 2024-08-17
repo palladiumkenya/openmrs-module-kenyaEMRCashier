@@ -2,7 +2,7 @@ package org.openmrs.module.kenyaemr.cashier.api.model;
 
 import org.openmrs.BaseOpenmrsData;
 
-public class InsuranceBenefitsPackage extends BaseOpenmrsData {
+public class InsuranceBenefitsPackageService extends BaseOpenmrsData {
 
     public static final long serialVersionUID = 0L;
     private int benefitId;

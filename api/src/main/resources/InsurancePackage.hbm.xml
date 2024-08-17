@@ -5,7 +5,7 @@
 <hibernate-mapping package="org.openmrs.module.kenyaemr.cashier.api.model">
 
 
-	<class name="org.openmrs.module.kenyaemr.cashier.api.model.InsuranceBenefitsPackage" table="insurance_benefits_package">
+	<class name="org.openmrs.module.kenyaemr.cashier.api.model.InsuranceBenefitsPackageService" table="insurance_benefits_package">
 		<cache usage="read-write"/>
 
 		<id name="id" type="int" column="benefit_id">
