@@ -79,23 +79,6 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
      * Maps exemption list in maps for faster access
      * @param node
      * @return
-     * {
-     *   "services": {
-     *     "all": [
-     *       {"concept":111, "description": "Malaria"},
-     *       {"concept":112, "description": "Typhoid"},
-     *       {"concept":113, "description": "X-ray"}
-     *     ],
-     *     "program:HIV": [
-     *       {"concept":111, "description": "Malaria"},
-     *       {"concept":112, "description": "Typhoid"},
-     *       {"concept":113, "description": "X-ray"}
-     *     ],
-     *     "program:TB": [
-     *       {"concept":111, "description": "Malaria"},
-     *       {"concept":112, "description": "Typhoid"},
-     *       {"concept":113, "description": "X-ray"}
-     *     ],
      */
     private Map<String, Set<Integer>> mapConcepts(ObjectNode node) {
         Map<String, Set<Integer>> exemptionList = new HashMap<String, Set<Integer>>();
