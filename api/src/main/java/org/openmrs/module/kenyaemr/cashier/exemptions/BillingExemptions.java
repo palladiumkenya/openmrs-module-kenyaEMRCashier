@@ -29,17 +29,16 @@ public abstract class BillingExemptions {
      * This is not prescriptive and should be up to an implementation to define which convention works
      * A sample payload can look like the below:
      * {
-     *   "services": {
-     *     "all": [111,112,113],
-     *     "program:HIV": [211,212,213],
-     *     "program:TB": [220,220,220],
-     *     "age<5": [311,312,313],
-     *     "visitAttribute:prisoner": [711,712,713]
-     *   },
-     *   "commodities": {
-     *     "all": [511,512,513],
-     *     "program:HIV": [611,612,613]
-     *   }
+     *   "all": [
+     *       {"concept":111, "description": "Malaria"},
+     *       {"concept":112, "description": "Typhoid"},
+     *       {"concept":113, "description": "X-ray"}
+     *     ],
+     *     "program:HIV": [
+     *       {"concept":111, "description": "Malaria"},
+     *       {"concept":112, "description": "Typhoid"},
+     *       {"concept":113, "description": "X-ray"}
+     *     ]
      * }
      * Please note that the key can be anything, as long as the implementation takes care of the evaluation logic
      * There should be a separate logic to populate the services and commodities and a separate one to check for exemptions and bill appropriately

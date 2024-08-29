@@ -13,17 +13,13 @@
  */
 package org.openmrs.module.kenyaemr.cashier.exemptions;
 
-import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
-import org.openmrs.GlobalProperty;
+import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.kenyaemr.cashier.api.util.CashierModuleConstants;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,29 +41,14 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
      */
     @Override
     public void buildBillingExemptionList() {
-        GlobalProperty gpConfiguredFilePath = Context.getAdministrationService().getGlobalPropertyObject(CashierModuleConstants.BILLING_EXEMPTIONS_CONFIG_FILE_PATH);
-        if (gpConfiguredFilePath == null || StringUtils.isBlank(gpConfiguredFilePath.getPropertyValue())) {
-            // initialize null sets for services and commodities
-            initializeExemptionsConfig();
-            System.out.println("Billing exemptions have not been configured...");
-            return;
-        }
-        String configurationFilePath = gpConfiguredFilePath.getPropertyValue();
-        FileInputStream fileInputStream;
+        AdministrationService adminService = Context.getAdministrationService();
+        String exemptionConfig = adminService.getGlobalProperty("kenyaemr.billing.exemptions");
         ObjectNode config = null;
-        try {
-            fileInputStream = new FileInputStream(configurationFilePath);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            initializeExemptionsConfig();
-            System.out.println("The configuration file for billing exemptions was found, but could not be processed");
-            return;
-        }
 
-        if (fileInputStream != null) {
+        if (exemptionConfig != null) {
             ObjectMapper mapper = new ObjectMapper();
             try {
-                config = mapper.readValue(fileInputStream, ObjectNode.class);
+                config = (ObjectNode) mapper.readTree(exemptionConfig);
             } catch (IOException e) {
                 e.printStackTrace();
                 initializeExemptionsConfig();
@@ -95,7 +76,7 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
     }
 
     /**
-     * Map exemption list in maps for fast access
+     * Maps exemption list in maps for faster access
      * @param node
      * @return
      */
@@ -109,7 +90,11 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
                 ArrayNode conceptIds = (ArrayNode) entry.getValue();
                 if (conceptIds.isArray() && conceptIds.size() > 0) {
                     for (int i = 0; i < conceptIds.size(); i++) {
-                        conceptSet.add((conceptIds.get(i).getIntValue()));
+                        ObjectNode conceptObj = (ObjectNode) conceptIds.get(i);
+                        Integer conceptId = conceptObj.get("concept") != null ? conceptObj.get("concept").getIntValue() : null;
+                        if (conceptId != null) {
+                            conceptSet.add((conceptId));
+                        }
                     }
                 }
                 if (conceptSet.size() > 0) {
