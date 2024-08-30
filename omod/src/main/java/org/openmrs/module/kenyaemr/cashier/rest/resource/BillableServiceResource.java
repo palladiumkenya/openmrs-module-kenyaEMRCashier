@@ -118,7 +118,7 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
     public String getStockItem(BillableService instance) {
         try {
             StockItem stockItem = instance.getStockItem();
-            return stockItem.getUuid() + ":" + stockItem.getConcept().getDisplayString();
+            return stockItem.getUuid() + ":" + stockItem.getCommonName();
         } catch (Exception e) {
             return "";
         }
