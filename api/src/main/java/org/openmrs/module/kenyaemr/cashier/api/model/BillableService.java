@@ -2,10 +2,15 @@ package org.openmrs.module.kenyaemr.cashier.api.model;
 
 import org.openmrs.BaseOpenmrsData;
 import org.openmrs.Concept;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This has been expanded to manage pricing of both services and commodity.
+ * For commodity, the stockItem property is specified and this links to a commodity in the stock management module
+ */
 public class BillableService extends BaseOpenmrsData {
 
     public static final long serialVersionUID = 0L;
@@ -15,6 +20,7 @@ public class BillableService extends BaseOpenmrsData {
     private String shortName;
     private Concept concept;
     private Concept serviceType;
+    private StockItem stockItem;
     private Concept serviceCategory;
     private List<CashierItemPrice> servicePrices;
     private BillableServiceStatus serviceStatus = BillableServiceStatus.ENABLED;
@@ -88,6 +94,14 @@ public class BillableService extends BaseOpenmrsData {
 
     public Concept getConcept() {
         return concept;
+    }
+
+    public StockItem getStockItem() {
+        return stockItem;
+    }
+
+    public void setStockItem(StockItem stockItem) {
+        this.stockItem = stockItem;
     }
 
     public void setConcept(Concept concept) {

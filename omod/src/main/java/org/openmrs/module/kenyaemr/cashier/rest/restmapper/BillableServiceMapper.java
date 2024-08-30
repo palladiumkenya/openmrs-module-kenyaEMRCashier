@@ -1,11 +1,13 @@
 package org.openmrs.module.kenyaemr.cashier.rest.restmapper;
 
+import org.apache.commons.lang3.StringUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.IPaymentModeService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableServiceStatus;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
+import org.openmrs.module.stockmanagement.api.StockManagementService;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,6 +21,7 @@ public class BillableServiceMapper {
     private String concept;
     private String serviceType;
     private String serviceCategory;
+    private String stockItem;
     private List<CashierItemPriceMapper> servicePrices;
     private BillableServiceStatus serviceStatus = BillableServiceStatus.ENABLED;
     private String uuid;
@@ -79,6 +82,14 @@ public class BillableServiceMapper {
         this.concept = concept;
     }
 
+    public String getStockItem() {
+        return stockItem;
+    }
+
+    public void setStockItem(String stockItem) {
+        this.stockItem = stockItem;
+    }
+
     public String getUuid() {
         return uuid;
     }
@@ -95,6 +106,9 @@ public class BillableServiceMapper {
         service.setServiceType(Context.getConceptService().getConceptByUuid(mapper.getServiceType()));
         service.setServiceCategory(Context.getConceptService().getConceptByUuid(mapper.getServiceCategory()));
         service.setServiceStatus(mapper.getServiceStatus());
+        if (StringUtils.isNotBlank(mapper.getStockItem())) {
+            service.setStockItem(Context.getService(StockManagementService.class).getStockItemByUuid(mapper.getStockItem()));
+        }
         for (CashierItemPriceMapper itemPrice : mapper.getServicePrices()) {
             CashierItemPrice price = new CashierItemPrice();
             price.setName(itemPrice.getName());
@@ -114,7 +128,9 @@ public class BillableServiceMapper {
         service.setServiceType(Context.getConceptService().getConceptByUuid(mapper.getServiceType()));
         service.setServiceCategory(Context.getConceptService().getConceptByUuid(mapper.getServiceCategory()));
         service.setServiceStatus(mapper.getServiceStatus());
-
+        if (StringUtils.isNotBlank(mapper.getStockItem())) {
+            service.setStockItem(Context.getService(StockManagementService.class).getStockItemByUuid(mapper.getStockItem()));
+        }
         // Pass the new prices from the mapper to syncCollection
         List<CashierItemPrice> updatedPrices = mapper.getServicePrices().stream().map(itemPrice -> {
             CashierItemPrice price = new CashierItemPrice();

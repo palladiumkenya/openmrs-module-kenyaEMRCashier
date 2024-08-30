@@ -55,14 +55,10 @@ public class ItemPriceServiceImpl extends BaseEntityDataServiceImpl<CashierItemP
 
 	@Override
 	public List<CashierItemPrice> getItemPrice(StockItem stockItem) {
-		// Criteria criteria = getRepository().createCriteria(getEntityClass());
 		Criteria criteria = getRepository().createCriteria(CashierItemPrice.class);
 
 		criteria.add(Restrictions.eq("item", stockItem));
 		criteria.addOrder(Order.desc("id"));
-
-		// List<ItemPrice> results = getRepository().select(getEntityClass(), criteria);
-		// return(results);
 		return criteria.list();
 	}
 

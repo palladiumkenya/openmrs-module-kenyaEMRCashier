@@ -46,7 +46,6 @@ public class CashierItemPriceResource extends BaseRestDataResource<CashierItemPr
             description.addProperty("name");
             description.addProperty("price");
             description.addProperty("paymentMode");
-            description.addProperty("item");
             description.addProperty("billableService", Representation.REF);
         } else if (rep instanceof CustomRepresentation) {
             //For custom representation, must be null
@@ -61,7 +60,6 @@ public class CashierItemPriceResource extends BaseRestDataResource<CashierItemPr
         description.addProperty("name");
         description.addProperty("price");
         description.addProperty("paymentMode");
-        description.addProperty("item");
         description.addProperty("billableService");
         return description;
     }
@@ -80,23 +78,6 @@ public class CashierItemPriceResource extends BaseRestDataResource<CashierItemPr
             instance.setPrice(BigDecimal.valueOf(amount));
         } else {
             instance.setPrice(BigDecimal.valueOf((Double) price));
-        }
-    }
-
-    @PropertySetter(value = "item")
-    public void setItem(CashierItemPrice instance, Object item) {
-        StockManagementService service = Context.getService(StockManagementService.class);
-        String itemUuid = (String) item;
-        instance.setItem(service.getStockItemByUuid(itemUuid));
-    }
-    @PropertyGetter(value = "item")
-    public String getItem(CashierItemPrice instance) {
-        try {
-            StockItem stockItem = instance.getItem();
-            return stockItem.getConcept().getDisplayString();
-        } catch (Exception e) {
-            System.out.println("Item probably was deleted");
-            return "";
         }
     }
 }
