@@ -77,7 +77,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                     DrugOrder drugOrder = (DrugOrder) order;
                     Integer drugID = drugOrder.getDrug() != null ? drugOrder.getDrug().getDrugId() : 0;
                     double drugQuantity = drugOrder.getQuantity() != null ? drugOrder.getQuantity() : 0.0;
-                    List<StockItem> stockItems = stockService.getStockItemByDrug(drugID);
+                    List<StockItem> stockItems = stockService.getStockItemByDrug(drugID); // we expect a one-to-one mapping of drug to stock item in the inventory module
 
                     if (!stockItems.isEmpty()) {
                         // check from the list for all exemptions
@@ -171,22 +171,22 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
         try {
 
             BillLineItem billLineItem = new BillLineItem();
+            List<CashierItemPrice> itemPrices = new ArrayList<>();
             if (stockitem != null) {
-                if (stockitem.getPurchasePrice().compareTo(BigDecimal.ZERO) <= 0) { // we want to get the price set for the stock item
+                itemPrices = priceService.getItemPrice(stockitem);
+                if ( itemPrices.size() < 1 || itemPrices.get(0).getPrice().compareTo(BigDecimal.ZERO) <= 0) {
                     return;
-                } else {
-                    billLineItem.setItem(stockitem);
-                    billLineItem.setPrice(stockitem.getPurchasePrice());
                 }
+                billLineItem.setItem(stockitem);
             } else if (service != null) {
-                List<CashierItemPrice> itemPrices = priceService.getServicePrice(service);
+                itemPrices = priceService.getServicePrice(service);
                 if ( itemPrices.size() < 1 || itemPrices.get(0).getPrice().compareTo(BigDecimal.ZERO) <= 0) {
                     return;
                 }
                 billLineItem.setBillableService(service);
-                billLineItem.setPrice(itemPrices.get(0).getPrice());// defaulting to the first item price
             }
 
+            billLineItem.setPrice(itemPrices.get(0).getPrice());// defaulting to the first item price
             // Check if patient has an active bill
             Bill activeBill = new Bill();
             activeBill.setPatient(patient);
