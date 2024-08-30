@@ -9,6 +9,8 @@ import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
+import org.openmrs.module.stockmanagement.api.StockManagementService;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
@@ -62,10 +64,15 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
                 status = BillableServiceStatus.DISABLED;
             }
         }
+
+        StockItem stockItem = context.getParameter("stockItem") != null ? Context.getService(StockManagementService.class).getStockItemByUuid(context.getParameter("stockItem"))  : null;
         BillableService searchTemplate = new BillableService();
         searchTemplate.setServiceType(serviceType);
         searchTemplate.setServiceCategory(serviceCategory);
         searchTemplate.setServiceStatus(status);
+        if (stockItem != null) {
+            searchTemplate.setStockItem(stockItem);
+        }
 
         IBillableItemsService service = Context.getService(IBillableItemsService.class);
         return new AlreadyPaged<>(context, service.findServices(new BillableServiceSearch(searchTemplate, false)), false);
@@ -82,6 +89,7 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
             description.addProperty("serviceCategory");
             description.addProperty("servicePrices");
             description.addProperty("serviceStatus");
+            description.addProperty("stockItem");
         } else if (rep instanceof CustomRepresentation) {
             //For custom representation, must be null
             // - let the user decide which properties should be included in the response
@@ -106,6 +114,15 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
         }
     }
 
+    @PropertyGetter(value = "stockItem")
+    public String getStockItem(BillableService instance) {
+        try {
+            StockItem stockItem = instance.getStockItem();
+            return stockItem.getUuid() + ":" + stockItem.getConcept().getDisplayString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
     @Override
     public DelegatingResourceDescription getCreatableProperties() {
         return getRepresentationDescription(new DefaultRepresentation());

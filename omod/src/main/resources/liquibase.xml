@@ -866,4 +866,33 @@
 			<column name="date_created"/>
 		</createIndex>
 	</changeSet>
+
+	<changeSet id="openhmis.cashier-001-v3.0.0-202408291429" author="aojwang">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<columnExists tableName="cashier_billable_service" columnName="stock_item_id"/>
+			</not>
+		</preConditions>
+		<comment>Adding the column item_id to the table cashier_billable_service</comment>
+		<addColumn tableName="cashier_billable_service">
+			<column name="stock_item_id" type="int">
+				<constraints nullable="true"/>
+			</column>
+		</addColumn>
+
+		<addForeignKeyConstraint constraintName="cashier_billable_stock_item_id_fk"
+								 baseTableName="cashier_billable_service" baseColumnNames="stock_item_id"
+								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id"
+								 onDelete="CASCADE" onUpdate="CASCADE"/>
+	</changeSet>
+
+	<changeSet id="openhmis.cashier-001-v3.0.0-202408291450" author="aojwang">
+		<preConditions onFail="MARK_RAN">
+			<columnExists tableName="cashier_item_price" columnName="item_id"/>
+		</preConditions>
+		<comment>Dropping the irrelevant column item_id</comment>
+		<dropForeignKeyConstraint baseTableName="cashier_item_price" constraintName="cashier_item_price_item_id_fk" />
+		<dropColumn tableName="cashier_item_price" columnName="item_id"/>
+	</changeSet>
+
 </databaseChangeLog>

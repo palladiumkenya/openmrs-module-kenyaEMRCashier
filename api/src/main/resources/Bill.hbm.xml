@@ -12,8 +12,6 @@
 			</generator>
 		</id>
 		<discriminator column="item_price_id" insert="false" />
-
-		<many-to-one name="item" class="org.openmrs.module.stockmanagement.api.model.StockItem" not-null="false" column="item_id" />
 		<many-to-one name="billableService" class="org.openmrs.module.kenyaemr.cashier.api.model.BillableService" not-null="false" column="service_id" />
 		<many-to-one name="paymentMode" class="org.openmrs.module.kenyaemr.cashier.api.model.PaymentMode" not-null="false" column="payment_mode" />
 
@@ -48,7 +46,7 @@
 		<property name="name" type="java.lang.String" column="name" not-null="true" length="19" />
 		<property name="shortName" type="java.lang.String" column="short_name" length="19" />
 		<many-to-one name="concept" class="org.openmrs.Concept"  not-null="false"  column="concept_id"/>
-
+		<many-to-one name="stockItem" class="org.openmrs.module.stockmanagement.api.model.StockItem" not-null="false" column="stock_item_id" />
 		<many-to-one name="serviceType" class="org.openmrs.Concept" not-null="false" column="service_type" />
 		<many-to-one name="serviceCategory" class="org.openmrs.Concept" not-null="false" column="service_category" />
 

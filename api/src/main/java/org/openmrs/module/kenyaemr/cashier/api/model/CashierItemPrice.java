@@ -13,7 +13,6 @@ public class CashierItemPrice extends BaseOpenmrsData {
 	private String name;
 	private BigDecimal price;
 	private PaymentMode paymentMode;
-	private StockItem item;
 	private BillableService billableService;
 
 	public CashierItemPrice() {
@@ -23,7 +22,6 @@ public class CashierItemPrice extends BaseOpenmrsData {
 	public CashierItemPrice(String name, BigDecimal price, StockItem item, BillableService billableService) {
 		this.name = name;
 		this.price = price;
-		this.item = item;
 		this.billableService = billableService;
 	}
 
@@ -50,14 +48,6 @@ public class CashierItemPrice extends BaseOpenmrsData {
 
 	public void setPaymentMode(PaymentMode paymentMode) {
 		this.paymentMode = paymentMode;
-	}
-
-	public StockItem getItem() {
-		return item;
-	}
-
-	public void setItem(StockItem item) {
-		this.item = item;
 	}
 
 	public BigDecimal getPrice() {
