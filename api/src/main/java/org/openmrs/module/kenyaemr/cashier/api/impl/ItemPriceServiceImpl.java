@@ -1,17 +1,21 @@
 package org.openmrs.module.kenyaemr.cashier.api.impl;
 
-import java.util.List;
-
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
+import org.openmrs.api.context.Context;
+import org.openmrs.api.db.hibernate.DbSession;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.impl.BaseEntityDataServiceImpl;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAuthorizationPrivileges;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillableServiceStatus;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Transactional
 public class ItemPriceServiceImpl extends BaseEntityDataServiceImpl<CashierItemPrice> implements IEntityAuthorizationPrivileges
@@ -55,11 +59,14 @@ public class ItemPriceServiceImpl extends BaseEntityDataServiceImpl<CashierItemP
 
 	@Override
 	public List<CashierItemPrice> getItemPrice(StockItem stockItem) {
-		Criteria criteria = getRepository().createCriteria(CashierItemPrice.class);
-
-		criteria.add(Restrictions.eq("item", stockItem));
-		criteria.addOrder(Order.desc("id"));
-		return criteria.list();
+		Criteria criteria = getRepository().createCriteria(BillableService.class);
+		criteria.add(Restrictions.eq("stockItem", stockItem));
+		criteria.add(Restrictions.eq("serviceStatus", BillableServiceStatus.ENABLED));
+		List<BillableService> results = criteria.list();
+		if (results.size() > 0) {
+			return results.get(0).getServicePrices();
+		}
+		return new ArrayList<>();
 	}
 
 	@Override
