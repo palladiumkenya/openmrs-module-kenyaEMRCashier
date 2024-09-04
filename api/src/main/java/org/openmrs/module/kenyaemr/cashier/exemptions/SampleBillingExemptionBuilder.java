@@ -13,6 +13,7 @@
  */
 package org.openmrs.module.kenyaemr.cashier.exemptions;
 
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
@@ -45,7 +46,7 @@ public class SampleBillingExemptionBuilder extends BillingExemptions {
         String exemptionConfig = adminService.getGlobalProperty("kenyaemr.billing.exemptions");
         ObjectNode config = null;
 
-        if (exemptionConfig != null) {
+        if (StringUtils.isNotBlank(exemptionConfig)) {
             ObjectMapper mapper = new ObjectMapper();
             try {
                 config = (ObjectNode) mapper.readTree(exemptionConfig);
