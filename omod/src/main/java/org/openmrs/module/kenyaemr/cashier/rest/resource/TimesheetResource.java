@@ -30,7 +30,7 @@ import java.text.DateFormat;
 /**
  * REST resource representing a {@link Timesheet}.
  */
-@Resource(name = RestConstants.VERSION_2 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/timesheet", supportedClass = Timesheet.class,
+@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/timesheet", supportedClass = Timesheet.class,
         supportedOpenmrsVersions = { "2.0 - 2.*" })
 public class TimesheetResource extends BaseRestDataResource<Timesheet> {
 	@Override
