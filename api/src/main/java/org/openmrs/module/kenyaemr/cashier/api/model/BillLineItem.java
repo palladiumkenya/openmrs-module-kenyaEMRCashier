@@ -31,6 +31,7 @@ public class BillLineItem extends BaseOpenmrsData {
 	private StockItem item;
 	private BillableService billableService;
 	private String itemOrServiceConceptUuid;
+	private String serviceTypeUuid;
 	private BigDecimal price;
 	private String priceName;
 	private CashierItemPrice itemPrice;
@@ -51,7 +52,7 @@ public class BillLineItem extends BaseOpenmrsData {
 
 	/**
 	 * Get the total price for the line item
-	 * 
+	 *
 	 * @return double the total price for the line item
 	 */
 	public BigDecimal getTotal() {
@@ -149,5 +150,17 @@ public class BillLineItem extends BaseOpenmrsData {
 			itemOrServiceConceptUuid = item.getConcept().getUuid();
 		}
 		return itemOrServiceConceptUuid;
+	}
+
+	public void setServiceTypeUuid(String serviceTypeUuid) {
+		this.serviceTypeUuid = serviceTypeUuid;
+	}
+
+	public String getServiceTypeUuid() {
+		if(billableService !=null){
+			return  (billableService.getServiceType() !=null)? billableService.getServiceType().getUuid():null;
+		}
+		return null;
+
 	}
 }
