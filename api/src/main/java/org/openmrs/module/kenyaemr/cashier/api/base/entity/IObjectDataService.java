@@ -15,10 +15,12 @@ package org.openmrs.module.kenyaemr.cashier.api.base.entity;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.openmrs.OpenmrsObject;
 import org.openmrs.api.OpenmrsService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepository;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -103,6 +105,9 @@ public interface IObjectDataService<E extends OpenmrsObject> extends OpenmrsServ
 	 */
 	@Transactional(readOnly = true)
 	E getById(int id);
+
+	@Transactional(readOnly = true)
+	Set<Payment> getPaymentsByBillId(Integer billId);
 
 	/**
 	 * Gets an object by uuid.
