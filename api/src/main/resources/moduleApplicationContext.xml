@@ -13,9 +13,25 @@
   		    http://www.springframework.org/schema/tx
   		    http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
   		    http://www.springframework.org/schema/aop
-  		    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+			http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
   		    http://www.springframework.org/schema/util
   		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+
+    <!-- Define the billSavePaymentAspect bean -->
+    <bean id="billSavePaymentAspect" class="org.openmrs.module.kenyaemr.cashier.advice.NewBillPaymentSyncToRMS">
+		<property name="billService" ref="cashierBillService"/>
+	</bean>
+
+    <!-- Create a proxy for BillService -->
+    <bean id="cashierBillService" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="target" ref="preCashierBillService"/>
+        <property name="interceptorNames">
+            <list>
+                <value>billSavePaymentAspect</value>
+            </list>
+        </property>
+    </bean>
 
 	<!-- Services accessible via Context.getService() -->
 	<bean parent="serviceContext">
@@ -128,7 +144,7 @@
 		<property name="preInterceptors" ref="serviceInterceptors" />
 		<property name="transactionAttributeSource" ref="transactionAttributeSource" />
 	</bean>
-	<bean id="cashierBillService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+	<bean id="preCashierBillService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
 		<property name="transactionManager" ref="transactionManager" />
 		<property name="target">
 			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.BillServiceImpl">
