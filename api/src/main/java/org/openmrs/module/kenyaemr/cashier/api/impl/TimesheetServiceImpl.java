@@ -23,9 +23,12 @@ import org.hibernate.criterion.Restrictions;
 import org.openmrs.Provider;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.ITimesheetService;
+import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.impl.BaseEntityDataServiceImpl;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAuthorizationPrivileges;
+import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
 import org.openmrs.module.kenyaemr.cashier.api.model.Timesheet;
+import org.openmrs.module.kenyaemr.cashier.api.search.TimesheetSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -100,6 +103,27 @@ public class TimesheetServiceImpl extends BaseEntityDataServiceImpl<Timesheet>
 				counter = 0;
 			}
 		}
+	}
+
+	@Override
+	public List<Timesheet> getTimesheets(TimesheetSearch timesheetSearch) {
+		return getTimesheets(timesheetSearch, null);
+	}
+
+	@Override
+	public List<Timesheet> getTimesheets(TimesheetSearch timesheetSearch, PagingInfo pagingInfo) {
+		if (timesheetSearch == null) {
+			throw new NullPointerException("The timesheet search must be defined.");
+		} else if (timesheetSearch.getTemplate() == null) {
+			throw new NullPointerException("The timesheet search template must be defined.");
+		}
+
+		return executeCriteria(Timesheet.class, pagingInfo, new Action1<Criteria>() {
+			@Override
+			public void apply(Criteria criteria) {
+				timesheetSearch.updateCriteria(criteria);
+			}
+		}, Order.desc("id"));
 	}
 
 	@Override
