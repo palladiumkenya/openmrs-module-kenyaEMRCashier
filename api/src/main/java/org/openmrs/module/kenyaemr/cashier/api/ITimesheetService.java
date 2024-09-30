@@ -17,8 +17,15 @@ import java.util.Date;
 import java.util.List;
 
 import org.openmrs.Provider;
+import org.openmrs.annotation.Authorized;
+import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.Timesheet;
+import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
+import org.openmrs.module.kenyaemr.cashier.api.search.TimesheetSearch;
+import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Interface that represents classes which perform data operations for {@link Timesheet}s.
@@ -54,4 +61,23 @@ public interface ITimesheetService extends IEntityDataService<Timesheet> {
 	 * @should return close all open timesheets
 	 */
 	void closeOpenTimesheets();
+
+	/**
+	 * Gets all timesheets using the specified {@link TimesheetSearch} settings.
+	 * @param timesheetSearch The timesheet search settings.
+	 * @return The timesheets found or an empty list if no bills were found.
+	 */
+	@Transactional(readOnly = true)
+	@Authorized({ PrivilegeConstants.VIEW_TIMESHEETS })
+	List<Timesheet> getTimesheets(TimesheetSearch timesheetSearch);
+
+	/**
+	 * Gets all timesheets using the specified {@link TimesheetSearch} settings.
+	 * @param timesheetSearch The timesheet search settings.
+	 * @param pagingInfo the paging for results
+	 * @return The timesheets found or an empty list if no bills were found.
+	 */
+	@Transactional(readOnly = true)
+	@Authorized({ PrivilegeConstants.VIEW_TIMESHEETS })
+	List<Timesheet> getTimesheets(TimesheetSearch timesheetSearch, PagingInfo pagingInfo);
 }
