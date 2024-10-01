@@ -29,30 +29,40 @@ public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
 
     @Override
     public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
-        // Check if the method is "savePatient"
-        if (method.getName().equals("savePatient") && args.length > 0 && args[0] instanceof Patient) {
-            Patient patient = (Patient) args[0];
+        try {
+            GlobalProperty globalRMSEnabled = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_SYNC_ENABLED);
+			String isRMSEnabled = globalRMSEnabled.getPropertyValue();
+            if(isRMSEnabled != null && isRMSEnabled.trim().equalsIgnoreCase("true")) {
+                // Check if the method is "savePatient"
+                if (method.getName().equals("savePatient") && args.length > 0 && args[0] instanceof Patient) {
+                    Patient patient = (Patient) args[0];
 
-            // Log patient info
-            if (patient != null) {
-                Date patientCreationDate = patient.getDateCreated();
-                System.out.println("RMS Sync Cashier Module: patient was created on: " + patientCreationDate);
+                    // Log patient info
+                    if (patient != null) {
+                        Date patientCreationDate = patient.getDateCreated();
+                        System.out.println("RMS Sync Cashier Module: patient was created on: " + patientCreationDate);
 
-                if(patientCreationDate != null && AdviceUtils.checkIfCreateModetOrEditMode(patientCreationDate)) {
-                    // CREATE MODE
-                    System.out.println("RMS Sync Cashier Module: New patient registered:");
-                    System.out.println("RMS Sync Cashier Module: Name: " + patient.getPersonName().getFullName());
-                    System.out.println("RMS Sync Cashier Module: DOB: " + patient.getBirthdate());
-                    System.out.println("RMS Sync Cashier Module: Age: " + patient.getAge());
+                        if(patientCreationDate != null && AdviceUtils.checkIfCreateModetOrEditMode(patientCreationDate)) {
+                            // CREATE MODE
+                            System.out.println("RMS Sync Cashier Module: New patient registered:");
+                            System.out.println("RMS Sync Cashier Module: Name: " + patient.getPersonName().getFullName());
+                            System.out.println("RMS Sync Cashier Module: DOB: " + patient.getBirthdate());
+                            System.out.println("RMS Sync Cashier Module: Age: " + patient.getAge());
 
-                    sendRMSPatientRegistration(patient);
-                } else {
-                    // EDIT MODE
-                    System.out.println("RMS Sync Cashier Module: patient in edit mode. we ignore");
+                            sendRMSPatientRegistration(patient);
+                        } else {
+                            // EDIT MODE
+                            System.out.println("RMS Sync Cashier Module: patient in edit mode. we ignore");
+                        }
+                    } else {
+                        System.out.println("RMS Sync Cashier Module: Attempted to save a null patient.");
+                    }
                 }
-            } else {
-                System.out.println("RMS Sync Cashier Module: Attempted to save a null patient.");
             }
+        } catch(Exception ex) {
+            System.err.println("RMS Sync Cashier Module: Error getting new patient: " + ex.getMessage());
+            ex.printStackTrace();
         }
     }
 
@@ -69,7 +79,7 @@ public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
 			SimpleObject payloadPrep = new SimpleObject();
 			payloadPrep.put("first_name", patient.getPersonName().getGivenName());
 			payloadPrep.put("middle_name", patient.getPersonName().getMiddleName());
-			payloadPrep.put("patient_unique_id", patient.getPatientId());
+			payloadPrep.put("patient_unique_id", patient.getUuid());
 			payloadPrep.put("last_name", patient.getPersonName().getFamilyName());
 			PatientIdentifierType nationalIDIdentifierType = Context.getPatientService()
 			        .getPatientIdentifierTypeByUuid("49af6cdc-7968-4abb-bf46-de10d7f4859f");

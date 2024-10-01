@@ -6,8 +6,8 @@ import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -16,11 +16,6 @@ import javax.validation.constraints.NotNull;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.GlobalProperty;
-import org.openmrs.Order;
-import org.openmrs.Patient;
-import org.openmrs.PatientIdentifier;
-import org.openmrs.PatientIdentifierType;
-import org.openmrs.api.ProgramWorkflowService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
@@ -35,27 +30,33 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
     @Override
     public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
         try {
-            if (method.getName().equals("save") && args.length > 0 && args[0] instanceof Bill) {
-                Bill bill = (Bill) args[0];
+            GlobalProperty globalRMSEnabled = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_SYNC_ENABLED);
+			String isRMSEnabled = globalRMSEnabled.getPropertyValue();
+            if(isRMSEnabled != null && isRMSEnabled.trim().equalsIgnoreCase("true")) {
+                if (method.getName().equals("save") && args.length > 0 && args[0] instanceof Bill) {
+                    Bill bill = (Bill) args[0];
 
-                if (bill == null) {
-                    return;
-                }
-                
-                Date billCreationDate = bill.getDateCreated();
-                System.out.println("RMS Sync Cashier Module: bill was created on: " + billCreationDate);
+                    if (bill == null) {
+                        return;
+                    }
+                    
+                    Date billCreationDate = bill.getDateCreated();
+                    System.out.println("RMS Sync Cashier Module: bill was created on: " + billCreationDate);
 
-                if (billCreationDate != null && AdviceUtils.checkIfCreateModetOrEditMode(billCreationDate)) {
-                    // CREATE Mode
-                    System.out.println("RMS Sync Cashier Module: New Bill being created");
-                    sendRMSNewBill(bill);
-                } else {
-                    // EDIT Mode
-                    System.out.println("RMS Sync Cashier Module: Bill being edited. We ignore");
+                    if (billCreationDate != null && AdviceUtils.checkIfCreateModetOrEditMode(billCreationDate)) {
+                        // CREATE Mode
+                        System.out.println("RMS Sync Cashier Module: New Bill being created");
+                        sendRMSNewBill(bill);
+                    } else {
+                        // EDIT Mode
+                        System.out.println("RMS Sync Cashier Module: Bill being edited. We ignore");
+                    }
                 }
             }
         } catch(Exception ex) {
-            System.err.println("RMS Sync Cashier Module: Error getting new Bill");
+            System.err.println("RMS Sync Cashier Module: Error getting new Bill: " + ex.getMessage());
+            ex.printStackTrace();
         }
     }
 
@@ -68,10 +69,11 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 			payloadPrep.put("bill_reference", bill.getUuid());
 			payloadPrep.put("total_cost", bill.getTotal());
             payloadPrep.put("hospital_code", Utils.getDefaultLocationMflCode(null));
-			payloadPrep.put("patient_id", bill.getPatient().getPatientId());
-            SimpleObject itemsPayload = new SimpleObject();
+			payloadPrep.put("patient_id", bill.getPatient().getUuid());
+            List<SimpleObject> items = new LinkedList<>();
 			List<BillLineItem> billItems = bill.getLineItems();
             for(BillLineItem billLineItem : billItems) {
+                SimpleObject itemsPayload = new SimpleObject();
                 if(billLineItem.getBillableService() != null) {
                     itemsPayload.put("service_code", "3f500af5-3139-45b0-ab47-57f9c504f92d");
                     itemsPayload.put("service_name", "service");
@@ -87,8 +89,10 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
                 itemsPayload.put("quantity", billLineItem.getQuantity());
                 itemsPayload.put("price", billLineItem.getPrice());
                 itemsPayload.put("excempted", "no");
+
+                items.add(itemsPayload);
             }
-            payloadPrep.put("bill_items", itemsPayload);
+            payloadPrep.put("bill_items", items);
 			ret = payloadPrep.toJson();
 			System.out.println("RMS Sync Cashier Module: Got bill details: " + ret);
 		} else {

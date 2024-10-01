@@ -44,6 +44,7 @@ import org.openmrs.Location;
 import org.openmrs.Patient;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.advice.NewBillPaymentSyncToRMS;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IReceiptNumberGenerator;
 import org.openmrs.module.kenyaemr.cashier.api.ReceiptNumberGeneratorFactory;
@@ -56,6 +57,8 @@ import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
+import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
+import org.openmrs.module.kenyaemr.cashier.api.util.CashierModuleConstants;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,6 +73,7 @@ import java.security.AccessControlException;
 import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Data service implementation class for {@link Bill}s.
@@ -108,6 +112,37 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 			throw new NullPointerException("The bill must be defined.");
 		}
 
+		//RMS check for payment
+		try {
+            GlobalProperty globalRMSEnabled = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_SYNC_ENABLED);
+			String isRMSEnabled = globalRMSEnabled.getPropertyValue();
+            if(isRMSEnabled != null && isRMSEnabled.trim().equalsIgnoreCase("true")) {
+				Bill oldBill = this.getByIdRO(bill.getId());
+				Bill newBill = bill;
+
+				Set<Payment> oldPayments = oldBill.getPayments();
+                Set<Payment> newPayments = newBill.getPayments();
+
+				System.out.println("RMS Sync Cashier Module: NEW Checking if it is a payment. OldPayments: " + oldPayments.size() + " NewPayments: " + newPayments.size());
+
+				if(newPayments.size() > oldPayments.size()) {
+					System.out.println("RMS Sync Cashier Module: New bill payment detected");
+
+					Set<Payment> payments = AdviceUtils.symmetricPaymentDifference(newPayments, oldPayments);
+					System.out.println("RMS Sync Cashier Module: New bill payments made: " + payments.size());
+
+					for(Payment payment : payments) {
+						NewBillPaymentSyncToRMS.sendRMSNewPayment(payment);
+					}
+				}
+			}
+		} catch(Exception ex) {
+            System.out.println("RMS Sync Cashier Module: Error checking for bill payment: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+		// End RMS payment sync
+
 		/* Check for refund.
 		 * A refund is given when the total of the bill's line items is negative.
 		 */
@@ -137,6 +172,15 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		}
 
 		return super.save(bill);
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	@Transactional(readOnly = true)
+	public Bill getByIdRO(Integer entityId) {
+		Bill bill = super.getById(entityId);
+		removeNullLineItems(bill);
+		return bill;
 	}
 
 	@Override

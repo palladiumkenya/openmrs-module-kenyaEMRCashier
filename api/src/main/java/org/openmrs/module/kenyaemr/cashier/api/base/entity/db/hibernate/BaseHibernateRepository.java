@@ -93,6 +93,8 @@ public interface BaseHibernateRepository {
 	 */
 	<E extends OpenmrsObject> E selectSingle(Class<E> cls, Serializable id);
 
+	<E extends OpenmrsObject> E selectSingleRO(Class<E> cls, Serializable id);
+
 	/**
 	 * Selects a single entity from the database using the specified {@link org.hibernate.Criteria}. If more than one entity
 	 * is found only the first is returned.

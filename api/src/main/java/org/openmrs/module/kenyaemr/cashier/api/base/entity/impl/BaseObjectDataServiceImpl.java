@@ -185,7 +185,7 @@ public abstract class BaseObjectDataServiceImpl<E extends OpenmrsObject, P exten
 			PrivilegeUtil.requirePrivileges(Context.getAuthenticatedUser(), privileges.getGetPrivilege());
 		}
 
-		return repository.selectSingle(getEntityClass(), entityId);
+		return repository.selectSingleRO(getEntityClass(), entityId);
 	}
 
 	@Override

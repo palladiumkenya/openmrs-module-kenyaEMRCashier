@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
+import org.hibernate.CacheMode;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.openmrs.OpenmrsObject;
@@ -123,6 +124,26 @@ public class BaseHibernateRepositoryImpl implements BaseHibernateRepository {
 
 		try {
 			return (E)session.get(cls, id);
+		} catch (Exception ex) {
+			throw new APIException("An exception occurred while attempting to select a single " + cls.getSimpleName()
+			        + " entity with ID" + " " + id.toString() + ".", ex);
+		}
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <E extends OpenmrsObject> E selectSingleRO(Class<E> cls, Serializable id) {
+		DbSession session = sessionFactory.getCurrentSession();
+
+		// Ensure no caching is used by ignoring the cache
+        session.setCacheMode(CacheMode.IGNORE);
+        
+        // ensure no first-level caching
+        session.clear();
+
+		try {
+			E ret = (E)session.get(cls, id);
+			return ret;
 		} catch (Exception ex) {
 			throw new APIException("An exception occurred while attempting to select a single " + cls.getSimpleName()
 			        + " entity with ID" + " " + id.toString() + ".", ex);

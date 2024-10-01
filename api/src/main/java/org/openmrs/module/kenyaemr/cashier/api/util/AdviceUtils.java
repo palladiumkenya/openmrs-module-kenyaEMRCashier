@@ -1,6 +1,10 @@
 package org.openmrs.module.kenyaemr.cashier.api.util;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 
 public class AdviceUtils {
     public static boolean checkIfCreateModetOrEditMode(Date date) {
@@ -15,6 +19,54 @@ public class AdviceUtils {
         
         // Check if the difference is positive (date is before now) and less than 60 seconds (60,000 ms)
         return diffInMillis >= 0 && diffInMillis < 60 * 1000;
+    }
+
+    // public static <T> Set<T> symmetricDifference(Set<T> set1, Set<T> set2) {
+    //     // Create a copy of the first set
+    //     Set<T> result = new HashSet<>(set1);
+        
+    //     // Create another copy of set2
+    //     Set<T> temp = new HashSet<>(set2);
+        
+    //     // Remove all elements in set2 from result
+    //     result.removeAll(set2);
+        
+    //     // Remove all elements in set1 from temp
+    //     temp.removeAll(set1);
+        
+    //     // Add the remaining elements from temp to result
+    //     result.addAll(temp);
+        
+    //     return result;
+    // }
+
+    /**
+     * Check if there are any new payments
+     * @param oldSet
+     * @param newSet
+     * @return
+     */
+    public static Set<Payment> symmetricPaymentDifference(Set<Payment> oldSet, Set<Payment> newSet) {
+        Set<Payment> result = new HashSet<>();
+
+        // Add elements from newSet that are not in oldSet based on ID comparison
+        for (Payment item1 : newSet) {
+            boolean found = false;
+            for (Payment item2 : oldSet) {
+                if (item1.getId() == item2.getId()) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                System.out.println("RMS Sync Cashier Module: Payments comparison: Adding item id " + item1.getId());
+                result.add(item1);
+            }
+        }
+
+        System.out.println("RMS Sync Cashier Module: Payments comparison: " + result.size());
+
+        return result;
     }
 }
 
