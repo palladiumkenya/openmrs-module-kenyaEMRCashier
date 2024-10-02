@@ -894,5 +894,22 @@
 		<dropForeignKeyConstraint baseTableName="cashier_item_price" constraintName="cashier_item_price_item_id_fk" />
 		<dropColumn tableName="cashier_item_price" columnName="item_id"/>
 	</changeSet>
+	<changeSet id="openhmis.cashier-001-v3.0.0-202410022230" author="makombe">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM location_tag where name='Cash Point';
+            </sqlCheck>
+        </preConditions>
+        <comment>Add Cash Point Tag if not already added.</comment>
+        <sql>
+
+            INSERT INTO location_tag (name, description, creator, date_created, uuid) VALUES
+            ('Cash Point',
+            'Cash point tag for managing cashier/billing locations',
+            1,
+            now(),
+            uuid());
+        </sql>
+    </changeSet>
 
 </databaseChangeLog>
