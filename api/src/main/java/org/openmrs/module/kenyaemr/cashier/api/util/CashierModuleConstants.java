@@ -29,5 +29,7 @@ public class CashierModuleConstants {
 	
 	public static final String RMS_PASSWORD = "kenyaemr.cashier.rms.integration.password";
 
+	public static final String RMS_LOGGING_ENABLED = "kenyaemr.cashier.rms.integration.logging";
+
 	protected CashierModuleConstants() {}
 }

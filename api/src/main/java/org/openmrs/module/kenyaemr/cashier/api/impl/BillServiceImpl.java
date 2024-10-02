@@ -113,37 +113,6 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 			throw new NullPointerException("The bill must be defined.");
 		}
 
-		//RMS check for payment
-		// try {
-        //     GlobalProperty globalRMSEnabled = Context.getAdministrationService()
-		// 	        .getGlobalPropertyObject(CashierModuleConstants.RMS_SYNC_ENABLED);
-		// 	String isRMSEnabled = globalRMSEnabled.getPropertyValue();
-        //     if(isRMSEnabled != null && isRMSEnabled.trim().equalsIgnoreCase("true")) {
-		// 		Bill oldBill = this.getByIdRO(bill.getId());
-		// 		Bill newBill = bill;
-
-		// 		Set<Payment> oldPayments = oldBill.getPayments();
-        //         Set<Payment> newPayments = newBill.getPayments();
-
-		// 		System.out.println("RMS Sync Cashier Module: NEW Checking if it is a payment. OldPayments: " + oldPayments.size() + " NewPayments: " + newPayments.size());
-
-		// 		if(newPayments.size() > oldPayments.size()) {
-		// 			System.out.println("RMS Sync Cashier Module: New bill payment detected");
-
-		// 			Set<Payment> payments = AdviceUtils.symmetricPaymentDifference(newPayments, oldPayments);
-		// 			System.out.println("RMS Sync Cashier Module: New bill payments made: " + payments.size());
-
-		// 			for(Payment payment : payments) {
-		// 				NewBillPaymentSyncToRMS.sendRMSNewPayment(payment);
-		// 			}
-		// 		}
-		// 	}
-		// } catch(Exception ex) {
-        //     System.out.println("RMS Sync Cashier Module: Error checking for bill payment: " + ex.getMessage());
-        //     ex.printStackTrace();
-        // }
-		// End RMS payment sync
-
 		/* Check for refund.
 		 * A refund is given when the total of the bill's line items is negative.
 		 */

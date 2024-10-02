@@ -25,7 +25,12 @@ import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.ui.framework.SimpleObject;
 import org.springframework.aop.AfterReturningAdvice;
 
+/**
+ * Detects when a new bill has been created and syncs to RMS Financial System
+ */
 public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
+
+	private Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
 
     @Override
     public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
@@ -42,15 +47,15 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
                     }
                     
                     Date billCreationDate = bill.getDateCreated();
-                    System.out.println("RMS Sync Cashier Module: bill was created on: " + billCreationDate);
+                    if(debugMode) System.out.println("RMS Sync Cashier Module: bill was created on: " + billCreationDate);
 
                     if (billCreationDate != null && AdviceUtils.checkIfCreateModetOrEditMode(billCreationDate)) {
                         // CREATE Mode
-                        System.out.println("RMS Sync Cashier Module: New Bill being created");
+                        if(debugMode) System.out.println("RMS Sync Cashier Module: New Bill being created");
                         sendRMSNewBill(bill);
                     } else {
                         // EDIT Mode
-                        System.out.println("RMS Sync Cashier Module: Bill being edited. We ignore");
+                        if(debugMode) System.out.println("RMS Sync Cashier Module: Bill being edited. We ignore");
                     }
                 }
             }
@@ -63,7 +68,7 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
     private String prepareNewBillRMSPayload(@NotNull Bill bill) {
 		String ret = "";
 		if (bill != null) {
-			System.out.println(
+			if(debugMode) System.out.println(
 			    "RMS Sync Cashier Module: New bill created: UUID" + bill.getUuid() + ", Total: " + bill.getTotal());
 			SimpleObject payloadPrep = new SimpleObject();
 			payloadPrep.put("bill_reference", bill.getUuid());
@@ -94,9 +99,9 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
             }
             payloadPrep.put("bill_items", items);
 			ret = payloadPrep.toJson();
-			System.out.println("RMS Sync Cashier Module: Got bill details: " + ret);
+			if(debugMode) System.out.println("RMS Sync Cashier Module: Got bill details: " + ret);
 		} else {
-			System.out.println("RMS Sync Cashier Module: bill is null");
+			if(debugMode) System.out.println("RMS Sync Cashier Module: bill is null");
 		}
 		return (ret);
 	}
@@ -113,7 +118,7 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 		HttpsURLConnection con = null;
 		HttpsURLConnection connection = null;
 		try {
-			System.out.println("RMS Sync Cashier Module: using bill payload: " + payload);
+			if(debugMode) System.out.println("RMS Sync Cashier Module: using bill payload: " + payload);
 			
 			// Create URL
 			GlobalProperty globalPostUrl = Context.getAdministrationService()
@@ -123,7 +128,7 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 				baseURL = "https://siaya.tsconect.com/api";
 			}
 			String completeURL = baseURL + "/login";
-			System.out.println("RMS Sync Cashier Module: Auth URL: " + completeURL);
+			if(debugMode) System.out.println("RMS Sync Cashier Module: Auth URL: " + completeURL);
 			URL url = new URL(completeURL);
 			GlobalProperty rmsUserGP = Context.getAdministrationService()
 			        .getGlobalPropertyObject(CashierModuleConstants.RMS_USERNAME);
@@ -162,7 +167,7 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 				in.close();
 				
 				String returnResponse = response.toString();
-				System.out.println("RMS Sync Cashier Module: Got Auth Response as: " + returnResponse);
+				if(debugMode) System.out.println("RMS Sync Cashier Module: Got Auth Response as: " + returnResponse);
 				
 				// Extract the token and token expiry date
 				ObjectMapper mapper = new ObjectMapper();
@@ -192,7 +197,7 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 						    "RMS Sync Cashier Module: We got the Auth token. Now sending the new bill details. Token: "
 						            + token);
 						String finalUrl = baseURL + "/create-bill";
-						System.out.println("RMS Sync Cashier Module: Final Create Bill URL: " + finalUrl);
+						if(debugMode) System.out.println("RMS Sync Cashier Module: Final Create Bill URL: " + finalUrl);
 						URL finUrl = new URL(finalUrl);
 						
 						connection = (HttpsURLConnection) finUrl.openConnection();
@@ -222,7 +227,7 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 							in.close();
 							
 							String finalReturnResponse = finalResponse.toString();
-							System.out.println("RMS Sync Cashier Module: Got New Bill Response as: " + finalReturnResponse);
+							if(debugMode) System.out.println("RMS Sync Cashier Module: Got New Bill Response as: " + finalReturnResponse);
 							
 							ObjectMapper finalMapper = new ObjectMapper();
 							JsonNode finaljsonNode = null;
@@ -256,7 +261,7 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 						}
 					}
 					catch (Exception em) {
-						System.out.println("RMS Sync Cashier Module: Error. Failed to send the New Bill final payload: " + em.getMessage());
+						if(debugMode) System.out.println("RMS Sync Cashier Module: Error. Failed to send the New Bill final payload: " + em.getMessage());
 						em.printStackTrace();
 					}
 				}
@@ -266,7 +271,7 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 			
 		}
 		catch (Exception ex) {
-			System.out.println("RMS Sync Cashier Module: Error. Failed to get auth token: " + ex.getMessage());
+			if(debugMode) System.out.println("RMS Sync Cashier Module: Error. Failed to get auth token: " + ex.getMessage());
 			ex.printStackTrace();
 		}
 		

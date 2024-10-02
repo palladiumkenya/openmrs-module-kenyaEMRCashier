@@ -196,6 +196,11 @@
 		<description>RMS integration Password</description>
 		<defaultValue>password</defaultValue>
 	</globalProperty>
+	<globalProperty>
+		<property>${project.parent.artifactId}.rms.integration.logging</property>
+		<description>Is RMS integration logging enabled - (true) = enabled, (false) = disabled</description>
+		<defaultValue>false</defaultValue>
+	</globalProperty>
 	<!-- Privileges -->
 	<!--  Bills  -->
 	<privilege>
