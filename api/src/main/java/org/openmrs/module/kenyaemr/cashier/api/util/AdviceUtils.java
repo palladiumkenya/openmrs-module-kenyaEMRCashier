@@ -53,13 +53,15 @@ public class AdviceUtils {
         for (Payment item1 : newSet) {
             boolean found = false;
             for (Payment item2 : oldSet) {
-                if (item1.getId() == item2.getId()) {
+                System.out.println("RMS Sync Cashier Module: Payments comparison: Oldset comparing item uuid " + item2.getUuid() + " with Newset: " + item1.getUuid());
+                if (item1.getUuid().equalsIgnoreCase(item2.getUuid())) {
+                    System.out.println("RMS Sync Cashier Module: Payments comparison: Found a match: " + item2.getUuid() + " and: " + item1.getUuid());
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                System.out.println("RMS Sync Cashier Module: Payments comparison: Adding item id " + item1.getId());
+                System.out.println("RMS Sync Cashier Module: Payments comparison: Adding item id " + item1.getUuid());
                 result.add(item1);
             }
         }

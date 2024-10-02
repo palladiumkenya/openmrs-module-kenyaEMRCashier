@@ -72,6 +72,7 @@ import java.net.URL;
 import java.security.AccessControlException;
 import java.text.DecimalFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -113,34 +114,34 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		}
 
 		//RMS check for payment
-		try {
-            GlobalProperty globalRMSEnabled = Context.getAdministrationService()
-			        .getGlobalPropertyObject(CashierModuleConstants.RMS_SYNC_ENABLED);
-			String isRMSEnabled = globalRMSEnabled.getPropertyValue();
-            if(isRMSEnabled != null && isRMSEnabled.trim().equalsIgnoreCase("true")) {
-				Bill oldBill = this.getByIdRO(bill.getId());
-				Bill newBill = bill;
+		// try {
+        //     GlobalProperty globalRMSEnabled = Context.getAdministrationService()
+		// 	        .getGlobalPropertyObject(CashierModuleConstants.RMS_SYNC_ENABLED);
+		// 	String isRMSEnabled = globalRMSEnabled.getPropertyValue();
+        //     if(isRMSEnabled != null && isRMSEnabled.trim().equalsIgnoreCase("true")) {
+		// 		Bill oldBill = this.getByIdRO(bill.getId());
+		// 		Bill newBill = bill;
 
-				Set<Payment> oldPayments = oldBill.getPayments();
-                Set<Payment> newPayments = newBill.getPayments();
+		// 		Set<Payment> oldPayments = oldBill.getPayments();
+        //         Set<Payment> newPayments = newBill.getPayments();
 
-				System.out.println("RMS Sync Cashier Module: NEW Checking if it is a payment. OldPayments: " + oldPayments.size() + " NewPayments: " + newPayments.size());
+		// 		System.out.println("RMS Sync Cashier Module: NEW Checking if it is a payment. OldPayments: " + oldPayments.size() + " NewPayments: " + newPayments.size());
 
-				if(newPayments.size() > oldPayments.size()) {
-					System.out.println("RMS Sync Cashier Module: New bill payment detected");
+		// 		if(newPayments.size() > oldPayments.size()) {
+		// 			System.out.println("RMS Sync Cashier Module: New bill payment detected");
 
-					Set<Payment> payments = AdviceUtils.symmetricPaymentDifference(newPayments, oldPayments);
-					System.out.println("RMS Sync Cashier Module: New bill payments made: " + payments.size());
+		// 			Set<Payment> payments = AdviceUtils.symmetricPaymentDifference(newPayments, oldPayments);
+		// 			System.out.println("RMS Sync Cashier Module: New bill payments made: " + payments.size());
 
-					for(Payment payment : payments) {
-						NewBillPaymentSyncToRMS.sendRMSNewPayment(payment);
-					}
-				}
-			}
-		} catch(Exception ex) {
-            System.out.println("RMS Sync Cashier Module: Error checking for bill payment: " + ex.getMessage());
-            ex.printStackTrace();
-        }
+		// 			for(Payment payment : payments) {
+		// 				NewBillPaymentSyncToRMS.sendRMSNewPayment(payment);
+		// 			}
+		// 		}
+		// 	}
+		// } catch(Exception ex) {
+        //     System.out.println("RMS Sync Cashier Module: Error checking for bill payment: " + ex.getMessage());
+        //     ex.printStackTrace();
+        // }
 		// End RMS payment sync
 
 		/* Check for refund.
@@ -178,9 +179,20 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	@Authorized({ PrivilegeConstants.VIEW_BILLS })
 	@Transactional(readOnly = true)
 	public Bill getByIdRO(Integer entityId) {
-		Bill bill = super.getById(entityId);
+		Bill bill = super.getByIdRO(entityId);
 		removeNullLineItems(bill);
 		return bill;
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	@Transactional(readOnly = true)
+	public Set<Payment> getPaymentsByBillId(Integer billId) {
+		Set<Payment> payments = super.getPaymentsByBillId(billId);
+		return payments;
+		// return(new HashSet<>());
+		// Bill current = getByIdRO(billId);
+		// return(current.getPayments());
 	}
 
 	@Override

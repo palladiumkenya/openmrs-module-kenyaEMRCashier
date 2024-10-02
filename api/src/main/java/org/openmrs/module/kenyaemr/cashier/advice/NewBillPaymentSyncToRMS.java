@@ -96,7 +96,9 @@ import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Objects;
+import java.util.Optional;
 import java.lang.reflect.Field;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -147,26 +149,36 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 			String isRMSEnabled = globalRMSEnabled.getPropertyValue();
             if(isRMSEnabled != null && isRMSEnabled.trim().equalsIgnoreCase("true")) {
                 String methodName = invocation.getMethod().getName();
-                System.out.println("RMS Sync Cashier Module: method intercepted: " + methodName);
+                // System.out.println("RMS Sync Cashier Module: method intercepted: " + methodName);
+				Bill oldBill = new Bill();
             
                 if ("save".equalsIgnoreCase(methodName)) {
                     System.out.println("RMS Sync Cashier Module: Intercepting save bill method");
 
                     Map<String, Object> oldState = new HashMap<>();
                     Object[] args = invocation.getArguments();
+					Set<Payment> oldPayments = new HashSet<>();
                     
                     if (args.length > 0 && args[0] instanceof Bill) {
                         // Clone the patient object before modification
-                        Bill oldBill = (Bill) args[0];
-                        Bill refreshedBill = billService.getByIdRO(oldBill.getId());
-                        oldState = captureObjectState(refreshedBill);
+                        oldBill = (Bill) args[0];
+                        // Bill refreshedBill = billService.getByIdRO(oldBill.getId());
+                        // oldState = captureObjectState(refreshedBill);
 
-                        System.out.println("RMS Sync Cashier Module: Old Payments: " + refreshedBill.getPayments().size());
-                        for (String fieldName : oldState.keySet()) {
-                            Object oldValue = oldState.get(fieldName);
+                        // System.out.println("RMS Sync Cashier Module: Old Payments: " + refreshedBill.getPayments().size());
+                        // for (String fieldName : oldState.keySet()) {
+                        //     Object oldValue = oldState.get(fieldName);
                 
-                            System.out.println("RMS Sync Cashier Module: Field: " + fieldName + " Value: " + oldValue + " set instance: " + (oldValue instanceof Set));
-                        }
+                        //     System.out.println("RMS Sync Cashier Module: Field: " + fieldName + " Value: " + oldValue + " set instance: " + (oldValue instanceof Set));
+                        // }
+
+						//test
+						Integer oldBillId = oldBill.getId();
+						oldPayments = billService.getPaymentsByBillId(oldBillId);
+
+						// for(Payment nm : oldPayments) {
+						// 	System.out.println("RMS Sync Cashier Module: oldPayments got UUID: " + nm.getUuid());
+						// }
                     }
                     
                     // Proceed with the original method
@@ -175,32 +187,48 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
                     try {
                         // Get the saved patient object (after modifications)
                         Bill newBill = (Bill) result;
-                        Map<String, Object> newState = captureObjectState(newBill);
+                        // Map<String, Object> newState = captureObjectState(newBill);
 
-                        Object oldPaymentsObject = oldState.get("payments");
-                        Set<Payment> oldPayments = (Set<Payment>) oldPaymentsObject;
+                        // Object oldPaymentsObject = oldState.get("payments");
+                        // Set<Payment> oldPayments = (Set<Payment>) oldPaymentsObject;
 
-                        Object newPaymentsObject = newState.get("payments");
-                        Set<Payment> newPayments = (Set<Payment>) newPaymentsObject;
+                        // Object newPaymentsObject = newState.get("payments");
+                        // Set<Payment> newPayments = (Set<Payment>) newPaymentsObject;
+
+						Set<Payment> newPayments = newBill.getPayments();
 
                         System.out.println("RMS Sync Cashier Module: Got a bill edit. checking if it is a payment. OldPayments: " + oldPayments.size() + " NewPayments: " + newPayments.size());
 
                         if(newPayments.size() > oldPayments.size()) {
                             System.out.println("RMS Sync Cashier Module: New bill payment detected");
 
-                            Set<Payment> payments = AdviceUtils.symmetricPaymentDifference(newPayments, oldPayments);
-                            System.out.println("RMS Sync Cashier Module: New bill payments made: " + payments.size());
+                            // Set<Payment> payments = AdviceUtils.symmetricPaymentDifference(oldPayments, newPayments);
+                            // System.out.println("RMS Sync Cashier Module: New bill payments made: " + payments.size());
 
-                            for(Payment payment : payments) {
-                                sendRMSNewPayment(payment);
-                            }
+                            // for(Payment payment : payments) {
+                            //     sendRMSNewPayment(payment);
+                            // }
+
+							//Note: with payments, the uuid and id is changed everytime a bill is saved.
+							//Note: The above method would have worked if we had the same IDs and UUIDs persisted
+							//Note: We therefore use the less reliable method of getting the last (N) elements from the newPayments
+
+							//Get the payment with the largest ID
+							Optional<Payment> maxPayment = newPayments.stream().max(Comparator.comparing(Payment::getId)); // Compare by ID
+
+        					Payment processPayment = maxPayment.orElse(null);
+
+							if(processPayment != null) {
+								sendRMSNewPayment(processPayment);
+							}
                         }
+
                     } catch(Exception ex) {
                         System.out.println("RMS Sync Cashier Module: Error checking for bill payment: " + ex.getMessage());
                         ex.printStackTrace();
                     }
                 } else {
-                    System.out.println("RMS Sync Cashier Module: This is not the save method. We ignore.");
+                    // System.out.println("RMS Sync Cashier Module: This is not the save method. We ignore.");
                     result = invocation.proceed();
                 }
             }
@@ -213,22 +241,22 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
         return (result);
     }
 
-    // Helper method to capture the object's state via reflection
-    private Map<String, Object> captureObjectState(Bill bill) {
-        Map<String, Object> state = new HashMap<>();
-        Field[] fields = bill.getClass().getDeclaredFields();
+    // // Helper method to capture the object's state via reflection
+    // private Map<String, Object> captureObjectState(Bill bill) {
+    //     Map<String, Object> state = new HashMap<>();
+    //     Field[] fields = bill.getClass().getDeclaredFields();
 
-        for (Field field : fields) {
-            field.setAccessible(true);
-            try {
-                state.put(field.getName(), field.get(bill));
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
+    //     for (Field field : fields) {
+    //         field.setAccessible(true);
+    //         try {
+    //             state.put(field.getName(), field.get(bill));
+    //         } catch (IllegalAccessException e) {
+    //             e.printStackTrace();
+    //         }
+    //     }
 
-        return state;
-    }
+    //     return state;
+    // }
 
     /**
      * Prepare the payment payload
@@ -239,7 +267,7 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 		String ret = "";
 		if (payment != null) {
 			System.out.println(
-			    "RMS Sync Cashier Module: New bill payment created: UUID" + payment.getUuid() + ", Amount Tendered: " + payment.getAmountTendered());
+			    "RMS Sync Cashier Module: New bill payment created: UUID: " + payment.getUuid() + ", Amount Tendered: " + payment.getAmountTendered());
 			SimpleObject payloadPrep = new SimpleObject();
 			payloadPrep.put("bill_reference", payment.getBill().getUuid());
 			payloadPrep.put("amount_paid", payment.getAmountTendered());
