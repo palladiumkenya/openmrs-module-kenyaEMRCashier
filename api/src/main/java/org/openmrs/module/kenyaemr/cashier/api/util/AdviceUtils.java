@@ -102,5 +102,53 @@ public class AdviceUtils {
         return(ret);
     }
 
+    /**
+     * Gets the RMS endpoint URL
+     * @return
+     */
+    public static String getRMSEndpointURL() {
+        String ret = "";
+
+        GlobalProperty globalPostUrl = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_ENDPOINT_URL);
+        String baseURL = globalPostUrl.getPropertyValue();
+        if (baseURL == null || baseURL.trim().isEmpty()) {
+            baseURL = "https://siaya.tsconect.com/api";
+        }
+        ret = baseURL;
+
+        return(ret);
+    }
+
+    /**
+     * Gets the RMS Auth Username
+     * @return
+     */
+    public static String getRMSAuthUserName() {
+        String ret = "";
+
+        GlobalProperty rmsUserGP = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_USERNAME);
+		String rmsUser = rmsUserGP.getPropertyValue();
+        ret = (rmsUser == null || rmsUser.trim().isEmpty()) ? "" : rmsUser;
+
+        return(ret);
+    }
+
+    /**
+     * Gets the RMS Auth Password
+     * @return
+     */
+    public static String getRMSAuthPassword() {
+        String ret = "";
+
+        GlobalProperty rmsPasswordGP = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_PASSWORD);
+		String rmsPassword = rmsPasswordGP.getPropertyValue();
+        ret = (rmsPassword == null || rmsPassword.trim().isEmpty()) ? "" : rmsPassword;
+
+        return(ret);
+    }
+
 }
 

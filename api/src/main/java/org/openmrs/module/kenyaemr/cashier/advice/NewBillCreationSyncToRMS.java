@@ -15,12 +15,9 @@ import javax.validation.constraints.NotNull;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.openmrs.GlobalProperty;
-import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
-import org.openmrs.module.kenyaemr.cashier.api.util.CashierModuleConstants;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.ui.framework.SimpleObject;
 import org.springframework.aop.AfterReturningAdvice;
@@ -30,15 +27,13 @@ import org.springframework.aop.AfterReturningAdvice;
  */
 public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 
-	private Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
+	private Boolean debugMode = false;
 
     @Override
     public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
         try {
-            GlobalProperty globalRMSEnabled = Context.getAdministrationService()
-			        .getGlobalPropertyObject(CashierModuleConstants.RMS_SYNC_ENABLED);
-			String isRMSEnabled = globalRMSEnabled.getPropertyValue();
-            if(isRMSEnabled != null && isRMSEnabled.trim().equalsIgnoreCase("true")) {
+			debugMode = AdviceUtils.isRMSLoggingEnabled();
+            if(AdviceUtils.isRMSIntegrationEnabled()) {
                 if (method.getName().equals("save") && args.length > 0 && args[0] instanceof Bill) {
                     Bill bill = (Bill) args[0];
 
@@ -60,7 +55,7 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
                 }
             }
         } catch(Exception ex) {
-            System.err.println("RMS Sync Cashier Module: Error getting new Bill: " + ex.getMessage());
+            if(debugMode) System.err.println("RMS Sync Cashier Module: Error getting new Bill: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
@@ -121,21 +116,12 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 			if(debugMode) System.out.println("RMS Sync Cashier Module: using bill payload: " + payload);
 			
 			// Create URL
-			GlobalProperty globalPostUrl = Context.getAdministrationService()
-			        .getGlobalPropertyObject(CashierModuleConstants.RMS_ENDPOINT_URL);
-			String baseURL = globalPostUrl.getPropertyValue();
-			if (baseURL == null || baseURL.trim().isEmpty()) {
-				baseURL = "https://siaya.tsconect.com/api";
-			}
+			String baseURL = AdviceUtils.getRMSEndpointURL();
 			String completeURL = baseURL + "/login";
 			if(debugMode) System.out.println("RMS Sync Cashier Module: Auth URL: " + completeURL);
 			URL url = new URL(completeURL);
-			GlobalProperty rmsUserGP = Context.getAdministrationService()
-			        .getGlobalPropertyObject(CashierModuleConstants.RMS_USERNAME);
-			String rmsUser = rmsUserGP.getPropertyValue();
-			GlobalProperty rmsPasswordGP = Context.getAdministrationService()
-			        .getGlobalPropertyObject(CashierModuleConstants.RMS_PASSWORD);
-			String rmsPassword = rmsPasswordGP.getPropertyValue();
+			String rmsUser = AdviceUtils.getRMSAuthUserName();
+			String rmsPassword = AdviceUtils.getRMSAuthPassword();
 			SimpleObject authPayloadCreator = SimpleObject.create("email", rmsUser != null ? rmsUser : "", "password",
 			    rmsPassword != null ? rmsPassword : "");
 			String authPayload = authPayloadCreator.toJson();
@@ -186,14 +172,14 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 					}
 				}
 				catch (Exception e) {
-					System.err.println("RMS Sync Cashier Module: Error getting auth token: " + e.getMessage());
+					if(debugMode) System.err.println("RMS Sync Cashier Module: Error getting auth token: " + e.getMessage());
 					e.printStackTrace();
 				}
 				
 				if (!token.isEmpty()) {
 					try {
 						// We send the payload to RMS
-						System.err.println(
+						if(debugMode) System.err.println(
 						    "RMS Sync Cashier Module: We got the Auth token. Now sending the new bill details. Token: "
 						            + token);
 						String finalUrl = baseURL + "/create-bill";
@@ -243,11 +229,11 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 									        : finaljsonNode.get("message").getTextValue();
 								}
 								
-								System.err.println("RMS Sync Cashier Module: Got New Bill final response: success: " + success
+								if(debugMode) System.err.println("RMS Sync Cashier Module: Got New Bill final response: success: " + success
 								        + " message: " + message);
 							}
 							catch (Exception e) {
-								System.err.println(
+								if(debugMode) System.err.println(
 								    "RMS Sync Cashier Module: Error getting New Bill final response: " + e.getMessage());
 								e.printStackTrace();
 							}
@@ -257,21 +243,21 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 							}
 							
 						} else {
-							System.err.println("RMS Sync Cashier Module: Failed to send New Bill final payload: " + finalResponseCode);
+							if(debugMode) System.err.println("RMS Sync Cashier Module: Failed to send New Bill final payload: " + finalResponseCode);
 						}
 					}
 					catch (Exception em) {
-						if(debugMode) System.out.println("RMS Sync Cashier Module: Error. Failed to send the New Bill final payload: " + em.getMessage());
+						if(debugMode) System.err.println("RMS Sync Cashier Module: Error. Failed to send the New Bill final payload: " + em.getMessage());
 						em.printStackTrace();
 					}
 				}
 			} else {
-				System.err.println("RMS Sync Cashier Module: Failed to get auth: " + responseCode);
+				if(debugMode) System.err.println("RMS Sync Cashier Module: Failed to get auth: " + responseCode);
 			}
 			
 		}
 		catch (Exception ex) {
-			if(debugMode) System.out.println("RMS Sync Cashier Module: Error. Failed to get auth token: " + ex.getMessage());
+			if(debugMode) System.err.println("RMS Sync Cashier Module: Error. Failed to get auth token: " + ex.getMessage());
 			ex.printStackTrace();
 		}
 		
