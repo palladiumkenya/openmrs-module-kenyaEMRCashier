@@ -3,6 +3,7 @@ package org.openmrs.module.kenyaemr.cashier.advice;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -26,8 +27,9 @@ import org.openmrs.module.kenyaemr.cashier.api.model.PaymentMode;
 import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
 import org.openmrs.module.kenyaemr.cashier.api.util.CashierModuleConstants;
 import org.openmrs.ui.framework.SimpleObject;
+import org.springframework.aop.AfterReturningAdvice;
 
-public class NewBillPaymentSyncToRMS implements MethodInterceptor {
+public class NewBillPaymentSyncToRMSAdvice implements AfterReturningAdvice {
 
     private IBillService billService;
 
@@ -39,8 +41,8 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
         this.billService = billService;
     }
 
-    @Override
-    public Object invoke(MethodInvocation invocation) throws Throwable {
+	@Override
+	public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
 
         Object result = null;
         try {
@@ -48,15 +50,12 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 			        .getGlobalPropertyObject(CashierModuleConstants.RMS_SYNC_ENABLED);
 			String isRMSEnabled = globalRMSEnabled.getPropertyValue();
             if(isRMSEnabled != null && isRMSEnabled.trim().equalsIgnoreCase("true")) {
-                String methodName = invocation.getMethod().getName();
-                // System.out.println("RMS Sync Cashier Module: method intercepted: " + methodName);
 				Bill oldBill = new Bill();
             
-                if ("save".equalsIgnoreCase(methodName)) {
+                if (method.getName().equals("save") && args.length > 0 && args[0] instanceof Bill) {
                     System.out.println("RMS Sync Cashier Module: Intercepting save bill method");
 
                     Map<String, Object> oldState = new HashMap<>();
-                    Object[] args = invocation.getArguments();
 					Set<Payment> oldPayments = new HashSet<>();
                     
                     if (args.length > 0 && args[0] instanceof Bill) {
@@ -80,9 +79,6 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 						// 	System.out.println("RMS Sync Cashier Module: oldPayments got UUID: " + nm.getUuid());
 						// }
                     }
-                    
-                    // Proceed with the original method
-                    result = invocation.proceed();
 
                     try {
                         // Get the saved patient object (after modifications)
@@ -127,18 +123,12 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
                         System.out.println("RMS Sync Cashier Module: Error checking for bill payment: " + ex.getMessage());
                         ex.printStackTrace();
                     }
-                } else {
-                    // System.out.println("RMS Sync Cashier Module: This is not the save method. We ignore.");
-                    result = invocation.proceed();
                 }
             }
         } catch(Exception ex) {
             System.out.println("RMS Sync Cashier Module: Error checking for bill payment: " + ex.getMessage());
             ex.printStackTrace();
-            result = invocation.proceed();
         }
-        
-        return (result);
     }
 
     /**
