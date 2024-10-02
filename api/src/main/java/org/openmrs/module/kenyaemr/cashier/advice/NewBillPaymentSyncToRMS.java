@@ -202,25 +202,25 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
                         if(newPayments.size() > oldPayments.size()) {
                             System.out.println("RMS Sync Cashier Module: New bill payment detected");
 
-                            // Set<Payment> payments = AdviceUtils.symmetricPaymentDifference(oldPayments, newPayments);
-                            // System.out.println("RMS Sync Cashier Module: New bill payments made: " + payments.size());
+                            Set<Payment> payments = AdviceUtils.symmetricPaymentDifference(oldPayments, newPayments);
+                            System.out.println("RMS Sync Cashier Module: New bill payments made: " + payments.size());
 
-                            // for(Payment payment : payments) {
-                            //     sendRMSNewPayment(payment);
-                            // }
+                            for(Payment payment : payments) {
+                                sendRMSNewPayment(payment);
+                            }
 
 							//Note: with payments, the uuid and id is changed everytime a bill is saved.
 							//Note: The above method would have worked if we had the same IDs and UUIDs persisted
 							//Note: We therefore use the less reliable method of getting the last (N) elements from the newPayments
 
 							//Get the payment with the largest ID
-							Optional<Payment> maxPayment = newPayments.stream().max(Comparator.comparing(Payment::getId)); // Compare by ID
+							// Optional<Payment> maxPayment = newPayments.stream().max(Comparator.comparing(Payment::getId)); // Compare by ID
 
-        					Payment processPayment = maxPayment.orElse(null);
+        					// Payment processPayment = maxPayment.orElse(null);
 
-							if(processPayment != null) {
-								sendRMSNewPayment(processPayment);
-							}
+							// if(processPayment != null) {
+							// 	sendRMSNewPayment(processPayment);
+							// }
                         }
 
                     } catch(Exception ex) {

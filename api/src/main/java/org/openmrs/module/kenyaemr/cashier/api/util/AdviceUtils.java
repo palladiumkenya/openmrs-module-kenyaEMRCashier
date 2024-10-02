@@ -7,6 +7,13 @@ import java.util.Set;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 
 public class AdviceUtils {
+
+    /**
+     * Checks if a bill is in create mode or edit mode
+     * CREATE MODE = true, EDIT MODE = false
+     * @param date
+     * @return
+     */
     public static boolean checkIfCreateModetOrEditMode(Date date) {
         // Get the current time in milliseconds
         long now = System.currentTimeMillis();
@@ -47,23 +54,34 @@ public class AdviceUtils {
      * @return
      */
     public static Set<Payment> symmetricPaymentDifference(Set<Payment> oldSet, Set<Payment> newSet) {
-        Set<Payment> result = new HashSet<>();
+        Set<Payment> result = new HashSet<>(newSet);
 
         // Add elements from newSet that are not in oldSet based on ID comparison
-        for (Payment item1 : newSet) {
+        for (Payment item1 : oldSet) {
             boolean found = false;
-            for (Payment item2 : oldSet) {
-                System.out.println("RMS Sync Cashier Module: Payments comparison: Oldset comparing item uuid " + item2.getUuid() + " with Newset: " + item1.getUuid());
-                if (item1.getUuid().equalsIgnoreCase(item2.getUuid())) {
-                    System.out.println("RMS Sync Cashier Module: Payments comparison: Found a match: " + item2.getUuid() + " and: " + item1.getUuid());
+            for (Payment item2 : newSet) {
+                System.out.println("RMS Sync Cashier Module: Payments comparison: Oldset comparing item uuid " + item2.getAmountTendered() + " with Newset: " + item1.getAmountTendered());
+                // BigDecimal behaves different. You cannot use ==
+                if (item1.getAmountTendered().compareTo(item2.getAmountTendered()) == 0) {
+                    System.out.println("RMS Sync Cashier Module: Payments comparison: Found a match: " + item2.getAmountTendered()+ " and: " + item1.getAmountTendered());
                     found = true;
+                    System.out.println("RMS Sync Cashier Module: Payments comparison: Removing item amount " + item2.getAmountTendered() + " size before: " + result.size());
+                    // result.remove(item2);
+                    for(Payment test : result) {
+                        if (item2.getAmountTendered().compareTo(test.getAmountTendered()) == 0) {
+                            result.remove(test);
+                            break;
+                        }
+                    }
+                    System.out.println("RMS Sync Cashier Module: Payments comparison: Removing item: size after: " + result.size());
                     break;
                 }
             }
-            if (!found) {
-                System.out.println("RMS Sync Cashier Module: Payments comparison: Adding item id " + item1.getUuid());
-                result.add(item1);
-            }
+            // if (found) {
+            //     System.out.println("RMS Sync Cashier Module: Payments comparison: Removing item amount " + item2.getAmountTendered() + " size before: " + result.size());
+            //     result.remove(item2);
+            //     System.out.println("RMS Sync Cashier Module: Payments comparison: Removing item: size after: " + result.size());
+            // }
         }
 
         System.out.println("RMS Sync Cashier Module: Payments comparison: " + result.size());
