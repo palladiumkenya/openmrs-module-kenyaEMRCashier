@@ -18,7 +18,6 @@ import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.ui.framework.SimpleObject;
