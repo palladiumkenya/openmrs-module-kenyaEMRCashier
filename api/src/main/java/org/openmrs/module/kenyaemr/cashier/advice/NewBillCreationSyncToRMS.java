@@ -16,6 +16,7 @@ import javax.validation.constraints.NotNull;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.Patient;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
@@ -66,42 +67,52 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 
     private String prepareNewBillRMSPayload(@NotNull Bill bill) {
 		String ret = "";
-		if (bill != null) {
-			if(debugMode) System.out.println(
-			    "RMS Sync Cashier Module: New bill created: UUID" + bill.getUuid() + ", Total: " + bill.getTotal());
-			SimpleObject payloadPrep = new SimpleObject();
-			payloadPrep.put("bill_reference", bill.getUuid());
-			payloadPrep.put("total_cost", bill.getTotal());
-            payloadPrep.put("hospital_code", Utils.getDefaultLocationMflCode(null));
-			payloadPrep.put("patient_id", bill.getPatient().getUuid());
-            List<SimpleObject> items = new LinkedList<>();
-			List<BillLineItem> billItems = bill.getLineItems();
-            for(BillLineItem billLineItem : billItems) {
-                SimpleObject itemsPayload = new SimpleObject();
-                if(billLineItem.getBillableService() != null) {
-                    itemsPayload.put("service_code", "3f500af5-3139-45b0-ab47-57f9c504f92d");
-                    itemsPayload.put("service_name", "service");
-                } else if(billLineItem.getItem() != null) {
-                    itemsPayload.put("service_code", "a3dd3be8-05c5-425e-8e08-6765f6a50b76");
-                    itemsPayload.put("service_name", "stock_item");
-                } else {
-                    itemsPayload.put("service_code", "");
-                    itemsPayload.put("service_name", ""); 
-                }
-                itemsPayload.put("unique_id", billLineItem.getUuid());
-                itemsPayload.put("bill_id", bill.getUuid());
-                itemsPayload.put("quantity", billLineItem.getQuantity());
-                itemsPayload.put("price", billLineItem.getPrice());
-                itemsPayload.put("excempted", "no");
 
-                items.add(itemsPayload);
-            }
-            payloadPrep.put("bill_items", items);
-			ret = payloadPrep.toJson();
-			if(debugMode) System.out.println("RMS Sync Cashier Module: Got bill details: " + ret);
-		} else {
-			if(debugMode) System.out.println("RMS Sync Cashier Module: bill is null");
-		}
+		try {
+			Context.openSession();
+			if (bill != null) {
+				if(debugMode) System.out.println(
+					"RMS Sync Cashier Module: New bill created: UUID" + bill.getUuid() + ", Total: " + bill.getTotal());
+				SimpleObject payloadPrep = new SimpleObject();
+				payloadPrep.put("bill_reference", bill.getUuid());
+				payloadPrep.put("total_cost", bill.getTotal());
+				payloadPrep.put("hospital_code", Utils.getDefaultLocationMflCode(null));
+				payloadPrep.put("patient_id", bill.getPatient().getUuid());
+				List<SimpleObject> items = new LinkedList<>();
+				List<BillLineItem> billItems = bill.getLineItems();
+				for(BillLineItem billLineItem : billItems) {
+					SimpleObject itemsPayload = new SimpleObject();
+					if(billLineItem.getBillableService() != null) {
+						itemsPayload.put("service_code", "3f500af5-3139-45b0-ab47-57f9c504f92d");
+						itemsPayload.put("service_name", "service");
+					} else if(billLineItem.getItem() != null) {
+						itemsPayload.put("service_code", "a3dd3be8-05c5-425e-8e08-6765f6a50b76");
+						itemsPayload.put("service_name", "stock_item");
+					} else {
+						itemsPayload.put("service_code", "");
+						itemsPayload.put("service_name", ""); 
+					}
+					itemsPayload.put("unique_id", billLineItem.getUuid());
+					itemsPayload.put("bill_id", bill.getUuid());
+					itemsPayload.put("quantity", billLineItem.getQuantity());
+					itemsPayload.put("price", billLineItem.getPrice());
+					itemsPayload.put("excempted", "no");
+
+					items.add(itemsPayload);
+				}
+				payloadPrep.put("bill_items", items);
+				ret = payloadPrep.toJson();
+				if(debugMode) System.out.println("RMS Sync Cashier Module: Got bill details: " + ret);
+			} else {
+				if(debugMode) System.out.println("RMS Sync Cashier Module: bill is null");
+			}
+		} catch (Exception ex) {
+			if(debugMode) System.err.println("RMS Sync Cashier Module: Error getting new bill payload: " + ex.getMessage());
+            ex.printStackTrace();
+		} finally {
+            Context.closeSession();
+        }
+
 		return (ret);
 	}
 

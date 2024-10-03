@@ -22,6 +22,7 @@ import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.ui.framework.SimpleObject;
+import org.openmrs.util.PrivilegeConstants;
 import org.springframework.aop.AfterReturningAdvice;
 
 /**
@@ -78,44 +79,54 @@ public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
      */
     private String preparePatientRMSPayload(@NotNull Patient patient) {
 		String ret = "";
-		if (patient != null) {
-			if(debugMode) System.out.println(
-			    "RMS Sync Cashier Module: New patient created: " + patient.getPersonName().getFullName() + ", Age: " + patient.getAge());
-			SimpleObject payloadPrep = new SimpleObject();
-			payloadPrep.put("first_name", patient.getPersonName().getGivenName());
-			payloadPrep.put("middle_name", patient.getPersonName().getMiddleName());
-			payloadPrep.put("patient_unique_id", patient.getUuid());
-			payloadPrep.put("last_name", patient.getPersonName().getFamilyName());
-			PatientIdentifierType nationalIDIdentifierType = Context.getPatientService()
-			        .getPatientIdentifierTypeByUuid("49af6cdc-7968-4abb-bf46-de10d7f4859f");
-			String natID = "";
-			if (nationalIDIdentifierType != null) {
-				PatientIdentifier piNatId = patient.getPatientIdentifier(nationalIDIdentifierType);
-				
-				if (piNatId != null) {
-					natID = piNatId.getIdentifier();
-					if(debugMode) System.err.println("RMS Sync Cashier Module: Got the national id as: " + natID);
+		try {
+			Context.openSession();
+			Context.addProxyPrivilege(PrivilegeConstants.GET_IDENTIFIER_TYPES);
+			if (patient != null) {
+				if(debugMode) System.out.println(
+					"RMS Sync Cashier Module: New patient created: " + patient.getPersonName().getFullName() + ", Age: " + patient.getAge());
+				SimpleObject payloadPrep = new SimpleObject();
+				payloadPrep.put("first_name", patient.getPersonName().getGivenName());
+				payloadPrep.put("middle_name", patient.getPersonName().getMiddleName());
+				payloadPrep.put("patient_unique_id", patient.getUuid());
+				payloadPrep.put("last_name", patient.getPersonName().getFamilyName());
+				PatientIdentifierType nationalIDIdentifierType = Context.getPatientService()
+						.getPatientIdentifierTypeByUuid("49af6cdc-7968-4abb-bf46-de10d7f4859f");
+				String natID = "";
+				if (nationalIDIdentifierType != null) {
+					PatientIdentifier piNatId = patient.getPatientIdentifier(nationalIDIdentifierType);
+					
+					if (piNatId != null) {
+						natID = piNatId.getIdentifier();
+						if(debugMode) System.err.println("RMS Sync Cashier Module: Got the national id as: " + natID);
+					}
 				}
+				payloadPrep.put("id_number", natID);
+				String phoneNumber = patient.getAttribute("Telephone contact") != null
+						? patient.getAttribute("Telephone contact").getValue()
+						: "";
+				payloadPrep.put("phone", phoneNumber);
+				payloadPrep.put("hospital_code", Utils.getDefaultLocationMflCode(null));
+				SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+				payloadPrep.put("dob", formatter.format(patient.getBirthdate()));
+				payloadPrep
+						.put("gender",
+							patient.getGender() != null
+									? (patient.getGender().equalsIgnoreCase("M") ? "Male"
+											: (patient.getGender().equalsIgnoreCase("F") ? "Female" : ""))
+									: "");
+				ret = payloadPrep.toJson();
+				if(debugMode) System.out.println("RMS Sync Cashier Module: Got patient registration details: " + ret);
+			} else {
+				if(debugMode) System.out.println("RMS Sync Cashier Module: patient is null");
 			}
-			payloadPrep.put("id_number", natID);
-			String phoneNumber = patient.getAttribute("Telephone contact") != null
-			        ? patient.getAttribute("Telephone contact").getValue()
-			        : "";
-			payloadPrep.put("phone", phoneNumber);
-			payloadPrep.put("hospital_code", Utils.getDefaultLocationMflCode(null));
-			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-			payloadPrep.put("dob", formatter.format(patient.getBirthdate()));
-			payloadPrep
-			        .put("gender",
-			            patient.getGender() != null
-			                    ? (patient.getGender().equalsIgnoreCase("M") ? "Male"
-			                            : (patient.getGender().equalsIgnoreCase("F") ? "Female" : ""))
-			                    : "");
-			ret = payloadPrep.toJson();
-			if(debugMode) System.out.println("RMS Sync Cashier Module: Got patient registration details: " + ret);
-		} else {
-			if(debugMode) System.out.println("RMS Sync Cashier Module: patient is null");
-		}
+		} catch (Exception ex) {
+			if(debugMode) System.err.println("RMS Sync Cashier Module: Error getting new patient payload: " + ex.getMessage());
+            ex.printStackTrace();
+		} finally {
+            Context.closeSession();
+        }
+
 		return (ret);
 	}
 
