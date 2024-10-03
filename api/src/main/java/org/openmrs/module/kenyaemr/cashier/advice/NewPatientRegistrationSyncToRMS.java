@@ -18,6 +18,7 @@ import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.ui.framework.SimpleObject;
@@ -51,7 +52,10 @@ public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
                             if(debugMode) System.out.println("RMS Sync Cashier Module: DOB: " + patient.getBirthdate());
                             if(debugMode) System.out.println("RMS Sync Cashier Module: Age: " + patient.getAge());
 
-                            sendRMSPatientRegistration(patient);
+                            // Use a thread to send the data. This frees up the frontend to proceed
+							syncPatientRunnable runner = new syncPatientRunnable(patient);
+							Thread thread = new Thread(runner);
+							thread.start();
                         } else {
                             // EDIT MODE
                             if(debugMode) System.out.println("RMS Sync Cashier Module: patient in edit mode. we ignore");
@@ -277,5 +281,34 @@ public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
 		
 		return (ret);
 	}
+
+	/**
+	 * A thread to free up the frontend
+	 */
+	private class syncPatientRunnable implements Runnable {
+
+        Patient patient = new Patient();
+		Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
+
+        public syncPatientRunnable(@NotNull Patient patient) {
+            this.patient = patient;
+        }
+
+        @Override
+        public void run() {
+            // Run the thread
+
+            try {
+				if(debugMode) System.out.println("RMS Sync Cashier Module: Start sending patient to RMS");
+
+                sendRMSPatientRegistration(patient);
+
+                if(debugMode) System.out.println("RMS Sync Cashier Module: Finished sending patient to RMS");
+            } catch(Exception ex) {
+                if(debugMode) System.err.println("RMS Sync Cashier Module: Error. Failed to send patient to RMS: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
+    }
 
 }

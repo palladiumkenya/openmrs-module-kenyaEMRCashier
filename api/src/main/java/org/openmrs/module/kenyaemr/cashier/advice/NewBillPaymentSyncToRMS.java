@@ -297,6 +297,9 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 		return (ret);
 	}
 
+	/**
+	 * A thread to free up the frontend
+	 */
 	private class syncPaymentRunnable implements Runnable {
 
         Payment payment = new Payment();

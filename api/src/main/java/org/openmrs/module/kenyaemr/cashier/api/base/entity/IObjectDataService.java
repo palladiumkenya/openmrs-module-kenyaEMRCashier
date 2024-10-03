@@ -107,9 +107,6 @@ public interface IObjectDataService<E extends OpenmrsObject> extends OpenmrsServ
 	E getById(int id);
 
 	@Transactional(readOnly = true)
-	E getByIdRO(int id);
-
-	@Transactional(readOnly = true)
 	Set<Payment> getPaymentsByBillId(Integer billId);
 
 	/**

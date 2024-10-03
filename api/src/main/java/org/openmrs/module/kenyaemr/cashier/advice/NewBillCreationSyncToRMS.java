@@ -15,6 +15,7 @@ import javax.validation.constraints.NotNull;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.openmrs.Patient;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
@@ -47,7 +48,10 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
                     if (billCreationDate != null && AdviceUtils.checkIfCreateModetOrEditMode(billCreationDate)) {
                         // CREATE Mode
                         if(debugMode) System.out.println("RMS Sync Cashier Module: New Bill being created");
-                        sendRMSNewBill(bill);
+                        // Use a thread to send the data. This frees up the frontend to proceed
+						syncBillRunnable runner = new syncBillRunnable(bill);
+						Thread thread = new Thread(runner);
+						thread.start();
                     } else {
                         // EDIT Mode
                         if(debugMode) System.out.println("RMS Sync Cashier Module: Bill being edited. We ignore");
@@ -263,5 +267,34 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
 		
 		return (ret);
 	}
+
+	/**
+	 * A thread to free up the frontend
+	 */
+	private class syncBillRunnable implements Runnable {
+
+        Bill bill = new Bill();
+		Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
+
+        public syncBillRunnable(@NotNull Bill bill) {
+            this.bill = bill;
+        }
+
+        @Override
+        public void run() {
+            // Run the thread
+
+            try {
+				if(debugMode) System.out.println("RMS Sync Cashier Module: Start sending Bill to RMS");
+
+                sendRMSNewBill(bill);
+
+                if(debugMode) System.out.println("RMS Sync Cashier Module: Finished sending Bill to RMS");
+            } catch(Exception ex) {
+                if(debugMode) System.err.println("RMS Sync Cashier Module: Error. Failed to send Bill to RMS: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
+    }
 
 }

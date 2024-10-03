@@ -140,26 +140,6 @@ public class BaseHibernateRepositoryImpl implements BaseHibernateRepository {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <E extends OpenmrsObject> E selectSingleRO(Class<E> cls, Serializable id) {
-		DbSession session = sessionFactory.getCurrentSession();
-
-		// Ensure no caching is used by ignoring the cache
-        session.setCacheMode(CacheMode.IGNORE);
-        
-        // ensure no first-level caching
-        // session.clear();
-
-		try {
-			E ret = (E)session.get(cls, id);
-			return ret;
-		} catch (Exception ex) {
-			throw new APIException("An exception occurred while attempting to select a single " + cls.getSimpleName()
-			        + " entity with ID" + " " + id.toString() + ".", ex);
-		}
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
 	public Set<Payment> getPaymentsByBillId(Integer billId) {
 		// Get the current Hibernate session from DbSessionFactory
         DbSession session = sessionFactory.getCurrentSession();

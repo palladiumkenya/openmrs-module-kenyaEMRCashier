@@ -95,8 +95,6 @@ public interface BaseHibernateRepository {
 	 */
 	<E extends OpenmrsObject> E selectSingle(Class<E> cls, Serializable id);
 
-	<E extends OpenmrsObject> E selectSingleRO(Class<E> cls, Serializable id);
-
 	Set<Payment> getPaymentsByBillId(Integer billId);
 
 	/**

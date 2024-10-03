@@ -147,21 +147,9 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	@Override
 	@Authorized({ PrivilegeConstants.VIEW_BILLS })
 	@Transactional(readOnly = true)
-	public Bill getByIdRO(Integer entityId) {
-		Bill bill = super.getByIdRO(entityId);
-		removeNullLineItems(bill);
-		return bill;
-	}
-
-	@Override
-	@Authorized({ PrivilegeConstants.VIEW_BILLS })
-	@Transactional(readOnly = true)
 	public Set<Payment> getPaymentsByBillId(Integer billId) {
 		Set<Payment> payments = super.getPaymentsByBillId(billId);
 		return payments;
-		// return(new HashSet<>());
-		// Bill current = getByIdRO(billId);
-		// return(current.getPayments());
 	}
 
 	@Override

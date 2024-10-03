@@ -50,10 +50,6 @@ public interface IBillService extends IEntityDataService<Bill> {
 
 	@Transactional(readOnly = true)
 	@Authorized({ PrivilegeConstants.VIEW_BILLS })
-	Bill getByIdRO(Integer billId);
-
-	@Transactional(readOnly = true)
-	@Authorized({ PrivilegeConstants.VIEW_BILLS })
 	Set<Payment> getPaymentsByBillId(Integer billId);
 
 	/**

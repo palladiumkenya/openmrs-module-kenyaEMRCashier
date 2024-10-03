@@ -192,17 +192,6 @@ public abstract class BaseObjectDataServiceImpl<E extends OpenmrsObject, P exten
 
 	@Override
 	@Transactional(readOnly = true)
-	public E getByIdRO(int entityId) {
-		P privileges = getPrivileges();
-		if (privileges != null && !StringUtils.isEmpty(privileges.getGetPrivilege())) {
-			PrivilegeUtil.requirePrivileges(Context.getAuthenticatedUser(), privileges.getGetPrivilege());
-		}
-
-		return repository.selectSingleRO(getEntityClass(), entityId);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
 	public Set<Payment> getPaymentsByBillId(Integer billId) {
 		P privileges = getPrivileges();
 		if (privileges != null && !StringUtils.isEmpty(privileges.getGetPrivilege())) {
