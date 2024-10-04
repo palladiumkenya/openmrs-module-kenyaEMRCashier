@@ -16,12 +16,14 @@ package org.openmrs.module.kenyaemr.cashier.api;
 
 import java.io.File;
 import java.util.List;
+import java.util.Set;
 
 import org.openmrs.Patient;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +47,10 @@ public interface IBillService extends IEntityDataService<Bill> {
 	@Transactional(readOnly = true)
 	@Authorized({ PrivilegeConstants.VIEW_BILLS })
 	Bill getBillByReceiptNumber(String receiptNumber);
+
+	@Transactional(readOnly = true)
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	Set<Payment> getPaymentsByBillId(Integer billId);
 
 	/**
 	 * Returns all {@link Bill}s for the specified patient with the specified paging.
