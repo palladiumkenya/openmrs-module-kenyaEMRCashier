@@ -235,4 +235,6 @@
 	<bean id="genericRepositoryDao" class="org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepositoryImpl">
 		<constructor-arg name="sessionFactory" ref="dbSessionFactory"/>
 	</bean>
+	<bean id="syncPatientsToRMSChore" class="org.openmrs.module.kenyaemr.cashier.chore.SyncPatientsToRMS" />
+	<bean id="syncBillsToRMSChore" class="org.openmrs.module.kenyaemr.cashier.chore.SyncBillsToRMS" />
 </beans>

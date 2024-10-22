@@ -150,5 +150,47 @@ public class AdviceUtils {
         return(ret);
     }
 
+    /**
+     * Get the status of sync chores
+     * @return true - already synced, false - not synced
+     */
+    public static Boolean getRMSSyncStatus() {
+        Boolean ret = false;
+
+        GlobalProperty rmsPatientSyncStatusGP = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_PATIENT_SYNC_STATUS);
+        GlobalProperty rmsBillSyncStatusGP = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_BILL_SYNC_STATUS);
+		String rmsPatientSyncStatus = rmsPatientSyncStatusGP.getPropertyValue();
+        String rmsBillSyncStatus = rmsBillSyncStatusGP.getPropertyValue();
+        String patientTest = (rmsPatientSyncStatus == null || rmsPatientSyncStatus.trim().isEmpty()) ? "" : rmsPatientSyncStatus.trim();
+        String billTest = (rmsBillSyncStatus == null || rmsBillSyncStatus.trim().isEmpty()) ? "" : rmsBillSyncStatus.trim();
+
+        if(patientTest.equalsIgnoreCase("true") && billTest.equalsIgnoreCase("true")) {
+            return(true);
+        }
+
+        return(ret);
+    }
+
+    /**
+     * Mark the sync chores as done
+     * @return
+     */
+    public static void setRMSSyncStatus(Boolean status) {
+
+        GlobalProperty rmsPatientSyncStatusGP = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_PATIENT_SYNC_STATUS);
+        GlobalProperty rmsBillSyncStatusGP = Context.getAdministrationService()
+			        .getGlobalPropertyObject(CashierModuleConstants.RMS_BILL_SYNC_STATUS);
+        if(status) {
+            rmsPatientSyncStatusGP.setPropertyValue("true");
+            rmsBillSyncStatusGP.setPropertyValue("true");
+        } else {
+            rmsPatientSyncStatusGP.setPropertyValue("false");
+            rmsBillSyncStatusGP.setPropertyValue("false");
+        }
+    }
+
 }
 

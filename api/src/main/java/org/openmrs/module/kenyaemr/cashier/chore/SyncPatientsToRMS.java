@@ -1,13 +1,22 @@
-package org.openmrs.module.kenyaemr.cashier.advice;
+/**
+ * This Source Code Form is subject to the terms of the Mozilla Public License,
+ * v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ * obtain one at http://mozilla.org/MPL/2.0/. OpenMRS is also distributed under
+ * the terms of the Healthcare Disclaimer located at http://openmrs.org/license.
+ *
+ * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
+ * graphic logo is a trademark of OpenMRS Inc.
+ */
+package org.openmrs.module.kenyaemr.cashier.chore;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.lang.reflect.Method;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.List;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.validation.constraints.NotNull;
@@ -17,57 +26,111 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
+// import org.openmrs.module.kenyacore.chore.AbstractChore;
 import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.openmrs.ui.framework.SimpleObject;
 import org.openmrs.util.PrivilegeConstants;
-import org.springframework.aop.AfterReturningAdvice;
+import org.springframework.stereotype.Component;
 
 /**
- * Detects when a new patient has been registered and syncs to RMS Financial System
+ * We want to sync patients to the RMS financial system
+ *
  */
-public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
+@Component("kenyaemr.cashier.chore.syncpatientstorms")
+// public class SyncPatientsToRMS extends AbstractChore {
+public class SyncPatientsToRMS {
+    /**
+     * @see AbstractChore#perform(PrintWriter)
+     */
+    private Boolean debugMode = false;
 
-	private Boolean debugMode = false;
+    // @Override
+    public void perform(PrintWriter output) {
+        debugMode = AdviceUtils.isRMSLoggingEnabled();
+        
+        if(AdviceUtils.isRMSIntegrationEnabled() && !AdviceUtils.getRMSSyncStatus()) {
+            if(debugMode) System.err.println("Cashier RMS Patients Sync: Starting ...");
+            runTask runners = new runTask(output);
+            Thread thread = new Thread(runners);
+            thread.start();
+        }
+    }
 
-    @Override
-    public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
+    /**
+     * This synchronizes the facility patients with RMS system
+     * @param output
+     * @return
+     */
+    private SimpleObject patientsSync(PrintWriter output) {
+        final SimpleObject ret = new SimpleObject();
+        final PrintWriter display = output;
+        
         try {
-			debugMode = AdviceUtils.isRMSLoggingEnabled();
-            if(AdviceUtils.isRMSIntegrationEnabled()) {
-                // Check if the method is "savePatient"
-                if (method.getName().equals("savePatient") && args.length > 0 && args[0] instanceof Patient) {
-                    Patient patient = (Patient) args[0];
+			Context.openSession();
+			Context.addProxyPrivilege(PrivilegeConstants.GET_IDENTIFIER_TYPES);
+            Context.addProxyPrivilege(PrivilegeConstants.GET_PATIENTS);
+            PatientService service = Context.getPatientService();
+            List<Patient> patients = service.getAllPatients();
 
-                    // Log patient info
-                    if (patient != null) {
-                        Date patientCreationDate = patient.getDateCreated();
-                        if(debugMode) System.out.println("RMS Sync Cashier Module: patient was created on: " + patientCreationDate);
+            for(Patient patient : patients) {
+                sendRMSPatientRegistration(patient);
 
-                        if(patientCreationDate != null && AdviceUtils.checkIfCreateModetOrEditMode(patientCreationDate)) {
-                            // CREATE MODE
-                            if(debugMode) System.out.println("RMS Sync Cashier Module: New patient registered:");
-                            if(debugMode) System.out.println("RMS Sync Cashier Module: Name: " + patient.getPersonName().getFullName());
-                            if(debugMode) System.out.println("RMS Sync Cashier Module: DOB: " + patient.getBirthdate());
-                            if(debugMode) System.out.println("RMS Sync Cashier Module: Age: " + patient.getAge());
-
-                            // Use a thread to send the data. This frees up the frontend to proceed
-							syncPatientRunnable runner = new syncPatientRunnable(patient);
-							Thread thread = new Thread(runner);
-							thread.start();
-                        } else {
-                            // EDIT MODE
-                            if(debugMode) System.out.println("RMS Sync Cashier Module: patient in edit mode. we ignore");
-                        }
-                    } else {
-                        if(debugMode) System.out.println("RMS Sync Cashier Module: Attempted to save a null patient.");
-                    }
+                // A delay to load balance the sync
+                try {
+                    Thread.sleep(2000); // 1000 ms = 1 second
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
-        } catch(Exception ex) {
-            if(debugMode) System.err.println("RMS Sync Cashier Module: Error getting new patient: " + ex.getMessage());
-            ex.printStackTrace();
+        } catch (Exception ex) {
+            if(debugMode) System.err.println("Cashier RMS Patients Sync: ERROR: " + ex.getMessage());
+            if(debugMode) display.println("Cashier RMS Patients Sync: ERROR: " + ex.getMessage());
+            if(debugMode) ex.printStackTrace();
+            throw new IllegalArgumentException("Cashier RMS Patients Sync: Unable to sync patients", ex);
+        } finally {
+            Context.closeSession();
+        }
+        ret.put("data", SimpleObject.create("status", true));
+
+        return ret;
+    }
+
+    /**
+     * This is the Thread to allow the server to quickly startup
+     */
+    private class runTask implements Runnable {
+
+        PrintWriter output = new PrintWriter(System.out);
+
+        public runTask(PrintWriter output) {
+            this.output = output;
+        }
+
+        @Override
+        public void run() {
+            // Run the task
+            if(debugMode) System.out.println("Cashier RMS Patients Sync: Starting the SyncPatientsToRMS chore");
+            if(debugMode) output.println("Cashier RMS Patients Sync: Starting the SyncPatientsToRMS chore");
+
+            try {
+
+                // Sync the patients
+                patientsSync(output);
+
+                // Sync the bills
+                SyncBillsToRMS syncBillsToRMS = new SyncBillsToRMS();
+                syncBillsToRMS.perform(output);
+
+                if(debugMode) System.out.println("Cashier RMS Patients Sync: Completed syncing patients to RMS");
+                if(debugMode) output.println("Cashier RMS Patients Sync: Completed  syncing patients to RMS");
+            } catch(Exception ex) {
+                if(debugMode) System.err.println("Cashier RMS Patients Sync: ERROR: SyncPatientsToRMS chore: " + ex.getMessage());
+                if(debugMode) output.println("Cashier RMS Patients Sync: ERROR: SyncPatientsToRMS chore: " + ex.getMessage());
+                if(debugMode) ex.printStackTrace();
+            }
         }
     }
 
@@ -76,12 +139,9 @@ public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
      * @param patient
      * @return
      */
-    private static String preparePatientRMSPayload(@NotNull Patient patient) {
+    private String preparePatientRMSPayload(@NotNull Patient patient) {
 		String ret = "";
-		Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
 		try {
-			Context.openSession();
-			Context.addProxyPrivilege(PrivilegeConstants.GET_IDENTIFIER_TYPES);
 			if (patient != null) {
 				if(debugMode) System.out.println(
 					"RMS Sync Cashier Module: New patient created: " + patient.getPersonName().getFullName() + ", Age: " + patient.getAge());
@@ -123,9 +183,7 @@ public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
 		} catch (Exception ex) {
 			if(debugMode) System.err.println("RMS Sync Cashier Module: Error getting new patient payload: " + ex.getMessage());
             ex.printStackTrace();
-		} finally {
-            Context.closeSession();
-        }
+		}
 
 		return (ret);
 	}
@@ -135,10 +193,9 @@ public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
      * @param patient
      * @return
      */
-    public static Boolean sendRMSPatientRegistration(@NotNull Patient patient) {
+    private Boolean sendRMSPatientRegistration(@NotNull Patient patient) {
 		Boolean ret = false;
 		String payload = preparePatientRMSPayload(patient);
-		Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
 		
 		HttpsURLConnection con = null;
 		HttpsURLConnection connection = null;
@@ -293,34 +350,5 @@ public class NewPatientRegistrationSyncToRMS implements AfterReturningAdvice {
 		
 		return (ret);
 	}
-
-	/**
-	 * A thread to free up the frontend
-	 */
-	private class syncPatientRunnable implements Runnable {
-
-        Patient patient = new Patient();
-		Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
-
-        public syncPatientRunnable(@NotNull Patient patient) {
-            this.patient = patient;
-        }
-
-        @Override
-        public void run() {
-            // Run the thread
-
-            try {
-				if(debugMode) System.out.println("RMS Sync Cashier Module: Start sending patient to RMS");
-
-                sendRMSPatientRegistration(patient);
-
-                if(debugMode) System.out.println("RMS Sync Cashier Module: Finished sending patient to RMS");
-            } catch(Exception ex) {
-                if(debugMode) System.err.println("RMS Sync Cashier Module: Error. Failed to send patient to RMS: " + ex.getMessage());
-                ex.printStackTrace();
-            }
-        }
-    }
 
 }

@@ -52,6 +52,7 @@
 		<powermock.version>1.4.10</powermock.version>
 		<javaCompilerVersion>1.7</javaCompilerVersion>
 		<itextPdfVersion>8.0.2</itextPdfVersion>
+		<!-- <kenyacoreVersion>3.0.1</kenyacoreVersion> -->
 	</properties>
 
 	<dependencyManagement>
@@ -106,6 +107,13 @@
 				<type>jar</type>
 				<scope>provided</scope>
 			</dependency>
+
+			<!-- <dependency>
+                <groupId>org.openmrs.module</groupId>
+                <artifactId>kenyacore-api</artifactId>
+                <version>${kenyacoreVersion}</version>
+				<scope>provided</scope>
+            </dependency> -->
 
 			<!-- End OpenMRS core -->
 

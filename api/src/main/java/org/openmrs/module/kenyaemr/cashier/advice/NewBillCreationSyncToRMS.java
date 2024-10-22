@@ -64,8 +64,9 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
         }
     }
 
-    private String prepareNewBillRMSPayload(@NotNull Bill bill) {
+    private static String prepareNewBillRMSPayload(@NotNull Bill bill) {
 		String ret = "";
+		Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
 
 		try {
 			Context.openSession();
@@ -120,9 +121,10 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
      * @param patient
      * @return
      */
-    private Boolean sendRMSNewBill(@NotNull Bill bill) {
+    public static Boolean sendRMSNewBill(@NotNull Bill bill) {
 		Boolean ret = false;
 		String payload = prepareNewBillRMSPayload(bill);
+		Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
 		
 		HttpsURLConnection con = null;
 		HttpsURLConnection connection = null;
@@ -297,6 +299,12 @@ public class NewBillCreationSyncToRMS implements AfterReturningAdvice {
             try {
 				if(debugMode) System.out.println("RMS Sync Cashier Module: Start sending Bill to RMS");
 
+				// If the patient doesnt exist, send the patient to RMS
+				if(debugMode) System.out.println("RMS Sync Cashier Module Bill: Send the patient first");
+				NewPatientRegistrationSyncToRMS.sendRMSPatientRegistration(bill.getPatient());
+
+				// Now we can send the bill
+				if(debugMode) System.out.println("RMS Sync Cashier Module Bill: Now Send the bill");
                 sendRMSNewBill(bill);
 
                 if(debugMode) System.out.println("RMS Sync Cashier Module: Finished sending Bill to RMS");

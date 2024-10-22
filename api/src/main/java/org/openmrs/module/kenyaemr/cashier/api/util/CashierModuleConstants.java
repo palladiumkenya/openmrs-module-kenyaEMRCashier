@@ -31,5 +31,9 @@ public class CashierModuleConstants {
 
 	public static final String RMS_LOGGING_ENABLED = "kenyaemr.cashier.rms.integration.logging";
 
+	public static final String RMS_PATIENT_SYNC_STATUS = "kenyaemr.cashier.chore.syncpatientstorms.done";
+
+	public static final String RMS_BILL_SYNC_STATUS = "kenyaemr.cashier.chore.syncbillstorms.done";
+
 	protected CashierModuleConstants() {}
 }

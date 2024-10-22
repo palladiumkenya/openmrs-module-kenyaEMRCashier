@@ -316,6 +316,15 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
             try {
 				if(debugMode) System.out.println("RMS Sync Cashier Module: Start sending payment to RMS");
 
+				// If the patient doesnt exist, send the patient to RMS
+				if(debugMode) System.out.println("RMS Sync Cashier Module Bill Payment: Send the patient first");
+				NewPatientRegistrationSyncToRMS.sendRMSPatientRegistration(payment.getBill().getPatient());
+
+				// If the bill doesnt exist, send the bill to RMS
+				if(debugMode) System.out.println("RMS Sync Cashier Module Bill Payment: Send the bill next");
+				NewBillCreationSyncToRMS.sendRMSNewBill(payment.getBill());
+
+				// Now we can send the bill payment
                 sendRMSNewPayment(payment);
 
                 if(debugMode) System.out.println("RMS Sync Cashier Module: Finished sending payment to RMS");
