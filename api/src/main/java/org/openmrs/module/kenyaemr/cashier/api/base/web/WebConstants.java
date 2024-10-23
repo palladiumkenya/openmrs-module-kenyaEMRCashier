@@ -19,8 +19,5 @@ package org.openmrs.module.kenyaemr.cashier.api.base.web;
 public class WebConstants {
 	protected static final String MODULE_BASE = "/module/kenyaemr/";
 	protected static final String MODULE_RESOURCE_BASE = "/moduleResources/kenyaemr/";
-
-	public static final String REPORT_DOWNLOAD_URL = "/moduleServlet/jasperreport/jreportDownload";
-
 	protected WebConstants() {}
 }

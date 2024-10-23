@@ -18,12 +18,6 @@
 
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
-			<artifactId>jasperreport-api</artifactId>
-			<type>jar</type>
-		</dependency>
-
-		<dependency>
-			<groupId>org.openmrs.module</groupId>
 			<artifactId>stockmanagement-api</artifactId>
 		</dependency>
 

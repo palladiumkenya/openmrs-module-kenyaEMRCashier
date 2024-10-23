@@ -20,12 +20,6 @@
 			<artifactId>stockmanagement-api</artifactId>
 		</dependency>
 
-
-		<dependency>
-			<groupId>org.openmrs.module</groupId>
-			<artifactId>jasperreport-api</artifactId>
-		</dependency>
-
 		<!-- These two dependencies need to be higher in the order to ensure that the correct (newer) version of
 		javassit is used -->
 		<dependency>

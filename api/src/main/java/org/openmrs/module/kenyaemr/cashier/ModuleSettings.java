@@ -17,8 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.jasperreport.JasperReport;
-import org.openmrs.module.jasperreport.JasperReportService;
 import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashierSettings;
 
@@ -57,18 +55,6 @@ public class ModuleSettings {
 
 	public static Integer getReceiptReportId() {
 		return getIntProperty(RECEIPT_REPORT_ID_PROPERTY);
-	}
-
-	public static JasperReport getReceiptReport() {
-		JasperReport report = null;
-
-		Integer reportId = getReceiptReportId();
-		if (reportId != null) {
-			JasperReportService reportService = Context.getService(JasperReportService.class);
-			report = reportService.getJasperReport(reportId);
-		}
-
-		return report;
 	}
 
 	public static CashierSettings loadSettings() {

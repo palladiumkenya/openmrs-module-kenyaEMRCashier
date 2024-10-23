@@ -13,16 +13,6 @@
  */
 package org.openmrs.module.kenyaemr.cashier.web.filter;
 
-import java.io.IOException;
-import java.util.Date;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.Provider;
@@ -33,6 +23,15 @@ import org.openmrs.module.kenyaemr.cashier.api.base.ProviderUtil;
 import org.openmrs.module.kenyaemr.cashier.api.model.Timesheet;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.springframework.stereotype.Component;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import java.io.IOException;
+import java.util.Date;
 
 /**
  * Performs the neccessary filters when a cashier logs out. Implements {@link Filter}

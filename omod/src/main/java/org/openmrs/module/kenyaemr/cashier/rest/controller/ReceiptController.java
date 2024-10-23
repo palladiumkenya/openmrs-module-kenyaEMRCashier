@@ -15,8 +15,6 @@ package org.openmrs.module.kenyaemr.cashier.rest.controller;
 
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.jasperreport.JasperReport;
-import org.openmrs.module.jasperreport.ReportGenerator;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
@@ -70,38 +68,6 @@ public class ReceiptController extends BaseRestController {
 		} else {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-	}
-
-	private boolean generateReport(Integer billId, HttpServletResponse response, Bill bill, JasperReport report)
-	        throws IOException {
-		String name = report.getName();
-		if (StringUtils.isEmpty(bill.getReceiptNumber())) {
-			report.setName(bill.getReceiptNumber());
-		} else {
-			report.setName(String.valueOf(billId));
-		}
-
-		HashMap<String, Object> params = new HashMap<String, Object>();
-		params.put("billId", bill.getId());
-
-		try {
-			ReportGenerator.generateHtmlAndWriteToResponse(report, params, response);
-		} catch (IOException e) {
-			if (StringUtils.isEmpty(bill.getReceiptNumber())) {
-				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error generating report for receipt '"
-				        + bill.getReceiptNumber() + "'");
-			} else {
-				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error generating report for bill '"
-				        + billId + "'");
-			}
-
-			return false;
-		} finally {
-			// Reset the report name
-			report.setName(name);
-		}
-
-		return true;
 	}
 
 	private boolean validateBill(Integer billId, Bill bill, HttpServletResponse response) throws IOException {

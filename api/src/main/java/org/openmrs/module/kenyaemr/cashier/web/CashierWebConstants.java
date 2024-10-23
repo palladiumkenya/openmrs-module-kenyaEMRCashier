@@ -25,7 +25,6 @@ public class CashierWebConstants extends WebConstants {
 	        + CashierModuleConstants.MODULE_NAME + "/";
 	public static final String MODULE_COMMONS_RESOURCE_ROOT = "/moduleResources/kenyaemr/commons/";
 	public static final String CASHIER_PAGE = MODULE_ROOT + "cashier";
-	public static final String JASPER_REPORT_PAGE = MODULE_ROOT + "jasperReport";
 	public static final String CASHIER_ROLE_ROOT = MODULE_ROOT + "cashierRole";
 	public static final String CASHIER_ROLE_PAGE = CASHIER_ROLE_ROOT + ".form";
 
