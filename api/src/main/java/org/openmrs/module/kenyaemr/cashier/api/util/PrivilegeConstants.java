@@ -13,16 +13,15 @@
  */
 package org.openmrs.module.kenyaemr.cashier.api.util;
 
+import org.openmrs.Privilege;
+import org.openmrs.api.UserService;
+import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.base.compatibility.PrivilegeConstantsCompatibility;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import org.openmrs.Privilege;
-import org.openmrs.api.UserService;
-import org.openmrs.api.context.Context;
-import org.openmrs.module.jasperreport.util.JasperReportPrivilegeConstants;
-import org.openmrs.module.kenyaemr.cashier.api.base.compatibility.PrivilegeConstantsCompatibility;
 
 /**
  * Constants class for module privilege constants.
@@ -106,8 +105,6 @@ public class PrivilegeConstants {
 		// Add other required cashier privileges
 		names.add("View Inventory Items");
 		names.add("View Inventory Metadata");
-		names.add(JasperReportPrivilegeConstants.VIEW_JASPER_REPORTS);
-
 		names.add(org.openmrs.util.PrivilegeConstants.ADD_ENCOUNTERS);
 		names.add(org.openmrs.util.PrivilegeConstants.ADD_VISITS);
 		names.add(org.openmrs.util.PrivilegeConstants.EDIT_ENCOUNTERS);
