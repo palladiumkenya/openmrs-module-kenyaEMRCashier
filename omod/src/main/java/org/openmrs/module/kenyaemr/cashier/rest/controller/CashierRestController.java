@@ -19,14 +19,14 @@ public class CashierRestController extends BaseRestController {
     @RequestMapping(method = RequestMethod.POST, path = "/billable-service")
     @ResponseBody
     public Object get(@RequestBody BillableServiceMapper request) {
-        //if the request has a uuid, update the billable service item
+        // Update the associated billable service item if a UUID is present in the request.
         if (request.getUuid() != null) {
             System.out.println("Updating billable service item " + request.getName());
             BillableService billableService = request.billableServiceUpdateMapper(request);
             IBillableItemsService service = Context.getService(IBillableItemsService.class);
             service.save(billableService);
         } else {
-            System.out.printf("Saving a new service item " + request.getName());
+            System.out.println("Saving a new service item " + request.getName());
             BillableService billableService = request.billableServiceMapper(request);
             IBillableItemsService service = Context.getService(IBillableItemsService.class);
             service.save(billableService);
