@@ -18,7 +18,18 @@ package org.openmrs.module.kenyaemr.cashier.api.util;
  */
 public class CashierModuleConstants {
 	public static final String MODULE_NAME = "cashier";
+
 	public static final String BILLING_EXEMPTIONS_CONFIG_FILE_PATH = "kenyaemr.cashier.billing.exemptions.config";
+
+	public static final String RMS_SYNC_ENABLED = "kenyaemr.cashier.rms.integration.enabled";
+	
+	public static final String RMS_ENDPOINT_URL = "kenyaemr.cashier.rms.integration.endpoint.url";
+	
+	public static final String RMS_USERNAME = "kenyaemr.cashier.rms.integration.username";
+	
+	public static final String RMS_PASSWORD = "kenyaemr.cashier.rms.integration.password";
+
+	public static final String RMS_LOGGING_ENABLED = "kenyaemr.cashier.rms.integration.logging";
 
 	protected CashierModuleConstants() {}
 }

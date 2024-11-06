@@ -37,6 +37,16 @@
 		<class>${project.parent.groupId}.${project.parent.artifactId}.advice.GenerateBillFromOrderable</class>
 	</advice>
 
+	<advice>
+		<point>org.openmrs.api.PatientService</point>
+		<class>org.openmrs.module.kenyaemr.cashier.advice.NewPatientRegistrationSyncToRMS</class>
+	</advice>
+
+	<advice>
+		<point>org.openmrs.module.kenyaemr.cashier.api.IBillService</point>
+		<class>org.openmrs.module.kenyaemr.cashier.advice.NewBillCreationSyncToRMS</class>
+	</advice>
+
 	<globalProperty>
 		<property>${project.parent.artifactId}.defaultReceiptReportId</property>
 		<description>ID of the default Jasper report to use for generating a receipt on the Bill page</description>
@@ -164,6 +174,31 @@
 		<description>
 			Full address and contact details to put in the receipt. Use "\n" for line break
 		</description>
+	</globalProperty>
+	<globalProperty>
+		<property>${project.parent.artifactId}.rms.integration.enabled</property>
+		<description>Is RMS integration enabled - (true) = enabled, (false) = disabled</description>
+		<defaultValue>false</defaultValue>
+	</globalProperty>
+	<globalProperty>
+		<property>${project.parent.artifactId}.rms.integration.endpoint.url</property>
+		<description>RMS integration Endpoint URL</description>
+		<defaultValue>https://siaya.tsconect.com/api</defaultValue>
+	</globalProperty>
+	<globalProperty>
+		<property>${project.parent.artifactId}.rms.integration.username</property>
+		<description>RMS integration Username</description>
+		<defaultValue>pdsl@gmail.com</defaultValue>
+	</globalProperty>
+	<globalProperty>
+		<property>${project.parent.artifactId}.rms.integration.password</property>
+		<description>RMS integration Password</description>
+		<defaultValue>password</defaultValue>
+	</globalProperty>
+	<globalProperty>
+		<property>${project.parent.artifactId}.rms.integration.logging</property>
+		<description>Is RMS integration logging enabled - (true) = enabled, (false) = disabled</description>
+		<defaultValue>false</defaultValue>
 	</globalProperty>
 	<!-- Privileges -->
 	<!--  Bills  -->

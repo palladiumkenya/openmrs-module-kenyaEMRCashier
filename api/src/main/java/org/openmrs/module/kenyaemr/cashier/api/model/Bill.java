@@ -25,6 +25,7 @@ import java.security.AccessControlException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -259,7 +260,7 @@ public class Bill extends BaseOpenmrsData {
 		}
 
 		if (this.payments == null) {
-			this.payments = new HashSet<Payment>();
+			this.payments = new LinkedHashSet<Payment>();
 		}
 		this.payments.add(payment);
 		payment.setBill(this);

@@ -16,10 +16,12 @@ package org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 
 /**
  * Represents types that can provide access to a data source through hibernate.
@@ -92,6 +94,8 @@ public interface BaseHibernateRepository {
 	 * @should return null if an entity with the id can not be found
 	 */
 	<E extends OpenmrsObject> E selectSingle(Class<E> cls, Serializable id);
+
+	Set<Payment> getPaymentsByBillId(Integer billId);
 
 	/**
 	 * Selects a single entity from the database using the specified {@link org.hibernate.Criteria}. If more than one entity
