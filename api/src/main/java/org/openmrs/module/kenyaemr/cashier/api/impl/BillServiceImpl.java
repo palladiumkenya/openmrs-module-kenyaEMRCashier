@@ -57,6 +57,7 @@ import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
+import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
@@ -85,6 +86,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	private static final String GP_DEFAULT_LOCATION = "kenyaemr.defaultLocation";
 	private static final String GP_FACILITY_ADDRESS_DETAILS = "kenyaemr.cashier.receipt.facilityAddress";
 	public static final String OPENMRS_ID = "dfacd928-0370-4315-99d7-6ec1c9f7ae76";
+	public static final String PAYMENT_REFERENCE_ATTRIBUTE = "d453e528-0264-4d6e-ae23-bc0b777e1146";
 
 
 	@Override
@@ -449,14 +451,19 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		Table paymentSection = new Table(paymentColWidth);
 		paymentSection.setWidth(UnitValue.createPercentValue(100f));
 		paymentSection.addCell(new Paragraph("  "));
-		paymentSection.addCell(new Paragraph("  "));
-		paymentSection.addCell(new Paragraph("Payment").setTextAlignment(TextAlignment.RIGHT).setBold());
-		paymentSection.addCell(new Paragraph(""));
+		paymentSection.addCell(new Paragraph("Payment").setTextAlignment(TextAlignment.LEFT).setBold());
+		paymentSection.addCell(new Paragraph("Ref No").setTextAlignment(TextAlignment.RIGHT).setBold());
+		paymentSection.addCell(new Paragraph(" "));
 		// append payment rows
 		for (Payment payment : bill.getPayments()) {
+			PaymentAttribute paymentReferenceAttribute = payment.getActiveAttributes().stream().filter(attribute -> attribute.getAttributeType().getUuid().equals(PAYMENT_REFERENCE_ATTRIBUTE)).findFirst().orElse(null);
+			String paymentReferenceCode = "";
+			if (paymentReferenceAttribute != null) {
+				paymentReferenceCode = paymentReferenceAttribute.getValue();
+			}
 			paymentSection.addCell(new Paragraph(" "));
-			paymentSection.addCell(new Paragraph(" "));
-			paymentSection.addCell(new Paragraph(payment.getInstanceType().getName()).setTextAlignment(TextAlignment.RIGHT)).setFontSize(10).setFont(helvetica);
+			paymentSection.addCell(new Paragraph(payment.getInstanceType().getName()).setTextAlignment(TextAlignment.LEFT)).setFontSize(10).setFont(helvetica);
+			paymentSection.addCell(new Paragraph(paymentReferenceCode).setTextAlignment(TextAlignment.RIGHT)).setFontSize(10).setFont(helvetica);
 			paymentSection.addCell(new Paragraph(df.format(payment.getAmountTendered())).setTextAlignment(TextAlignment.RIGHT)).setFontSize(10).setFont(helvetica);
 		}
 
