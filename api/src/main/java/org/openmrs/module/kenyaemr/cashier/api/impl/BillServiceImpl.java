@@ -42,6 +42,8 @@ import org.joda.time.DateTime;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
 import org.openmrs.Patient;
+import org.openmrs.PatientIdentifier;
+import org.openmrs.PatientIdentifierType;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
@@ -82,6 +84,8 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	private static final Log LOG = LogFactory.getLog(BillServiceImpl.class);
 	private static final String GP_DEFAULT_LOCATION = "kenyaemr.defaultLocation";
 	private static final String GP_FACILITY_ADDRESS_DETAILS = "kenyaemr.cashier.receipt.facilityAddress";
+	public static final String OPENMRS_ID = "dfacd928-0370-4315-99d7-6ec1c9f7ae76";
+
 
 	@Override
 	protected IEntityAuthorizationPrivileges getPrivileges() {
@@ -331,6 +335,8 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
             throw new RuntimeException(e);
         }
 
+		PatientIdentifierType openmrsIdType = Context.getPatientService().getPatientIdentifierTypeByUuid(OPENMRS_ID);
+		PatientIdentifier openmrsId = patient.getPatientIdentifier(openmrsIdType); // TODO: we should check for any NULL
         /**
 		 * https://kb.itextpdf.com/home/it7kb/faq/how-to-set-the-page-size-to-envelope-size-with-landscape-orientation
 		 * page size: 3.5inch length, 1.1 inch height
@@ -405,7 +411,11 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		receiptHeader.addCell(new Paragraph(bill.getReceiptNumber())).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(helvetica);
 
 		receiptHeader.addCell(new Paragraph("Patient:")).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(headerSectionFont);
-		receiptHeader.addCell(new Paragraph(WordUtils.capitalizeFully(fullName))).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(helvetica);
+		receiptHeader.addCell(new Paragraph(WordUtils.capitalizeFully(fullName + " (" + patient.getAge() + " Years)"))).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(helvetica);
+
+		receiptHeader.addCell(new Paragraph("Patient ID:")).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(headerSectionFont);
+		receiptHeader.addCell(new Paragraph(openmrsId != null ? openmrsId.getIdentifier().toUpperCase() : "")).setFontSize(FONT_SIZE_12).setTextAlignment(TextAlignment.LEFT).setFont(helvetica);
+
 
 		float[] columnWidths = { 1f, 5f, 2f, 2f };
 		Table billLineItemstable = new Table(columnWidths);
@@ -463,6 +473,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		doc.add(paymentSection);
 		doc.add(divider);
 		doc.add(new Paragraph("You were served by " + bill.getCashier().getName()).setFont(footerSectionFont).setFontSize(8).setTextAlignment(TextAlignment.CENTER));
+		doc.add(new Paragraph("GET WELL SOON").setFont(footerSectionFont).setFontSize(10).setTextAlignment(TextAlignment.CENTER));
 
 		doc.close();
 		return returnFile;
