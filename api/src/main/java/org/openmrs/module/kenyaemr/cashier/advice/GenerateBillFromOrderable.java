@@ -7,6 +7,7 @@ import org.openmrs.PatientProgram;
 import org.openmrs.Provider;
 import org.openmrs.TestOrder;
 import org.openmrs.User;
+import org.openmrs.Visit;
 import org.openmrs.VisitAttribute;
 import org.openmrs.api.OrderService;
 import org.openmrs.api.ProgramWorkflowService;
@@ -51,6 +52,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
     ICashPointService cashPointService = Context.getService(ICashPointService.class);
     public static String PROCEDURE_CLASS_CONCEPT_UUID = "8d490bf4-c2cc-11de-8d13-0010c6dffd0f";
     public static String IMAGING_CLASS_CONCEPT_UUID = "8caa332c-efe4-4025-8b18-3398328e1323";
+    public static String PAYMENT_TYPE_VISIT_ATTRIBUTE_UUID = "e6cb0c3b-04b0-4117-9bc6-ce24adbda802";
 
     @Override
     public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
@@ -172,6 +174,16 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
 
             BillLineItem billLineItem = new BillLineItem();
             List<CashierItemPrice> itemPrices = new ArrayList<>();
+            Visit visitForOrder = order.getEncounter().getVisit();
+            CashierItemPrice itemPrice = null;
+            String paymentMethodDuringVisit = null; // i.e. cash, mobile money, insurance etc
+            if (visitForOrder != null) {
+                VisitAttribute paymentMethod = visitForOrder.getActiveAttributes().stream().filter(attribute -> attribute.getAttributeType().getUuid().equals(PAYMENT_TYPE_VISIT_ATTRIBUTE_UUID)).findFirst().orElse(null);
+                if (paymentMethod != null) {
+                    paymentMethodDuringVisit = paymentMethod.getValueReference();
+                }
+            }
+
             if (stockitem != null) {
                 itemPrices = priceService.getItemPrice(stockitem);
                 if ( itemPrices.size() < 1 || itemPrices.get(0).getPrice().compareTo(BigDecimal.ZERO) <= 0) {
@@ -185,8 +197,11 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                 }
                 billLineItem.setBillableService(service);
             }
+            String finalPaymentMethodDuringVisit = paymentMethodDuringVisit;
+            itemPrice = paymentMethodDuringVisit != null ? itemPrices.stream().filter(i -> i.getPaymentMode().getUuid().equals(finalPaymentMethodDuringVisit)).findFirst().orElse(null) : null;
 
-            billLineItem.setPrice(itemPrices.get(0).getPrice());// defaulting to the first item price
+            // Sets the price to that defined in a visit attribute during check-in, otherwise pick the first price
+            billLineItem.setPrice(itemPrice != null ? itemPrice.getPrice() : itemPrices.get(0).getPrice());
             // Check if patient has an active bill
             Bill activeBill = new Bill();
             activeBill.setPatient(patient);
@@ -204,7 +219,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
             if (!providers.isEmpty()) {
                 activeBill.setCashier(providers.get(0));
                 List<CashPoint> cashPoints = cashPointService.getAll();
-                activeBill.setCashPoint(cashPoints.get(0));
+                activeBill.setCashPoint(cashPoints.get(0)); // TODO: this needs correction
                 activeBill.addLineItem(billLineItem);
                 activeBill.setStatus(BillStatus.PENDING);
                 billService.save(activeBill);
