@@ -17,6 +17,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Criteria;
@@ -36,6 +37,7 @@ import org.openmrs.module.kenyaemr.cashier.api.base.entity.IObjectDataService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepository;
 import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
 import org.openmrs.module.kenyaemr.cashier.api.base.util.PrivilegeUtil;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -186,6 +188,17 @@ public abstract class BaseObjectDataServiceImpl<E extends OpenmrsObject, P exten
 		}
 
 		return repository.selectSingle(getEntityClass(), entityId);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Set<Payment> getPaymentsByBillId(Integer billId) {
+		P privileges = getPrivileges();
+		if (privileges != null && !StringUtils.isEmpty(privileges.getGetPrivilege())) {
+			PrivilegeUtil.requirePrivileges(Context.getAuthenticatedUser(), privileges.getGetPrivilege());
+		}
+
+		return repository.getPaymentsByBillId(billId);
 	}
 
 	@Override
