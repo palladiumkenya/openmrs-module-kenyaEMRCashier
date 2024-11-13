@@ -15,6 +15,7 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
@@ -28,17 +29,6 @@ import org.openmrs.ui.framework.SimpleObject;
 public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 
 	private Boolean debugMode = false;
-
-    private IBillService billService;
-
-    public IBillService getBillService() {
-        return billService;
-    }
-
-    public void setBillService(IBillService billService) {
-        this.billService = billService;
-    }
-
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
 
@@ -60,7 +50,7 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
                         oldBill = (Bill) args[0];
                         
 						Integer oldBillId = oldBill.getId();
-						oldPayments = billService.getPaymentsByBillId(oldBillId);
+						oldPayments = Context.getService(IBillService.class).getPaymentsByBillId(oldBillId);
                     }
                     
                     // Proceed with the original method
@@ -81,7 +71,7 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 
                             for(Payment payment : payments) {
 								// Use a thread to send the data. This frees up the frontend to proceed
-                                syncPaymentRunnable runner = new syncPaymentRunnable(payment);
+                                syncPaymentRunnableTask runner = new syncPaymentRunnableTask(payment);
 								Thread thread = new Thread(runner);
 								thread.start();
                             }
@@ -108,7 +98,7 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 
     /**
      * Prepare the payment payload
-     * @param bill
+     * @param payment
      * @return
      */
     public static String prepareBillPaymentRMSPayload(@NotNull Payment payment) {
@@ -134,10 +124,10 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 
     /**
      * Send the new payment payload to RMS
-     * @param patient
+     * @param payment
      * @return
      */
-    public static Boolean sendRMSNewPayment(@NotNull Payment payment) {
+    public static Boolean sendRMSNewPaymentDetails(@NotNull Payment payment) {
 		Boolean ret = false;
 		Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
 
@@ -300,12 +290,12 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
 	/**
 	 * A thread to free up the frontend
 	 */
-	private class syncPaymentRunnable implements Runnable {
+	private class syncPaymentRunnableTask implements Runnable {
 
         Payment payment = new Payment();
 		Boolean debugMode = AdviceUtils.isRMSLoggingEnabled();
 
-        public syncPaymentRunnable(@NotNull Payment payment) {
+        public syncPaymentRunnableTask(@NotNull Payment payment) {
             this.payment = payment;
         }
 
@@ -316,7 +306,7 @@ public class NewBillPaymentSyncToRMS implements MethodInterceptor {
             try {
 				if(debugMode) System.out.println("RMS Sync Cashier Module: Start sending payment to RMS");
 
-                sendRMSNewPayment(payment);
+                sendRMSNewPaymentDetails(payment);
 
                 if(debugMode) System.out.println("RMS Sync Cashier Module: Finished sending payment to RMS");
             } catch(Exception ex) {
