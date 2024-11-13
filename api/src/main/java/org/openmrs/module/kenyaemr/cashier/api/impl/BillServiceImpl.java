@@ -46,6 +46,7 @@ import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.advice.NewBillPaymentSyncToRMS;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IReceiptNumberGenerator;
 import org.openmrs.module.kenyaemr.cashier.api.ReceiptNumberGeneratorFactory;
@@ -59,6 +60,8 @@ import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
+import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
+import org.openmrs.module.kenyaemr.cashier.api.util.CashierModuleConstants;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,7 +75,9 @@ import java.net.URL;
 import java.security.AccessControlException;
 import java.text.DecimalFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Data service implementation class for {@link Bill}s.
@@ -143,6 +148,14 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		}
 
 		return super.save(bill);
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	@Transactional(readOnly = true)
+	public Set<Payment> getPaymentsByBillId(Integer billId) {
+		Set<Payment> payments = super.getPaymentsByBillId(billId);
+		return payments;
 	}
 
 	@Override

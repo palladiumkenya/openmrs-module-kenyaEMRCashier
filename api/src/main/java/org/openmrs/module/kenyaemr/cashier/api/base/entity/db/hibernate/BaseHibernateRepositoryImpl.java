@@ -14,15 +14,24 @@
 package org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.hibernate.CacheMode;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.openmrs.OpenmrsObject;
+import org.openmrs.Patient;
 import org.openmrs.api.APIException;
 import org.openmrs.api.db.hibernate.DbSession;
 import org.openmrs.api.db.hibernate.DbSessionFactory;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
+import org.openmrs.module.kenyaemr.cashier.api.model.PaymentMode;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -127,6 +136,48 @@ public class BaseHibernateRepositoryImpl implements BaseHibernateRepository {
 			throw new APIException("An exception occurred while attempting to select a single " + cls.getSimpleName()
 			        + " entity with ID" + " " + id.toString() + ".", ex);
 		}
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public Set<Payment> getPaymentsByBillId(Integer billId) {
+		// Get the current Hibernate session from DbSessionFactory
+        DbSession session = sessionFactory.getCurrentSession();
+        
+        // Ensure no caching is used by ignoring the cache
+        session.setCacheMode(CacheMode.IGNORE);
+
+		String sqlQuery = "SELECT cbp.bill_payment_id, cbp.uuid, cbp.bill_id, cbp.payment_mode_id, cbp.amount_tendered, cbp.amount FROM cashier_bill cb inner join cashier_bill_payment cbp on cbp.bill_id = cb.bill_id and cb.bill_id =:billId";
+
+		// Execute the query and fetch the result
+        List<Object[]> resultList = session.createSQLQuery(sqlQuery)
+                                           .setParameter("billId", billId)
+                                           .list();
+		
+		System.out.println("RMS Sync Cashier Module: Payments got SQL payments: " + resultList.size());
+										   
+		// Create a Set to hold the resulting Patient objects
+        Set<Payment> payments = new HashSet<>();
+
+        // Iterate through the results and map them to Patient objects
+        for (Object[] row : resultList) {
+            Payment payment = new Payment();
+            payment.setId((Integer) row[0]);  // payment_id
+			// System.out.println("RMS Sync Cashier Module: Payments got SQL payments: injecting ID" + (Integer) row[0]);
+            payment.setUuid((String) row[1]); // payment uuid
+			// System.out.println("RMS Sync Cashier Module: Payments got SQL payments: injecting UUID" + (String) row[1]);
+			Bill newBill = new Bill();
+			newBill.setId(billId);
+			payment.setBill(newBill); // bill
+			PaymentMode newPaymentMode = new PaymentMode();
+			newPaymentMode.setId((Integer) row[3]);
+			payment.setInstanceType(newPaymentMode); // payment mode
+			payment.setAmountTendered((BigDecimal) row[4]); //Amount Tendered
+			payment.setAmount((BigDecimal) row[5]); //Total Amount
+            payments.add(payment);
+        }
+
+		return(payments);
 	}
 
 	@Override
