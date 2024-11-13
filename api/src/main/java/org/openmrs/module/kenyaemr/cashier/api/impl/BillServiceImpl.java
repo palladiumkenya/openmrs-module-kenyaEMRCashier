@@ -258,6 +258,8 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 
 			index = bill.getLineItems().indexOf(null);
 		}
+		// We also want to remove voided line items
+		bill.getLineItems().removeIf(billLineItem -> billLineItem.getVoided());
 	}
 
 	@Override

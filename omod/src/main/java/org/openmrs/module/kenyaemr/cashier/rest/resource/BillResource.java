@@ -21,16 +21,21 @@ import org.openmrs.User;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ProviderService;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
-import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
-import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
-import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.ModuleSettings;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
+import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ITimesheetService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
-import org.openmrs.module.kenyaemr.cashier.api.model.*;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
+import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
+import org.openmrs.module.kenyaemr.cashier.api.model.Timesheet;
+import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.RoundingUtil;
+import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
+import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.webservices.rest.web.ConversionUtil;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
@@ -169,8 +174,14 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		String createdOnOrAfterDateStr = context.getRequest().getParameter("createdOnOrAfter");
 
 		// Add voided parameter with default false
-		String includedVoidedStr = context.getRequest().getParameter("includeVoided");
-		boolean includeVoided = Boolean.parseBoolean(includedVoidedStr);
+		String includedVoidedBillsStr = context.getRequest().getParameter("includeVoidedBills");
+		boolean includeVoidedBills = Strings.isNotEmpty(includedVoidedBillsStr)
+				? Boolean.parseBoolean(includedVoidedBillsStr) : false;
+
+
+		String includedVoidedLineItemsStr = context.getRequest().getParameter("includeVoided"); //TODO: rename the request param to includeVoidedItems
+		boolean includeVoidedLineItems = Strings.isNotEmpty(includedVoidedLineItemsStr)
+				? Boolean.parseBoolean(includedVoidedLineItemsStr) : false;
 
 		Patient patient = Strings.isNotEmpty(patientUuid) ? Context.getPatientService().getPatientByUuid(patientUuid)
 				: null;
@@ -189,14 +200,13 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		searchTemplate.setPatient(patient);
 		searchTemplate.setStatus(billStatus);
 		searchTemplate.setCashPoint(cashPoint);
-		searchTemplate.setVoided(!includeVoided);
 		IBillService service = Context.getService(IBillService.class);
 
 		List<Bill> result = service
-				.getBills(new BillSearch(searchTemplate, createdOnOrAfterDate, createdOnOrBeforeDate, includeVoided));
+				.getBills(new BillSearch(searchTemplate, createdOnOrAfterDate, createdOnOrBeforeDate, includeVoidedBills));
 
-		// Filter out voided line items if includeVoided is false
-		if (!includeVoided) {
+		// Filter out voided line items if includeVoidedLineItems is false
+		if (!includeVoidedLineItems) {
 			for (Bill bill : result) {
 				if (bill.getLineItems() != null) {
 					List<BillLineItem> filteredItems = bill.getLineItems()
