@@ -183,17 +183,17 @@
 	<globalProperty>
 		<property>${project.parent.artifactId}.rms.integration.endpoint.url</property>
 		<description>RMS integration Endpoint URL</description>
-		<defaultValue>https://siaya.tsconect.com/api</defaultValue>
+		<defaultValue></defaultValue>
 	</globalProperty>
 	<globalProperty>
 		<property>${project.parent.artifactId}.rms.integration.username</property>
 		<description>RMS integration Username</description>
-		<defaultValue>pdsl@gmail.com</defaultValue>
+		<defaultValue></defaultValue>
 	</globalProperty>
 	<globalProperty>
 		<property>${project.parent.artifactId}.rms.integration.password</property>
 		<description>RMS integration Password</description>
-		<defaultValue>password</defaultValue>
+		<defaultValue></defaultValue>
 	</globalProperty>
 	<globalProperty>
 		<property>${project.parent.artifactId}.rms.integration.logging</property>
