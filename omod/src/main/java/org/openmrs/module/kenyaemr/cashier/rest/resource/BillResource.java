@@ -13,7 +13,6 @@
  */
 package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.openmrs.Patient;
@@ -22,16 +21,21 @@ import org.openmrs.User;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ProviderService;
 import org.openmrs.api.context.Context;
-import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
-import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
-import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
-import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.ModuleSettings;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
+import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ITimesheetService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
-import org.openmrs.module.kenyaemr.cashier.api.model.*;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
+import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
+import org.openmrs.module.kenyaemr.cashier.api.model.Timesheet;
+import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.RoundingUtil;
+import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
+import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.webservices.rest.web.ConversionUtil;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
@@ -50,12 +54,13 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * REST resource representing a {@link Bill}.
  */
-@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/bill", supportedClass = Bill.class,
-		supportedOpenmrsVersions = {"2.0 - 2.*"})
+@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE
+		+ "/bill", supportedClass = Bill.class, supportedOpenmrsVersions = { "2.0 - 2.*" })
 public class BillResource extends BaseRestDataResource<Bill> {
 	@Override
 	public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
@@ -66,7 +71,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			description.addProperty("cashPoint", Representation.REF);
 			description.addProperty("cashier", Representation.REF);
 			description.addProperty("dateCreated");
-			description.addProperty("lineItems");
+			description.addProperty("lineItems", Representation.DEFAULT);
 			description.addProperty("patient", Representation.REF);
 			description.addProperty("payments", Representation.FULL);
 			description.addProperty("receiptNumber");
@@ -131,7 +136,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 
 	@Override
 	public Bill save(Bill bill) {
-		//TODO: Test all the ways that this could fail
+		// TODO: Test all the ways that this could fail
 
 		if (bill.getId() == null) {
 			if (bill.getCashier() == null) {
@@ -148,7 +153,8 @@ public class BillResource extends BaseRestDataResource<Bill> {
 				loadBillCashPoint(bill);
 			}
 
-			// Now that all all attributes have been set (i.e., payments and bill status) we can check to see if the bill
+			// Now that all all attributes have been set (i.e., payments and bill status) we
+			// can check to see if the bill
 			// is fully paid.
 			bill.synchronizeBillStatus();
 			if (bill.getStatus() == null) {
@@ -167,13 +173,28 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		String createdOnOrBeforeDateStr = context.getRequest().getParameter("createdOnOrBefore");
 		String createdOnOrAfterDateStr = context.getRequest().getParameter("createdOnOrAfter");
 
-		Patient patient = Strings.isNotEmpty(patientUuid) ? Context.getPatientService().getPatientByUuid(patientUuid) : null;
+		// Add voided parameter with default false
+		String includedVoidedBillsStr = context.getRequest().getParameter("includeVoidedBills");
+		boolean includeVoidedBills = Strings.isNotEmpty(includedVoidedBillsStr)
+				? Boolean.parseBoolean(includedVoidedBillsStr) : false;
+
+
+		String includedVoidedLineItemsStr = context.getRequest().getParameter("includeVoided"); //TODO: rename the request param to includeVoidedItems
+		boolean includeVoidedLineItems = Strings.isNotEmpty(includedVoidedLineItemsStr)
+				? Boolean.parseBoolean(includedVoidedLineItemsStr) : false;
+
+		Patient patient = Strings.isNotEmpty(patientUuid) ? Context.getPatientService().getPatientByUuid(patientUuid)
+				: null;
 		BillStatus billStatus = Strings.isNotEmpty(status) ? BillStatus.valueOf(status.toUpperCase()) : null;
-		CashPoint cashPoint = Strings.isNotEmpty(cashPointUuid) ? Context.getService(ICashPointService.class).getByUuid(cashPointUuid) : null;
-		Date createdOnOrBeforeDate = StringUtils.isNotBlank(createdOnOrBeforeDateStr) ?
-				(Date) ConversionUtil.convert(createdOnOrBeforeDateStr, Date.class) : null;
-		Date createdOnOrAfterDate = StringUtils.isNotBlank(createdOnOrAfterDateStr) ?
-				(Date) ConversionUtil.convert(createdOnOrAfterDateStr, Date.class) : null;
+		CashPoint cashPoint = Strings.isNotEmpty(cashPointUuid)
+				? Context.getService(ICashPointService.class).getByUuid(cashPointUuid)
+				: null;
+		Date createdOnOrBeforeDate = StringUtils.isNotBlank(createdOnOrBeforeDateStr)
+				? (Date) ConversionUtil.convert(createdOnOrBeforeDateStr, Date.class)
+				: null;
+		Date createdOnOrAfterDate = StringUtils.isNotBlank(createdOnOrAfterDateStr)
+				? (Date) ConversionUtil.convert(createdOnOrAfterDateStr, Date.class)
+				: null;
 
 		Bill searchTemplate = new Bill();
 		searchTemplate.setPatient(patient);
@@ -181,7 +202,22 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		searchTemplate.setCashPoint(cashPoint);
 		IBillService service = Context.getService(IBillService.class);
 
-		List<Bill> result = service.getBills(new BillSearch(searchTemplate, createdOnOrAfterDate, createdOnOrBeforeDate, false));
+		List<Bill> result = service
+				.getBills(new BillSearch(searchTemplate, createdOnOrAfterDate, createdOnOrBeforeDate, includeVoidedBills));
+
+		// Filter out voided line items if includeVoidedLineItems is false
+		if (!includeVoidedLineItems) {
+			for (Bill bill : result) {
+				if (bill.getLineItems() != null) {
+					List<BillLineItem> filteredItems = bill.getLineItems()
+							.stream()
+							.filter(item -> !item.getVoided())
+							.collect(Collectors.toList());
+					bill.setLineItems(new ArrayList<>(filteredItems));
+				}
+			}
+		}
+
 		return new AlreadyPaged<>(context, result, false);
 	}
 
@@ -217,8 +253,8 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			AdministrationService adminService = Context.getAdministrationService();
 			boolean timesheetRequired;
 			try {
-				timesheetRequired =
-						Boolean.parseBoolean(adminService.getGlobalProperty(ModuleSettings.TIMESHEET_REQUIRED_PROPERTY));
+				timesheetRequired = Boolean
+						.parseBoolean(adminService.getGlobalProperty(ModuleSettings.TIMESHEET_REQUIRED_PROPERTY));
 			} catch (Exception e) {
 				timesheetRequired = false;
 			}
