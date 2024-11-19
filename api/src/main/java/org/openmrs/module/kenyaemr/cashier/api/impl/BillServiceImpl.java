@@ -321,9 +321,9 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 
 		Patient patient = bill.getPatient();
 		String fullName = patient.getGivenName().concat(" ").concat(
-				patient.getFamilyName() != null ? bill.getPatient().getFamilyName() : ""
-		).concat(" ").concat(
 				patient.getMiddleName() != null ? bill.getPatient().getMiddleName() : ""
+		).concat(" ").concat(
+				patient.getFamilyName() != null ? bill.getPatient().getFamilyName() : ""
 		);
 
         File returnFile = null;
