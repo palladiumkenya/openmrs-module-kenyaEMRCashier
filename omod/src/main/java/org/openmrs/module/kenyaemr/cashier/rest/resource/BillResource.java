@@ -55,6 +55,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.LinkedHashSet;
 
 /**
  * REST resource representing a {@link Bill}.
@@ -101,7 +102,8 @@ public class BillResource extends BaseRestDataResource<Bill> {
 	@PropertySetter("payments")
 	public void setBillPayments(Bill instance, Set<Payment> payments) {
 		if (instance.getPayments() == null) {
-			instance.setPayments(new HashSet<Payment>(payments.size()));
+			// instance.setPayments(new HashSet<Payment>(payments.size()));
+			instance.setPayments(new LinkedHashSet<Payment>(payments.size()));
 		}
 		BaseRestDataResource.syncCollection(instance.getPayments(), payments);
 		for (Payment payment : instance.getPayments()) {

@@ -13,11 +13,15 @@
  */
 package org.openmrs.module.kenyaemr.cashier;
 
+import java.io.PrintWriter;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openmrs.module.BaseModuleActivator;
 import org.openmrs.module.Module;
 import org.openmrs.module.ModuleFactory;
+import org.openmrs.module.kenyaemr.cashier.api.util.AdviceUtils;
+import org.openmrs.module.kenyaemr.cashier.chore.SyncPatientsToRMS;
 import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptions;
 import org.openmrs.module.kenyaemr.cashier.exemptions.SampleBillingExemptionBuilder;
 import org.openmrs.module.kenyaemr.cashier.web.CashierWebConstants;
@@ -43,8 +47,16 @@ public class CashierModuleActivator extends BaseModuleActivator {
 	@Override
 	public void started() {
 		LOG.info("OpenHMIS Cashier Module Module started");
+		System.out.println("OpenHMIS Cashier Module Module started");
 		SampleBillingExemptionBuilder exemptionListBuilder = new SampleBillingExemptionBuilder();
 		exemptionListBuilder.buildBillingExemptionList();
+
+		if(AdviceUtils.isRMSIntegrationEnabled() && !AdviceUtils.getRMSSyncStatus()) {
+			//Start patient and bills sync to RMS
+			PrintWriter output = new PrintWriter(System.out, true);
+			SyncPatientsToRMS syncPatientsToRMS = new SyncPatientsToRMS();
+			syncPatientsToRMS.perform(output);
+		}
 	}
 
 	/**
@@ -56,5 +68,6 @@ public class CashierModuleActivator extends BaseModuleActivator {
 		WebModuleUtil.unloadFilters(module);
 
 		LOG.info("OpenHMIS Cashier Module Module stopped");
+		System.out.println("OpenHMIS Cashier Module Module stopped");
 	}
 }
