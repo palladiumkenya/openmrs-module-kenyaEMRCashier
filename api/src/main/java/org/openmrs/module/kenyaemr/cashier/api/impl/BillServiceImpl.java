@@ -489,6 +489,9 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	}
 
 	private void addBillLineItem(BillLineItem item, Table table, PdfFont font) {
+		if (item.getPaymentStatus().equals(BillStatus.PENDING)) { // all other statuses mean that the line item's bill is settled
+			return;
+		}
 		String itemName = "";
 		if (item.getItem() != null) {
 			itemName = item.getItem().getCommonName();
