@@ -66,9 +66,22 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                 if (order == null) {
                     return;
                 }
-                // Exclude discontinuation orders as well
-                if (order.getAction().equals(Order.Action.DISCONTINUE)
-                        || order.getAction().equals(Order.Action.REVISE)
+
+                if (order.getAction().equals(Order.Action.DISCONTINUE)) {
+                    /**
+                     * Canceling an order does the following:
+                     * 1. creates a discontinuation order
+                     * 2. but does not set fulfiller status
+                     */
+                    if (order.getFulfillerStatus() == null && order.getDateStopped() == null && order.getPreviousOrder() != null) {
+                        // check for an associated bill and void it
+                        Order cancelledOrder = order.getPreviousOrder();
+                        voidOrderBillItem(cancelledOrder);
+                        return;
+                    }
+                }
+
+                if (order.getAction().equals(Order.Action.REVISE)
                         || order.getAction().equals(Order.Action.RENEW)) {
                     return;
                 }
@@ -101,7 +114,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                         addBillItemToBill(order, patient, cashierUUID, cashpointUUID, null, searchResult.get(0), 1, order.getDateActivated(), lineItemStatus);
                     }
                 }
-            }else if (method.getName().equals("voidOrder") && args.length > 0 && args[0] instanceof Order){
+            } else if (method.getName().equals("voidOrder") && args.length > 0 && args[0] instanceof Order){
                 //if cancel order then check existing bill and set it  voided
                 Order order = (Order) args[0];
                 if (orderService.getOrderByUuid(order.getUuid()) != null){
@@ -228,7 +241,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
             }
 
         } catch (Exception ex) {
-            System.err.println("Error sending the bill item: " + ex.getMessage());
+            System.err.println("Error adding the bill item: " + ex.getMessage());
             ex.printStackTrace();
         }
     }
@@ -259,7 +272,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
     /**
      * cancel a given @BillLineItem whose order has been cancelled
      */
-    private boolean voidOrderBillItem(Order order) {
+    private void voidOrderBillItem(Order order) {
         try {
             // Search for a bill line item for this order
             BillLineItem billLineItem = new BillLineItem();
@@ -267,10 +280,15 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
             BillItemSearch billItemSearch = new BillItemSearch(billLineItem);
 
             BillLineItemService billLineItemService = Context.getService(BillLineItemService.class);
-            billLineItemService.fetchBillItemByOrder(billItemSearch);
+            List<BillLineItem> billedItemsForOrder =  billLineItemService.fetchBillItemByOrder(billItemSearch);
+            if (billedItemsForOrder.isEmpty()) {
+                return;
+            }
+
+            billLineItem = billedItemsForOrder.get(0); // defaulting to the first item
 
             // void the bill line item
-//            billLineItem.setPaymentStatus(BillStatus.CANCELLED); client may have already paid at the time of order cancellation thus need to retain payment status
+            //client may have already paid at the time of order cancellation thus need to retain payment status
             billLineItem.setVoidReason(order.getAction() + " Order No:" + order.getOrderNumber());
             billLineItem.setVoided(true);
             billLineItemService.save(billLineItem);
@@ -281,13 +299,9 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                 bill.setStatus(BillStatus.CANCELLED);
                 billService.save(bill);
             }
-
-            return true;
-
         } catch (Exception e) {
             System.err.println("Error voiding bill line item: " + e.getMessage());
             e.printStackTrace();
-            return false;
         }
     }
 }
