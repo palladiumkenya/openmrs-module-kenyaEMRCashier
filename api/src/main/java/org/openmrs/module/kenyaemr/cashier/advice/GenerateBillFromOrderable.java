@@ -28,6 +28,7 @@ import org.openmrs.module.kenyaemr.cashier.api.search.BillItemSearch;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptions;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
+import org.openmrs.module.orderexpansion.api.model.MedicalSupplyOrder;
 import org.openmrs.module.stockmanagement.api.StockManagementService;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.springframework.aop.AfterReturningAdvice;
@@ -52,6 +53,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
     ICashPointService cashPointService = Context.getService(ICashPointService.class);
     public static String PROCEDURE_CLASS_CONCEPT_UUID = "8d490bf4-c2cc-11de-8d13-0010c6dffd0f";
     public static String IMAGING_CLASS_CONCEPT_UUID = "8caa332c-efe4-4025-8b18-3398328e1323";
+    public static String MEDICAL_SUPPLIES_CLASS_CONCEPT_UUID = "0dcf23d4-3008-4d8e-b12c-4ec95d1cfd97";
     public static String PAYMENT_TYPE_VISIT_ATTRIBUTE_UUID = "e6cb0c3b-04b0-4117-9bc6-ce24adbda802";
 
     @Override
@@ -99,6 +101,17 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                         boolean isExempted = checkIfOrderIsExempted(workflowService, order, BillingExemptions.COMMODITIES);
                         BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
                         addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) drugQuantity, order.getDateActivated(), lineItemStatus);
+                    }
+                } else if (MEDICAL_SUPPLIES_CLASS_CONCEPT_UUID.equals(order.getConcept().getConceptClass().getUuid())) { // non-pharms
+                    MedicalSupplyOrder medicalSupplyOrder = (MedicalSupplyOrder) order;
+                    double supplyQuantity = medicalSupplyOrder.getQuantity() != null ? medicalSupplyOrder.getQuantity() : 0.0;
+                    List<StockItem> stockItems = stockService.getStockItemByConcept(medicalSupplyOrder.getConcept().getConceptId());
+
+                    if (!stockItems.isEmpty()) {
+                        // check from the list for all exemptions
+                        boolean isExempted = checkIfOrderIsExempted(workflowService, order, BillingExemptions.COMMODITIES);
+                        BillStatus lineItemStatus = isExempted ? BillStatus.EXEMPTED : BillStatus.PENDING;
+                        addBillItemToBill(order, patient, cashierUUID, cashpointUUID, stockItems.get(0), null, (int) supplyQuantity, order.getDateActivated(), lineItemStatus);
                     }
                 } else if (order instanceof TestOrder || PROCEDURE_CLASS_CONCEPT_UUID.equals(order.getConcept().getConceptClass().getUuid()) || IMAGING_CLASS_CONCEPT_UUID.equals(order.getConcept().getConceptClass().getUuid())) {
                     BillableService searchTemplate = new BillableService();
