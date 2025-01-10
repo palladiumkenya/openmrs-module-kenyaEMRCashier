@@ -140,6 +140,13 @@
 			</dependency>
 
 			<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>orderexpansion-api</artifactId>
+				<version>1.0.0-SNAPSHOT</version>
+				<type>jar</type>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
 				<groupId>org.reflections</groupId>
 				<artifactId>reflections</artifactId>
 				<version>0.9.8</version>
@@ -416,6 +423,7 @@
 			<properties>
 				<openMRSVersion>2.0.5</openMRSVersion>
 				<javaCompilerVersion>1.8</javaCompilerVersion>
+				<orderExpansionVersion>1.0.0-SNAPSHOT</orderExpansionVersion>
 			</properties>
 		</profile>
 	</profiles>
