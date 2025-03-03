@@ -12,15 +12,15 @@
 
 	<distributionManagement>
 		<repository>
-			<id>openmrs-repo</id>
-			<name>Modules</name>
-			<url>https://openmrs.jfrog.io/openmrs/modules/</url>
+			<id>mks-repo</id>
+			<name>Mekom Solutions Nexus Releases</name>
+			<url>https://nexus.mekomsolutions.net/repository/maven-releases</url>
 		</repository>
 		<snapshotRepository>
-    		<id>kenyaemr-repo</id>
-			<name>Snapshots</name>
-    		<url>http://mavenrepo.openhmisafrica.org/content/repositories/snapshots</url>
-  		</snapshotRepository>
+			<id>mks-repo-snapshots</id>
+			<name>Mekom Solutions Nexus Snapshots</name>
+			<url>https://nexus.mekomsolutions.net/repository/maven-snapshots</url>
+		</snapshotRepository>
 	</distributionManagement>
 
 	<developers>
