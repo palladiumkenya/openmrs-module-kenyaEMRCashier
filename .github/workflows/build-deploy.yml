@@ -22,7 +22,7 @@ jobs:
           java-version: "8"
 
       - name: Build with Maven
-        run: mvn -B package -DskipTests
+        run: mvn -B clean install -DskipTests
 
   publish:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
@@ -39,7 +39,7 @@ jobs:
           java-version: "8"
 
       - name: Build with Maven
-        run: mvn -B package -DskipTests
+        run: mvn -B clean install -DskipTests
 
       - name: Set settings.xml
         uses: s4u/maven-settings-action@v3.0.0
@@ -57,4 +57,4 @@ jobs:
             }]
 
       - name: Publish
-        run: mvn --batch-mode clean deploy -DskipTests
+        run: mvn --batch-mode deploy -DskipTests
