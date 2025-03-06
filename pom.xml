@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.openmrs.module</groupId>
@@ -31,15 +33,17 @@
 
 	<organization>
 		<name>KenyaEMR</name>
-<!--		<url>http://openhmis.github.com/OpenHMIS/</url>-->
+		<!--		<url>http://openhmis.github.com/OpenHMIS/</url>-->
 	</organization>
 
-<!--	<scm>-->
-<!--		<connection>scm:git:git@github.com:OpenHMIS/openmrs-module-openhmis.cashier.git</connection>-->
-<!--		<developerConnection>scm:git:git@github.com:OpenHMIS/openmrs-module-openhmis.cashier.git</developerConnection>-->
-<!--		<url>scm:git:git@github.com:OpenHMIS/openmrs-module-openhmis.cashier.git</url>-->
-<!--		<tag>HEAD</tag>-->
-<!--	</scm>-->
+	<!--	<scm>-->
+	<!--
+	<connection>scm:git:git@github.com:OpenHMIS/openmrs-module-openhmis.cashier.git</connection>-->
+	<!--
+	<developerConnection>scm:git:git@github.com:OpenHMIS/openmrs-module-openhmis.cashier.git</developerConnection>-->
+	<!--		<url>scm:git:git@github.com:OpenHMIS/openmrs-module-openhmis.cashier.git</url>-->
+	<!--		<tag>HEAD</tag>-->
+	<!--	</scm>-->
 
 	<modules>
 		<module>api</module>
@@ -52,6 +56,7 @@
 		<powermock.version>1.4.10</powermock.version>
 		<javaCompilerVersion>1.7</javaCompilerVersion>
 		<itextPdfVersion>8.0.2</itextPdfVersion>
+		<moduleId>kenyaemr.cashier</moduleId>
 	</properties>
 
 	<dependencyManagement>
@@ -180,11 +185,11 @@
 			</dependency>
 
 			<dependency>
-					<groupId>org.openmrs.module</groupId>
-					<artifactId>appframework-api</artifactId>
-					<version>2.0</version>
-					<type>jar</type>
-					<scope>provided</scope>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>appframework-api</artifactId>
+				<version>2.0</version>
+				<type>jar</type>
+				<scope>provided</scope>
 			</dependency>
 
 			<dependency>
@@ -226,16 +231,16 @@
 			</dependency>
 
 			<dependency>
-                <groupId>org.apache.httpcomponents</groupId>
-                <artifactId>httpclient</artifactId>
-                <version>4.5.10</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+				<groupId>org.apache.httpcomponents</groupId>
+				<artifactId>httpclient</artifactId>
+				<version>4.5.10</version>
+				<exclusions>
+					<exclusion>
+						<groupId>commons-logging</groupId>
+						<artifactId>commons-logging</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
 
 			<dependency>
 				<groupId>com.itextpdf</groupId>
@@ -375,7 +380,8 @@
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>2.14</version>
 					<configuration>
-						<argLine>-javaagent:${settings.localRepository}/org/powermock/powermock-module-javaagent/${powermock.version}/powermock-module-javaagent-${powermock.version}.jar -noverify</argLine>
+						<argLine>-javaagent:${settings.localRepository}/org/powermock/powermock-module-javaagent/${powermock.version}/powermock-module-javaagent-${powermock.version}.jar
+							-noverify</argLine>
 					</configuration>
 				</plugin>
 				<plugin>

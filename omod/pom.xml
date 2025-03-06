@@ -1,4 +1,7 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -7,7 +10,7 @@
 		<version>4.2.2-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>cashier-omod</artifactId>
+	<artifactId>kenyaemr.cashier-omod</artifactId>
 	<packaging>jar</packaging>
 	<name>OpenHMIS Cashier Module OMOD</name>
 	<description>OMOD project for the OpenHMIS Cashier module</description>
@@ -87,8 +90,8 @@
 		<!-- Begin webservices.rest -->
 
 		<dependency>
-			  <groupId>org.openmrs.module</groupId>
-			  <artifactId>webservices.rest-omod</artifactId>
+			<groupId>org.openmrs.module</groupId>
+			<artifactId>webservices.rest-omod</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.openmrs.module</groupId>
@@ -100,7 +103,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>${project.parent.artifactId}-${project.parent.version}</finalName>
+		<finalName>${project.parent.artifactId}-omod-${project.parent.version}</finalName>
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
@@ -140,7 +143,8 @@
 						<includeEmptyDirs>true</includeEmptyDirs>
 					</configuration>
 				</plugin>
-				<!--This plugin's configuration is used to store Eclipse m2e settings
+				<!--This
+				plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
@@ -186,7 +190,6 @@
 			<plugin>
 				<groupId>org.openmrs.maven.plugins</groupId>
 				<artifactId>maven-openmrs-plugin</artifactId>
-
 				<executions>
 					<execution>
 						<id>init</id>
@@ -204,26 +207,48 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.2.0</version>
+				<executions>
+					<execution>
+						<id>attach-artifacts</id>
+						<phase>package</phase>
+						<goals>
+							<goal>attach-artifact</goal>
+						</goals>
+						<configuration>
+							<artifacts>
+								<artifact>
+									<file>${project.build.directory}/${project.build.finalName}.omod</file>
+									<type>omod</type>
+								</artifact>
+							</artifacts>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 
-	      <plugin>
-		      <groupId>net.alchim31.maven</groupId>
-              <artifactId>yuicompressor-maven-plugin</artifactId>
-			  <version>1.5.1</version>
-              <executions>
-                  <execution>
-                      <goals>
-                          <goal>compress</goal>
-                      </goals>
-                  </execution>
-              </executions>
-              <configuration>
-                  <!-- <verbose>true</verbose> -->
-                  <nosuffix>true</nosuffix>
-                  <excludes>
-                      <exclude>**/*.min.js</exclude>
-                  </excludes>
-              </configuration>
-          </plugin>
+			<plugin>
+				<groupId>net.alchim31.maven</groupId>
+				<artifactId>yuicompressor-maven-plugin</artifactId>
+				<version>1.5.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>compress</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<!-- <verbose>true</verbose> -->
+					<nosuffix>true</nosuffix>
+					<excludes>
+						<exclude>**/*.min.js</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -234,5 +259,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>
