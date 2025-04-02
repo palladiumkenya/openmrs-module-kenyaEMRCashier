@@ -15,6 +15,8 @@ package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
+import org.openmrs.module.stockmanagement.api.StockManagementService;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IPaymentModeService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
@@ -84,6 +86,11 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 		}
 
 		instance.setInstanceType(mode);
+	}
+	@PropertySetter("item")
+	public void setStockItem(Payment instance, String uuid) {
+		StockItem stockItem =  Context.getService(StockManagementService.class).getStockItemByUuid(uuid) ;
+		instance.setItem(stockItem);
 	}
 
 	@PropertySetter("attributes")
