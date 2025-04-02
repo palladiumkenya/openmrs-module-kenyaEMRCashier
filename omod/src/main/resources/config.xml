@@ -33,10 +33,10 @@
 	<!-- Module Activator -->
 	<activator>org.openmrs.module.kenyaemr.cashier.CashierModuleActivator</activator>
 
-	<advice>
+	<!-- <advice>
 		<point>org.openmrs.api.OrderService</point>
 		<class>${project.parent.groupId}.${project.parent.artifactId}.advice.GenerateBillFromOrderable</class>
-	</advice>
+	</advice> -->
 
 	<globalProperty>
 		<property>${project.parent.artifactId}.defaultReceiptReportId</property>
