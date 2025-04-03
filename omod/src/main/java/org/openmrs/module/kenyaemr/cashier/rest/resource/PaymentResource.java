@@ -57,6 +57,7 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 			description.addProperty("attributes");
 			description.addProperty("amount");
 			description.addProperty("amountTendered");
+			description.addProperty("item");
 			description.addProperty("dateCreated");
 			description.addProperty("voided");
 		}
@@ -71,6 +72,7 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 		description.addProperty("attributes");
 		description.addProperty("amount");
 		description.addProperty("amountTendered");
+		description.addProperty("item");
 
 		return description;
 	}
