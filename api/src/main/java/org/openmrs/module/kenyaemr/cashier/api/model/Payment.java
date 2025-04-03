@@ -14,6 +14,7 @@
 package org.openmrs.module.kenyaemr.cashier.api.model;
 
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.model.BaseInstanceCustomizableData;
+import org.openmrs.module.stockmanagement.api.model.StockItem;
 
 import java.math.BigDecimal;
 
@@ -27,6 +28,8 @@ public class Payment extends BaseInstanceCustomizableData<PaymentMode, PaymentAt
 	private Bill bill;
 	private BigDecimal amount;
 	private BigDecimal amountTendered;
+	private StockItem item;
+
 
 	public Integer getId() {
 		return paymentId;
@@ -75,5 +78,12 @@ public class Payment extends BaseInstanceCustomizableData<PaymentMode, PaymentAt
 
 	public void setBill(Bill bill) {
 		this.bill = bill;
+	}
+	public StockItem getItem() {
+		return item;
+	}
+
+	public void setItem(StockItem item) {
+		this.item = item;
 	}
 }

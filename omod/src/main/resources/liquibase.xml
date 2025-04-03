@@ -895,4 +895,23 @@
 		<dropColumn tableName="cashier_item_price" columnName="item_id"/>
 	</changeSet>
 
+	<changeSet id="openhmis.cashier-001-v3.0.0-202504021620" author="makombe">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<columnExists tableName="cashier_bill_payment" columnName="item_id"/>
+			</not>
+		</preConditions>
+		<comment>Adding the column item_id to the table cashier_bill_payment</comment>
+		<addColumn tableName="cashier_bill_payment">
+			<column name="item_id" type="int">
+				<constraints nullable="true"/>
+			</column>
+		</addColumn>
+
+		<addForeignKeyConstraint constraintName="cashier_bill_payment_item_id_fk"
+								 baseTableName="cashier_bill_payment" baseColumnNames="item_id"
+								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id"
+								 onDelete="CASCADE" onUpdate="CASCADE"/>
+	</changeSet>
+
 </databaseChangeLog>
