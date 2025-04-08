@@ -1,5 +1,7 @@
 package org.openmrs.module.kenyaemr.cashier.advice;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.openmrs.DrugOrder;
 import org.openmrs.Order;
 import org.openmrs.Patient;
@@ -37,17 +39,11 @@ import org.springframework.aop.AfterReturningAdvice;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class GenerateBillFromOrderable implements AfterReturningAdvice {
+    private static final Log LOG = LogFactory.getLog(GenerateBillFromOrderable.class);
 
     OrderService orderService = Context.getOrderService();
     IBillService billService = Context.getService(IBillService.class);
@@ -61,7 +57,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
 
     @Override
     public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
-
+        LOG.info("abertnamanya-new-error log: " +"TRy to create invoice item");
         try {
             // Extract the Order object from the arguments
             ProgramWorkflowService workflowService = Context.getProgramWorkflowService();
@@ -94,6 +90,8 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                 Patient patient = order.getPatient();
                 String cashierUUID = Context.getAuthenticatedUser().getUuid();
                 String cashpointUUID = Utils.getDefaultLocation().getUuid();
+                LOG.info("abertnamanya-new-error log: " + Utils.getDefaultLocation().toString());
+
                 if (order instanceof DrugOrder) {
                     DrugOrder drugOrder = (DrugOrder) order;
                     Integer drugID = drugOrder.getDrug() != null ? drugOrder.getDrug().getDrugId() : 0;
