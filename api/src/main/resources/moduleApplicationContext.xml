@@ -101,6 +101,14 @@
 	<bean parent="serviceContext">
 		<property name="moduleService">
 			<list merge="true">
+				<value>org.openmrs.module.kenyaemr.cashier.api.IInsuranceBenefitsPackageService</value>
+				<ref bean="insuranceBenefitsPackageService" />
+			</list>
+		</property>
+	</bean>
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list merge="true">
 				<value>org.openmrs.module.kenyaemr.cashier.api.ICashierItemPriceService</value>
 				<ref bean="cashierItemPriceService" />
 			</list>
@@ -200,6 +208,16 @@
 		<property name="transactionManager" ref="transactionManager" />
 		<property name="target">
 			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.BillableItemsServiceImpl">
+				<property name="repository" ref="genericRepositoryDao" />
+			</bean>
+		</property>
+		<property name="preInterceptors" ref="serviceInterceptors" />
+		<property name="transactionAttributeSource" ref="transactionAttributeSource" />
+	</bean>
+	<bean id="insuranceBenefitsPackageService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="target">
+			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.InsuranceBenefitsPackageServiceImpl">
 				<property name="repository" ref="genericRepositoryDao" />
 			</bean>
 		</property>
