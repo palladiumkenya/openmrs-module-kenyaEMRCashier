@@ -1,7 +1,9 @@
 package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.openmrs.Concept;
+import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
@@ -23,11 +25,13 @@ import org.openmrs.module.webservices.rest.web.representation.Representation;
 import org.openmrs.module.webservices.rest.web.resource.impl.AlreadyPaged;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
 import org.openmrs.module.webservices.rest.web.response.ResourceDoesNotSupportOperationException;
+import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/billableService", supportedClass = BillableService.class,
+@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/billableService", 
+        supportedClass = BillableService.class,
         supportedOpenmrsVersions = {"2.0 - 2.*"})
 public class BillableServiceResource extends BaseRestDataResource<BillableService> {
 
@@ -43,39 +47,79 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
 
     @Override
     public BillableService getByUniqueId(String uuid) {
-        return getService().getByUuid(uuid);
+        if (StringUtils.isBlank(uuid)) {
+            throw new APIException("UUID cannot be empty");
+        }
+        BillableService service = getService().getByUuid(uuid);
+        if (service == null) {
+            throw new APIException("Billable service not found with UUID: " + uuid);
+        }
+        return service;
     }
 
     @Override
     public BillableService save(BillableService delegate) {
+        validateBillableService(delegate);
+        checkForDuplicateService(delegate);
         return super.save(delegate);
     }
 
     @Override
     protected AlreadyPaged<BillableService> doSearch(RequestContext context) {
-        Concept serviceType = context.getParameter("serviceType") != null ? Context.getConceptService().getConceptByUuid(
-                context.getParameter("serviceType")) : null;
-        Concept serviceCategory = context.getParameter("serviceCategory") != null ? Context.getConceptService().getConceptByUuid(
-                context.getParameter("serviceCategory")) : null;
-        String serviceStatus = context.getParameter("isDisabled");
-        BillableServiceStatus status = BillableServiceStatus.ENABLED;
-        if (Strings.isNotEmpty(serviceStatus)) {
-            if (serviceStatus.equalsIgnoreCase("yes") || serviceStatus.equalsIgnoreCase("1")) {
-                status = BillableServiceStatus.DISABLED;
+        try {
+            BillableService searchTemplate = createSearchTemplate(context);
+            IBillableItemsService service = Context.getService(IBillableItemsService.class);
+            List<BillableService> results = service.findServices(new BillableServiceSearch(searchTemplate, false));
+            return new AlreadyPaged<>(context, results, false);
+        } catch (Exception e) {
+            throw new APIException("Error searching billable services: " + e.getMessage(), e);
+        }
+    }
+
+    private BillableService createSearchTemplate(RequestContext context) {
+        BillableService searchTemplate = new BillableService();
+        
+        // Handle service type
+        String serviceTypeUuid = context.getParameter("serviceType");
+        if (StringUtils.isNotBlank(serviceTypeUuid)) {
+            Concept serviceType = Context.getConceptService().getConceptByUuid(serviceTypeUuid);
+            if (serviceType == null) {
+                throw new APIException("Invalid service type UUID: " + serviceTypeUuid);
             }
+            searchTemplate.setServiceType(serviceType);
         }
 
-        StockItem stockItem = context.getParameter("stockItem") != null ? Context.getService(StockManagementService.class).getStockItemByUuid(context.getParameter("stockItem"))  : null;
-        BillableService searchTemplate = new BillableService();
-        searchTemplate.setServiceType(serviceType);
-        searchTemplate.setServiceCategory(serviceCategory);
-        searchTemplate.setServiceStatus(status);
-        if (stockItem != null) {
+        // Handle service category
+        String serviceCategoryUuid = context.getParameter("serviceCategory");
+        if (StringUtils.isNotBlank(serviceCategoryUuid)) {
+            Concept serviceCategory = Context.getConceptService().getConceptByUuid(serviceCategoryUuid);
+            if (serviceCategory == null) {
+                throw new APIException("Invalid service category UUID: " + serviceCategoryUuid);
+            }
+            searchTemplate.setServiceCategory(serviceCategory);
+        }
+
+        // Handle service status
+        String serviceStatus = context.getParameter("isDisabled");
+        if (Strings.isNotEmpty(serviceStatus)) {
+            searchTemplate.setServiceStatus(
+                serviceStatus.equalsIgnoreCase("yes") || serviceStatus.equalsIgnoreCase("1") 
+                ? BillableServiceStatus.DISABLED 
+                : BillableServiceStatus.ENABLED
+            );
+        }
+
+        // Handle stock item
+        String stockItemUuid = context.getParameter("stockItem");
+        if (StringUtils.isNotBlank(stockItemUuid)) {
+            StockItem stockItem = Context.getService(StockManagementService.class).getStockItemByUuid(stockItemUuid);
+            if (stockItem == null) {
+                throw new APIException("Invalid stock item UUID: " + stockItemUuid);
+            }
             searchTemplate.setStockItem(stockItem);
         }
 
-        IBillableItemsService service = Context.getService(IBillableItemsService.class);
-        return new AlreadyPaged<>(context, service.findServices(new BillableServiceSearch(searchTemplate, false)), false);
+        return searchTemplate;
     }
 
     @Override
@@ -90,9 +134,15 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
             description.addProperty("servicePrices");
             description.addProperty("serviceStatus");
             description.addProperty("stockItem");
+            description.addProperty("creator", Representation.REF);
+            description.addProperty("dateCreated");
+            description.addProperty("changedBy", Representation.REF);
+            description.addProperty("dateChanged");
+            description.addProperty("voided");
+            description.addProperty("voidedBy", Representation.REF);
+            description.addProperty("dateVoided");
+            description.addProperty("voidReason");
         } else if (rep instanceof CustomRepresentation) {
-            //For custom representation, must be null
-            // - let the user decide which properties should be included in the response
             description = null;
         }
         return description;
@@ -105,8 +155,11 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
 
     @PropertySetter("servicePrices")
     public void setServicePrices(BillableService instance, List<CashierItemPrice> itemPrices) {
+        if (itemPrices == null) {
+            throw new APIException("Service prices cannot be null");
+        }
         if (instance.getServicePrices() == null) {
-            instance.setServicePrices(new ArrayList<CashierItemPrice>(itemPrices.size()));
+            instance.setServicePrices(new ArrayList<>(itemPrices.size()));
         }
         BaseRestDataResource.syncCollection(instance.getServicePrices(), itemPrices);
         for (CashierItemPrice itemPrice : instance.getServicePrices()) {
@@ -118,18 +171,53 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
     public String getStockItem(BillableService instance) {
         try {
             StockItem stockItem = instance.getStockItem();
-            return stockItem.getUuid() + ":" + stockItem.getCommonName();
+            return stockItem != null ? stockItem.getUuid() + ":" + stockItem.getCommonName() : "";
         } catch (Exception e) {
             return "";
         }
     }
+
     @Override
     public DelegatingResourceDescription getCreatableProperties() {
-        return getRepresentationDescription(new DefaultRepresentation());
+        DelegatingResourceDescription description = getRepresentationDescription(new DefaultRepresentation());
+        description.addRequiredProperty("name");
+        description.addRequiredProperty("concept");
+        description.addRequiredProperty("servicePrices");
+        return description;
     }
 
     @Override
     public DelegatingResourceDescription getUpdatableProperties() throws ResourceDoesNotSupportOperationException {
         return getCreatableProperties();
+    }
+
+    private void validateBillableService(BillableService service) {
+        if (service == null) {
+            throw new APIException("Billable service cannot be null");
+        }
+        if (StringUtils.isBlank(service.getName())) {
+            throw new APIException("Name is required");
+        }
+        if (service.getConcept() == null) {
+            throw new APIException("Concept is required");
+        }
+        if (service.getServicePrices() == null || service.getServicePrices().isEmpty()) {
+            throw new APIException("At least one service price is required");
+        }
+    }
+
+    private void checkForDuplicateService(BillableService service) {
+        if (service.getConcept() != null) {
+            BillableServiceSearch search = new BillableServiceSearch();
+            BillableService template = new BillableService();
+            template.setConcept(service.getConcept());
+            search.setTemplate(template);
+            
+            List<BillableService> existingServices = getService().findServices(search);
+            if (!existingServices.isEmpty() && 
+                (service.getId() == null || !existingServices.get(0).getId().equals(service.getId()))) {
+                throw new APIException("A billable service with this concept already exists");
+            }
+        }
     }
 }
