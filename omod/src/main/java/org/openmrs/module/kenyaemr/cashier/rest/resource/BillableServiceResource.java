@@ -93,30 +93,44 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
         // Get the service
         IBillableItemsService billableItemsService = Context.getService(IBillableItemsService.class);
 
-        // Only check for duplicates when creating a new service
         if (delegate.getId() == null) {
             BillableServiceSearch search = new BillableServiceSearch();
-            // Use the exact name for template
             search.getTemplate().setName(delegate.getName());
 
             List<BillableService> existingServices = billableItemsService.findServices(search);
 
-            // More thorough duplicate check - compare normalized names
-            boolean duplicateExists = false;
             String normalizedNewName = delegate.getName().trim().toLowerCase();
 
             for (BillableService existingService : existingServices) {
                 String normalizedExistingName = existingService.getName().trim().toLowerCase();
+
                 if (normalizedExistingName.equals(normalizedNewName)) {
-                    duplicateExists = true;
-                    break;
+                    throw new ResourceDoesNotSupportOperationException(
+                            "Cannot save billable service. A service with name '" +
+                                    delegate.getName() + "' already exists (UUID: " +
+                                    existingService.getUuid() + "). Please use a different name.");
                 }
             }
+        } else {
 
-            if (duplicateExists) {
-                throw new ResourceDoesNotSupportOperationException(
-                        "Cannot save billable service. A service with name '" +
-                                delegate.getName() + "' already exists. Please use a different name.");
+            String normalizedNewName = delegate.getName().trim().toLowerCase();
+            BillableServiceSearch search = new BillableServiceSearch();
+            search.getTemplate().setName(delegate.getName());
+            List<BillableService> existingServices = billableItemsService.findServices(search);
+
+            for (BillableService existingService : existingServices) {
+                if (existingService.getId().equals(delegate.getId())) {
+                    continue;
+                }
+
+                String normalizedExistingName = existingService.getName().trim().toLowerCase();
+
+                if (normalizedExistingName.equals(normalizedNewName)) {
+                    throw new ResourceDoesNotSupportOperationException(
+                            "Cannot update billable service. Another service with name '" +
+                                    delegate.getName() + "' already exists (UUID: " +
+                                    existingService.getUuid() + "). Please use a different name.");
+                }
             }
         }
 
@@ -136,8 +150,8 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
             errors.add("Billable service name is required");
         }
 
-        if (service.getServiceType() == null) {
-            errors.add("Service type is required");
+        if (service.getStockItem() == null && service.getServiceType() == null) {
+            errors.add("Service type is required when no stock item is specified");
         }
 
         if (service.getConcept() == null) {
@@ -382,6 +396,20 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
         stockItemRef.put("links", links);
 
         return stockItemRef;
+    }
+
+    @PropertySetter("stockItem")
+    public void setStockItem(BillableService instance, String stockItemUuid) {
+        if (StringUtils.isBlank(stockItemUuid)) {
+            instance.setStockItem(null);
+            return;
+        }
+        
+        StockItem stockItem = Context.getService(StockManagementService.class).getStockItemByUuid(stockItemUuid);
+        if (stockItem == null) {
+            throw new ObjectNotFoundException();
+        }
+        instance.setStockItem(stockItem);
     }
 
     /**
