@@ -288,4 +288,41 @@
 		<property name="retired" type="boolean" column="retired" length="1" not-null="true" />
 		<property name="uuid" type="java.lang.String" column="uuid" length="38" unique="true" />
 	</class>
+
+	<class name="org.openmrs.module.kenyaemr.cashier.api.model.BillWaiver" table="cashier_bill_waiver">
+		<cache usage="read-write"/>
+		<id name="id" type="int" column="waiver_id">
+			<generator class="native">
+				<param name="sequence">cashier_bill_waiver_waiver_id_seq</param>
+			</generator>
+		</id>
+		<discriminator column="waiver_id" insert="false" />
+
+		<many-to-one name="bill" class="org.openmrs.module.kenyaemr.cashier.api.model.Bill" column="bill_id" not-null="true" />
+		<many-to-one name="lineItem" class="org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem" column="line_item_id" not-null="false" />
+		<many-to-one name="requestedBy" class="org.openmrs.User" column="requested_by" not-null="true" />
+		<many-to-one name="approvedBy" class="org.openmrs.User" column="approved_by" not-null="false" />
+		<property name="reason" type="java.lang.String" column="reason" not-null="true" length="500" />
+		<property name="waivedAmount" type="java.math.BigDecimal" column="waived_amount" not-null="true" />
+		<property name="originalAmount" type="java.math.BigDecimal" column="original_amount" not-null="true" />
+		<property name="remainingAmount" type="java.math.BigDecimal" column="remaining_amount" not-null="true" />
+		<property name="status" column="status" not-null="true">
+			<type name="org.hibernate.type.EnumType">
+				<param name="enumClass">org.openmrs.module.kenyaemr.cashier.api.model.WaiverStatus</param>
+				<param name="type">12</param>
+			</type>
+		</property>
+		<property name="rejectionReason" type="java.lang.String" column="rejection_reason" length="500" />
+
+		<!-- BaseOpenmrsData Fields-->
+		<many-to-one name="creator" class="org.openmrs.User" not-null="true" column="creator" />
+		<property name="dateCreated" type="java.util.Date" column="date_created" not-null="true" length="19" />
+		<many-to-one name="changedBy" class="org.openmrs.User" column="changed_by" />
+		<property name="dateChanged" type="java.util.Date" column="date_changed" length="19" />
+		<property name="voided" type="java.lang.Boolean" column="voided" length="1" not-null="true" />
+		<many-to-one name="voidedBy" class="org.openmrs.User" column="voided_by" />
+		<property name="dateVoided" type="java.util.Date" column="date_voided" length="19" />
+		<property name="voidReason" type="java.lang.String" column="void_reason" length="255" />
+		<property name="uuid" type="java.lang.String" column="uuid" length="38" unique="true" />
+	</class>
 </hibernate-mapping>

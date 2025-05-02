@@ -106,6 +106,14 @@
 			</list>
 		</property>
 	</bean>
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list merge="true">
+				<value>org.openmrs.module.kenyaemr.cashier.api.IBillWaiverService</value>
+				<ref bean="billWaiverService" />
+			</list>
+		</property>
+	</bean>
 
 	<!-- Service Bean Definitions -->
 	<bean id="itemPriceService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
@@ -210,6 +218,16 @@
 		<property name="transactionManager" ref="transactionManager" />
 		<property name="target">
 			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.ICashierItemPriceServiceImpl">
+				<property name="repository" ref="genericRepositoryDao" />
+			</bean>
+		</property>
+		<property name="preInterceptors" ref="serviceInterceptors" />
+		<property name="transactionAttributeSource" ref="transactionAttributeSource" />
+	</bean>
+	<bean id="billWaiverService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="target">
+			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.BillWaiverServiceImpl">
 				<property name="repository" ref="genericRepositoryDao" />
 			</bean>
 		</property>

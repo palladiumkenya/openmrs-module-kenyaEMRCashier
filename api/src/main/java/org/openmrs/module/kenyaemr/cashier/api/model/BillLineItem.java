@@ -39,6 +39,7 @@ public class BillLineItem extends BaseOpenmrsData {
 	private Integer lineItemOrder;
 	private BillStatus paymentStatus;
 	private Order order;
+	private BigDecimal remainingAmount;
 
 	@Override
 	public Integer getId() {
@@ -162,5 +163,16 @@ public class BillLineItem extends BaseOpenmrsData {
 		}
 		return null;
 
+	}
+
+	public BigDecimal getRemainingAmount() {
+		if (remainingAmount == null) {
+			remainingAmount = getTotal();
+		}
+		return remainingAmount;
+	}
+
+	public void setRemainingAmount(BigDecimal remainingAmount) {
+		this.remainingAmount = remainingAmount;
 	}
 }

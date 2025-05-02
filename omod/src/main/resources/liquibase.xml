@@ -861,12 +861,6 @@
 								 referencedTableName="orders" referencedColumnNames="order_id"
 								 onDelete="CASCADE" onUpdate="CASCADE"/>
 	</changeSet>
-	<changeSet author="aojwang" id="cashier_create_index_on_date_created_202406051539">
-		<createIndex indexName="cashier_date_created" tableName="cashier_bill">
-			<column name="date_created"/>
-		</createIndex>
-	</changeSet>
-
 	<changeSet id="openhmis.cashier-001-v3.0.0-202408291429" author="aojwang">
 		<preConditions onFail="MARK_RAN">
 			<not>
@@ -912,6 +906,87 @@
 								 baseTableName="cashier_bill_payment" baseColumnNames="item_id"
 								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id"
 								 onDelete="CASCADE" onUpdate="CASCADE"/>
+	</changeSet>
+
+	<changeSet id="openhmis.cashier-001-v3.0.0-202504021621" author="Donald Kibet">
+		<preConditions onFail="MARK_RAN">
+			<not>
+				<tableExists tableName="cashier_bill_waiver"/>
+			</not>
+		</preConditions>
+		<createTable tableName="cashier_bill_waiver">
+			<column name="waiver_id" type="int" autoIncrement="true">
+				<constraints primaryKey="true" nullable="false" />
+			</column>
+
+			<column name="bill_id" type="int">
+				<constraints nullable="false" foreignKeyName="fk_waiver_bill" references="cashier_bill(bill_id)"/>
+			</column>
+
+			<column name="line_item_id" type="int">
+				<constraints nullable="true" foreignKeyName="fk_waiver_line_item" references="cashier_bill_line_item(bill_line_item_id)"/>
+			</column>
+
+			<column name="requested_by" type="int">
+				<constraints nullable="false" foreignKeyName="fk_waiver_requested_by" references="users(user_id)"/>
+			</column>
+
+			<column name="approved_by" type="int">
+				<constraints nullable="true" foreignKeyName="fk_waiver_approved_by" references="users(user_id)"/>
+			</column>
+
+			<column name="reason" type="varchar(500)">
+				<constraints nullable="false"/>
+			</column>
+
+			<column name="waived_amount" type="decimal(10,2)">
+				<constraints nullable="false"/>
+			</column>
+
+			<column name="original_amount" type="decimal(10,2)">
+				<constraints nullable="false"/>
+			</column>
+
+			<column name="remaining_amount" type="decimal(10,2)">
+				<constraints nullable="false"/>
+			</column>
+
+			<column name="status" type="varchar(10)">
+				<constraints nullable="false"/>
+			</column>
+
+			<column name="rejection_reason" type="varchar(500)"/>
+
+			<column name="creator" type="int">
+				<constraints nullable="false" foreignKeyName="fk_waiver_creator" references="users(user_id)"/>
+			</column>
+
+			<column name="date_created" type="datetime">
+				<constraints nullable="false"/>
+			</column>
+
+			<column name="changed_by" type="int">
+				<constraints nullable="true" foreignKeyName="fk_waiver_changed_by" references="users(user_id)"/>
+			</column>
+
+			<column name="date_changed" type="datetime"/>
+
+			<column name="voided" type="boolean" defaultValueBoolean="false">
+				<constraints nullable="false"/>
+			</column>
+
+			<column name="voided_by" type="int">
+				<constraints nullable="true" foreignKeyName="fk_waiver_voided_by" references="users(user_id)"/>
+			</column>
+
+			<column name="date_voided" type="datetime"/>
+
+			<column name="void_reason" type="varchar(255)"/>
+
+			<column name="uuid" type="char(38)">
+				<constraints nullable="false" unique="true"/>
+			</column>
+		</createTable>
 	</changeSet>
 
 </databaseChangeLog>
