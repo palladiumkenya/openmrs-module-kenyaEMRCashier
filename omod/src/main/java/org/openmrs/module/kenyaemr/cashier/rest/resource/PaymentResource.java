@@ -56,7 +56,6 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 			description.addProperty("amount");
 			description.addProperty("amountTendered");
 			description.addProperty("billLineItem");
-//			description.addProperty("item");
 			description.addProperty("dateCreated");
 			description.addProperty("voided");
 		}
@@ -71,7 +70,6 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 		description.addProperty("attributes");
 		description.addProperty("amount");
 		description.addProperty("amountTendered");
-//		description.addProperty("item");
 		description.addProperty("billLineItem");
 
 		return description;
@@ -89,11 +87,6 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 
 		instance.setInstanceType(mode);
 	}
-//	@PropertySetter("item")
-//	public void setStockItem(Payment instance, String uuid) {
-//		StockItem stockItem =  Context.getService(StockManagementService.class).getStockItemByUuid(uuid) ;
-//		instance.setItem(stockItem);
-//	}
 
 	@PropertySetter("billLineItem")
 	public void setBillLineItem(Payment instance, String uuid){

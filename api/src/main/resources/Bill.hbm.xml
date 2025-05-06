@@ -185,7 +185,6 @@
 
 		<many-to-one name="bill" class="org.openmrs.module.kenyaemr.cashier.api.model.Bill" column="bill_id" not-null="true" />
 		<many-to-one name="instanceType" class="org.openmrs.module.kenyaemr.cashier.api.model.PaymentMode" column="payment_mode_id" not-null="true" />
-<!--		<many-to-one name="item" class="org.openmrs.module.stockmanagement.api.model.StockItem" column="item_id" not-null="false" />-->
 		<many-to-one name="billLineItem" class="org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem" column="line_item_id" not-null="false"/>
 
 
