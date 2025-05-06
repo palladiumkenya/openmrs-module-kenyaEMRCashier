@@ -895,23 +895,49 @@
 		<dropColumn tableName="cashier_item_price" columnName="item_id"/>
 	</changeSet>
 
-	<changeSet id="openhmis.cashier-001-v3.0.0-202504021620" author="makombe">
+<!--	<changeSet id="openhmis.cashier-001-v3.0.0-202504021620" author="makombe">-->
+<!--		<preConditions onFail="MARK_RAN">-->
+<!--			<not>-->
+<!--				<columnExists tableName="cashier_bill_payment" columnName="item_id"/>-->
+<!--			</not>-->
+<!--		</preConditions>-->
+<!--		<comment>Adding the column item_id to the table cashier_bill_payment</comment>-->
+<!--		<addColumn tableName="cashier_bill_payment">-->
+<!--			<column name="item_id" type="int">-->
+<!--				<constraints nullable="true"/>-->
+<!--			</column>-->
+<!--		</addColumn>-->
+
+<!--		<addForeignKeyConstraint constraintName="cashier_bill_payment_item_id_fk"-->
+<!--								 baseTableName="cashier_bill_payment" baseColumnNames="item_id"-->
+<!--								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id"-->
+<!--								 onDelete="CASCADE" onUpdate="CASCADE"/>-->
+<!--	</changeSet>-->
+	<changeSet id="openhmis.cashier-001-v3.0.0-202505052120" author="itskios09">
 		<preConditions onFail="MARK_RAN">
-			<not>
-				<columnExists tableName="cashier_bill_payment" columnName="item_id"/>
-			</not>
+			<columnExists tableName="cashier_bill_payment" columnName="item_id"/>
 		</preConditions>
-		<comment>Adding the column item_id to the table cashier_bill_payment</comment>
+		<comment>Dropping the item_id column and its foreign key</comment>
+
+		<dropForeignKeyConstraint
+				baseTableName="cashier_bill_payment"
+				constraintName="cashier_bill_payment_item_id_fk"/>
+
+		<dropColumn tableName="cashier_bill_payment" columnName="item_id"/>
+
 		<addColumn tableName="cashier_bill_payment">
-			<column name="item_id" type="int">
+			<column name="line_item_id" type="int">
 				<constraints nullable="true"/>
 			</column>
 		</addColumn>
 
-		<addForeignKeyConstraint constraintName="cashier_bill_payment_item_id_fk"
-								 baseTableName="cashier_bill_payment" baseColumnNames="item_id"
-								 referencedTableName="stockmgmt_stock_item" referencedColumnNames="stock_item_id"
-								 onDelete="CASCADE" onUpdate="CASCADE"/>
+		<addForeignKeyConstraint
+				baseTableName="cashier_bill_payment"
+				baseColumnNames="line_item_id"
+				constraintName="cashier_bill_payment_line_item_id_fk"
+				referencedTableName="cashier_bill_line_item"
+				referencedColumnNames="bill_line_item_id"
+		onDelete="CASCADE"
+		onUpdate="CASCADE"/>
 	</changeSet>
-
 </databaseChangeLog>
