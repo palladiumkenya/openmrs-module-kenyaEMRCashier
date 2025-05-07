@@ -53,11 +53,7 @@ import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.impl.BaseEntityDataServiceImpl;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAuthorizationPrivileges;
 import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
-import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
-import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
-import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
+import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
@@ -134,6 +130,7 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		if(!bills.isEmpty()) {
 			Bill billToUpdate = bills.get(0);
 			billToUpdate.setStatus(BillStatus.PENDING);
+			billToUpdate.setBillType(BillType.QUOTATION);
 			for (BillLineItem item: bill.getLineItems()) {
 				item.setBill(billToUpdate);
 				billToUpdate.getLineItems().add(item);
@@ -519,4 +516,15 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 			}
 		}
 	}
+
+	@Authorized({ PrivilegeConstants.MANAGE_BILLS })
+	@Transactional
+	public void convertQuotationToInvoice(Bill bill) {
+		if (bill == null) {
+			throw new NullPointerException("The bill must be defined.");
+		}
+		super.save(bill);
+	}
+
+
 }

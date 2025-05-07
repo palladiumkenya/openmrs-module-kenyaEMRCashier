@@ -65,6 +65,10 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 			criteria.add(Restrictions.eq("status", bill.getStatus()));
 		}
 
+		if (bill.getBillType() != null) {
+			criteria.add(Restrictions.eq("billType", bill.getBillType()));
+		}
+
 		if (getCreatedOnOrBefore() != null) {
 			// set the date's time to the last millisecond of the date
 			Calendar cal = Calendar.getInstance();

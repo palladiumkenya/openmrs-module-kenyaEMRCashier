@@ -26,12 +26,7 @@ import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ITimesheetService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
-import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
-import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
-import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
-import org.openmrs.module.kenyaemr.cashier.api.model.Timesheet;
+import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.RoundingUtil;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
@@ -77,6 +72,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			description.addProperty("receiptNumber");
 			description.addProperty("status");
 			description.addProperty("adjustmentReason");
+			description.addProperty("billType");
 			description.addProperty("id");
 		}
 		return description;
@@ -134,6 +130,14 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		}
 	}
 
+	@PropertySetter("billType")
+	public void setBillType(Bill instance, BillType billType) {
+		if (instance.getBillType() == null) {
+			instance.setBillType(billType);
+		} else if (instance.getBillType() == BillType.QUOTATION || billType == BillType.INVOICE) {
+			instance.setBillType(billType);
+		}
+	}
 	@Override
 	public Bill save(Bill bill) {
 		// TODO: Test all the ways that this could fail
@@ -160,6 +164,9 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			if (bill.getStatus() == null) {
 				bill.setStatus(BillStatus.PENDING);
 			}
+			if (bill.getBillType() == null) {
+				bill.setBillType(BillType.QUOTATION);
+			}
 		}
 
 		return super.save(bill);
@@ -169,6 +176,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 	protected AlreadyPaged<Bill> doSearch(RequestContext context) {
 		String patientUuid = context.getRequest().getParameter("patientUuid");
 		String status = context.getRequest().getParameter("status");
+		String bill_type = context.getRequest().getParameter("billType");
 		String cashPointUuid = context.getRequest().getParameter("cashPointUuid");
 		String createdOnOrBeforeDateStr = context.getRequest().getParameter("createdOnOrBefore");
 		String createdOnOrAfterDateStr = context.getRequest().getParameter("createdOnOrAfter");
@@ -186,6 +194,9 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		Patient patient = Strings.isNotEmpty(patientUuid) ? Context.getPatientService().getPatientByUuid(patientUuid)
 				: null;
 		BillStatus billStatus = Strings.isNotEmpty(status) ? BillStatus.valueOf(status.toUpperCase()) : null;
+
+		BillType billType = Strings.isNotEmpty(bill_type) ? BillType.valueOf(bill_type.toUpperCase()) : null;
+
 		CashPoint cashPoint = Strings.isNotEmpty(cashPointUuid)
 				? Context.getService(ICashPointService.class).getByUuid(cashPointUuid)
 				: null;
@@ -199,6 +210,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		Bill searchTemplate = new Bill();
 		searchTemplate.setPatient(patient);
 		searchTemplate.setStatus(billStatus);
+		searchTemplate.setBillType(billType);
 		searchTemplate.setCashPoint(cashPoint);
 		IBillService service = Context.getService(IBillService.class);
 

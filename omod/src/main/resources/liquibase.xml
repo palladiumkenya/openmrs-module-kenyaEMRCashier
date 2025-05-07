@@ -914,4 +914,12 @@
 								 onDelete="CASCADE" onUpdate="CASCADE"/>
 	</changeSet>
 
+	<changeSet id="openhmis.cashier-quotation-approved" author="abertnamanya">
+		<addColumn tableName="cashier_bill">
+			<column name="bill_type" type="varchar(255)">
+				<constraints nullable="true" />
+			</column>
+		</addColumn>
+	</changeSet>
+
 </databaseChangeLog>

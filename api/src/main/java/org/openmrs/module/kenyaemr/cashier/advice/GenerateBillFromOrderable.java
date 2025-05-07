@@ -19,13 +19,7 @@ import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ItemPriceService;
-import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
-import org.openmrs.module.kenyaemr.cashier.api.model.BillableServiceStatus;
-import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
-import org.openmrs.module.kenyaemr.cashier.api.model.CashierItemPrice;
+import org.openmrs.module.kenyaemr.cashier.api.model.*;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillItemSearch;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillableServiceSearch;
 import org.openmrs.module.kenyaemr.cashier.exemptions.BillingExemptions;
@@ -57,7 +51,6 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
 
     @Override
     public void afterReturning(Object returnValue, Method method, Object[] args, Object target) throws Throwable {
-        LOG.info("abertnamanya-new-error log: " +"TRy to create invoice item");
         try {
             // Extract the Order object from the arguments
             ProgramWorkflowService workflowService = Context.getProgramWorkflowService();
@@ -90,7 +83,6 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                 Patient patient = order.getPatient();
                 String cashierUUID = Context.getAuthenticatedUser().getUuid();
                 String cashpointUUID = Utils.getDefaultLocation().getUuid();
-                LOG.info("abertnamanya-new-error log: " + Utils.getDefaultLocation().toString());
 
                 if (order instanceof DrugOrder) {
                     DrugOrder drugOrder = (DrugOrder) order;
@@ -262,6 +254,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
             Bill activeBill = new Bill();
             activeBill.setPatient(patient);
             activeBill.setStatus(BillStatus.PENDING);
+            activeBill.setBillType(BillType.QUOTATION);
             // Bill Item
 
             billLineItem.setQuantity(quantity);
@@ -279,6 +272,7 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                 activeBill.setCashPoint(cashPoints.get(0)); // TODO: this needs correction
                 activeBill.addLineItem(billLineItem);
                 activeBill.setStatus(BillStatus.PENDING);
+                activeBill.setBillType(BillType.QUOTATION);
                 billService.save(activeBill);
             } else {
                 System.out.println("User is not a provider");

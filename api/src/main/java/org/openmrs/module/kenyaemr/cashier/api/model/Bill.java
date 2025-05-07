@@ -45,6 +45,16 @@ public class Bill extends BaseOpenmrsData {
 	private Set<Bill> adjustedBy;
 	private Boolean receiptPrinted = false;
 	private String adjustmentReason;
+	private BillType billType;
+
+	public BillType getBillType() {
+		return billType;
+	}
+
+	public void setBillType(BillType billType) {
+		this.billType = billType;
+	}
+
 	public String getAdjustmentReason() {
 		return adjustmentReason;
 	}
