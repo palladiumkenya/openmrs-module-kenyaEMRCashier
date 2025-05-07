@@ -15,10 +15,12 @@ package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
-import org.openmrs.module.kenyaemr.cashier.api.model.*;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
+import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
+import org.openmrs.module.kenyaemr.cashier.api.model.PaymentMode;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
-import org.openmrs.module.stockmanagement.api.StockManagementService;
-import org.openmrs.module.stockmanagement.api.model.StockItem;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.IPaymentModeService;
 import org.openmrs.module.webservices.rest.web.RequestContext;
