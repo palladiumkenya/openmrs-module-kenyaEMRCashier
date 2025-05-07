@@ -42,6 +42,11 @@
 		<level value="DEBUG" />
 	</logger>
 
+	<!-- Add specific logger for kenyaemr cashier module -->
+	<logger name="org.openmrs.module.kenyaemr.cashier">
+		<level value="INFO" />
+	</logger>
+
 	<logger name="org.openmrs.api">
 		<level value="WARN" />
 	</logger>

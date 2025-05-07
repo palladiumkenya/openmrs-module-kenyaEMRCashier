@@ -150,6 +150,16 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
         }
     }
 
+    @PropertyGetter(value = "itemOrServiceConceptUuid")
+    public String getItemOrServiceConceptUuid(BillLineItem instance) {
+        try {
+            return instance.getItemOrServiceConceptUuid();
+        } catch (Exception e) {
+            LOG.warn("Error getting itemOrServiceConceptUuid for bill line item " + instance.getUuid(), e);
+            return null;
+        }
+    }
+
     @Override
     public BillLineItem getByUniqueId(String uuid) {
         return getService().getByUuid(uuid);

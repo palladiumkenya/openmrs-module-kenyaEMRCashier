@@ -1,0 +1,31 @@
+<!ELEMENT log4j:configuration (appender*, logger*, root?)>
+<!ATTLIST log4j:configuration
+    xmlns:log4j CDATA #FIXED "http://jakarta.apache.org/log4j/">
+
+<!ELEMENT appender (layout?, param*)>
+<!ATTLIST appender
+    name CDATA #REQUIRED
+    class CDATA #REQUIRED>
+
+<!ELEMENT layout (param*)>
+<!ATTLIST layout
+    class CDATA #REQUIRED>
+
+<!ELEMENT param EMPTY>
+<!ATTLIST param
+    name CDATA #REQUIRED
+    value CDATA #REQUIRED>
+
+<!ELEMENT logger (level?, appender-ref*)>
+<!ATTLIST logger
+    name CDATA #REQUIRED>
+
+<!ELEMENT level EMPTY>
+<!ATTLIST level
+    value (DEBUG|INFO|WARN|ERROR|FATAL) #REQUIRED>
+
+<!ELEMENT root (level, appender-ref*)>
+
+<!ELEMENT appender-ref EMPTY>
+<!ATTLIST appender-ref
+    ref CDATA #REQUIRED> 
