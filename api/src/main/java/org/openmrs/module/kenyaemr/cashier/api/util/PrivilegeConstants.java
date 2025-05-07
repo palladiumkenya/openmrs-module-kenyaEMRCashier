@@ -56,12 +56,16 @@ public class PrivilegeConstants {
 	public static final String TASK_MANAGE_CASHIER_METADATA = "Task: Manage Cashier Metadata";
 	public static final String TASK_VIEW_CASHIER_REPORTS = "Task: View Cashier Reports";
 
+	public static final String MANAGE_DEPOSITS = "Manage Deposits";
+	public static final String VIEW_DEPOSITS = "View Deposits";
+	public static final String PURGE_DEPOSITS = "Purge Deposits";
+
 	public static final String[] PRIVILEGE_NAMES = new String[] { MANAGE_BILLS, ADJUST_BILLS, VIEW_BILLS, PURGE_BILLS,
 	        REFUND_MONEY, REPRINT_RECEIPT, MANAGE_TIMESHEETS, VIEW_TIMESHEETS, PURGE_TIMESHEETS, MANAGE_METADATA,
 	        VIEW_METADATA, PURGE_METADATA, APP_VIEW_CASHIER_APP, TASK_CREATE_NEW_BILL_PAGE, TASK_ADJUST_CASHIER_BILL,
 	        TASK_CASHIER_TIMESHEETS_PAGE, TASK_MANAGE_CASHIER_MODULE_PAGE, TASK_MANAGE_CASHIER_METADATA,
 	        TASK_CASHIER_TIMESHEETS_PAGE, TASK_MANAGE_CASHIER_MODULE_PAGE, TASK_VIEW_CASHIER_REPORTS,
-	        APP_ACCESS_CASHIER_TASKS_PAGE };
+	        APP_ACCESS_CASHIER_TASKS_PAGE, MANAGE_DEPOSITS, VIEW_DEPOSITS, PURGE_DEPOSITS };
 
 	private static PrivilegeConstantsCompatibility getPrivilegeConstantsCompatibility() {
 		if (privilegeConstantsCompatibility == null) {

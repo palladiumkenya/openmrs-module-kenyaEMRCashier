@@ -144,10 +144,19 @@ public class BillLineItem extends BaseOpenmrsData {
 	}
 
 	public String getItemOrServiceConceptUuid() {
-		if (billableService != null) {
-			itemOrServiceConceptUuid = billableService.getConcept().getUuid();
-		} else if (item != null) {
-			itemOrServiceConceptUuid = item.getConcept().getUuid();
+		if (itemOrServiceConceptUuid != null) {
+			return itemOrServiceConceptUuid;
+		}
+		try {
+			if (billableService != null && billableService.getConcept() != null) {
+				itemOrServiceConceptUuid = billableService.getConcept().getUuid();
+			} else if (item != null && item.getConcept() != null) {
+				itemOrServiceConceptUuid = item.getConcept().getUuid();
+			}
+		} catch (Exception e) {
+			// Log the error but don't throw it
+			org.apache.commons.logging.LogFactory.getLog(getClass()).warn(
+				"Error getting concept UUID for bill line item " + getId(), e);
 		}
 		return itemOrServiceConceptUuid;
 	}

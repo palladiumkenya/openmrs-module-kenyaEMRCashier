@@ -299,12 +299,7 @@
 		<many-to-one name="patient" class="org.openmrs.Patient" column="patient_id" not-null="true"/>
 		<property name="amount" type="java.math.BigDecimal" column="amount" not-null="true"/>
 		<property name="depositType" type="string" column="deposit_type" not-null="true"/>
-		<property name="status" column="status" not-null="true">
-			<type name="org.hibernate.type.EnumType">
-				<param name="enumClass">org.openmrs.module.kenyaemr.cashier.api.model.DepositStatus</param>
-				<param name="type">12</param>
-			</type>
-		</property>
+		<property name="status" type="org.openmrs.module.kenyaemr.cashier.api.model.DepositStatus" column="status" not-null="true"/>
 		<property name="referenceNumber" type="string" column="reference_number"/>
 		<property name="description" type="string" column="description"/>
 		
@@ -314,12 +309,12 @@
 		</set>
 		
 		<!-- OpenMRS Base Data -->
-		<many-to-one name="creator" class="org.openmrs.User" column="creator" not-null="true"/>
+		<property name="creator" type="org.openmrs.User" column="creator" not-null="true"/>
 		<property name="dateCreated" type="timestamp" column="date_created" not-null="true"/>
-		<many-to-one name="changedBy" class="org.openmrs.User" column="changed_by"/>
+		<property name="changedBy" type="org.openmrs.User" column="changed_by"/>
 		<property name="dateChanged" type="timestamp" column="date_changed"/>
 		<property name="voided" type="boolean" column="voided" not-null="true"/>
-		<many-to-one name="voidedBy" class="org.openmrs.User" column="voided_by"/>
+		<property name="voidedBy" type="org.openmrs.User" column="voided_by"/>
 		<property name="dateVoided" type="timestamp" column="date_voided"/>
 		<property name="voidReason" type="string" column="void_reason"/>
 		<property name="uuid" type="string" column="uuid" not-null="true" unique="true"/>
@@ -327,30 +322,24 @@
 
 	<class name="org.openmrs.module.kenyaemr.cashier.api.model.DepositTransaction" table="cashier_deposit_transaction">
 		<cache usage="read-write"/>
-		<id name="depositTransactionId" type="java.lang.Integer">
+		<id name="transactionId" type="java.lang.Integer">
 			<column name="transaction_id"/>
 			<generator class="native"/>
 		</id>
 		
 		<many-to-one name="deposit" class="org.openmrs.module.kenyaemr.cashier.api.model.Deposit" column="deposit_id" not-null="true"/>
-		<many-to-one name="billLineItem" class="org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem" column="bill_line_item_id" not-null="false" fetch="select"/>
 		<property name="amount" type="java.math.BigDecimal" column="amount" not-null="true"/>
-		<property name="transactionType" column="transaction_type" not-null="true">
-			<type name="org.hibernate.type.EnumType">
-				<param name="enumClass">org.openmrs.module.kenyaemr.cashier.api.model.TransactionType</param>
-				<param name="type">12</param>
-			</type>
-		</property>
+		<property name="transactionType" type="org.openmrs.module.kenyaemr.cashier.api.model.TransactionType" column="transaction_type" not-null="true"/>
 		<property name="reason" type="string" column="reason"/>
 		<property name="receiptNumber" type="string" column="receipt_number"/>
 		
 		<!-- OpenMRS Base Data -->
-		<many-to-one name="creator" class="org.openmrs.User" column="creator" not-null="true"/>
+		<property name="creator" type="org.openmrs.User" column="creator" not-null="true"/>
 		<property name="dateCreated" type="timestamp" column="date_created" not-null="true"/>
-		<many-to-one name="changedBy" class="org.openmrs.User" column="changed_by"/>
+		<property name="changedBy" type="org.openmrs.User" column="changed_by"/>
 		<property name="dateChanged" type="timestamp" column="date_changed"/>
 		<property name="voided" type="boolean" column="voided" not-null="true"/>
-		<many-to-one name="voidedBy" class="org.openmrs.User" column="voided_by"/>
+		<property name="voidedBy" type="org.openmrs.User" column="voided_by"/>
 		<property name="dateVoided" type="timestamp" column="date_voided"/>
 		<property name="voidReason" type="string" column="void_reason"/>
 		<property name="uuid" type="string" column="uuid" not-null="true" unique="true"/>

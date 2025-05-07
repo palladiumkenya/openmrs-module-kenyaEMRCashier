@@ -26,12 +26,16 @@ import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.ITimesheetService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
+import org.openmrs.module.kenyaemr.cashier.api.IDepositService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.model.Timesheet;
+import org.openmrs.module.kenyaemr.cashier.api.model.Deposit;
+import org.openmrs.module.kenyaemr.cashier.api.model.DepositTransaction;
+import org.openmrs.module.kenyaemr.cashier.api.model.TransactionType;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.RoundingUtil;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
@@ -39,15 +43,21 @@ import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceC
 import org.openmrs.module.webservices.rest.web.ConversionUtil;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.RestConstants;
+import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
 import org.openmrs.module.webservices.rest.web.representation.DefaultRepresentation;
+import org.openmrs.module.webservices.rest.web.representation.FullRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.RefRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
 import org.openmrs.module.webservices.rest.web.resource.impl.AlreadyPaged;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
+import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingSubResource;
+import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
+import org.openmrs.module.webservices.rest.web.response.ResponseException;
 import org.springframework.web.client.RestClientException;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -78,6 +88,11 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			description.addProperty("status");
 			description.addProperty("adjustmentReason");
 			description.addProperty("id");
+			// Add new properties for cumulative totals
+			description.addProperty("totalPayments", findMethod("getTotalPayments"), Representation.DEFAULT);
+			description.addProperty("totalExempted", findMethod("getTotalExempted"), Representation.DEFAULT);
+			description.addProperty("totalDeposits", findMethod("getTotalDeposits"), Representation.DEFAULT);
+			description.addProperty("balance", findMethod("getBalance"), Representation.DEFAULT);
 		}
 		return description;
 	}
@@ -274,5 +289,71 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			}
 			bill.setCashPoint(cashPoint);
 		}
+	}
+
+	@PropertyGetter("totalPayments")
+	public BigDecimal getTotalPayments(Bill instance) {
+		if (instance.getPayments() == null) {
+			return BigDecimal.ZERO;
+		}
+		return instance.getPayments().stream()
+				.filter(payment -> !payment.getVoided())
+				.map(Payment::getAmountTendered)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	@PropertyGetter("totalExempted")
+	public BigDecimal getTotalExempted(Bill instance) {
+		if (instance.getLineItems() == null) {
+			return BigDecimal.ZERO;
+		}
+		return instance.getLineItems().stream()
+				.filter(item -> !item.getVoided() && item.getPaymentStatus() != null && 
+						item.getPaymentStatus().equals("EXEMPTED"))
+				.map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	@PropertyGetter("totalDeposits")
+	public BigDecimal getTotalDeposits(Bill instance) {
+		if (instance.getLineItems() == null) {
+			return BigDecimal.ZERO;
+		}
+		
+		IDepositService depositService = Context.getService(IDepositService.class);
+		BigDecimal totalDeposits = BigDecimal.ZERO;
+		
+		// Get all deposits for the patient
+		List<Deposit> patientDeposits = depositService.getDepositsByPatient(instance.getPatient(), null);
+		
+		// For each deposit, sum up the transactions that are linked to this bill's line items
+		for (Deposit deposit : patientDeposits) {
+			if (deposit.getTransactions() != null) {
+				for (DepositTransaction transaction : deposit.getTransactions()) {
+					if (!transaction.getVoided() && 
+						transaction.getTransactionType() == TransactionType.APPLY &&
+						transaction.getBillLineItem() != null && 
+						instance.getLineItems().contains(transaction.getBillLineItem())) {
+						totalDeposits = totalDeposits.add(transaction.getAmount());
+					}
+				}
+			}
+		}
+		
+		return totalDeposits;
+	}
+
+	@PropertyGetter("balance")
+	public BigDecimal getBalance(Bill instance) {
+		BigDecimal totalBillAmount = instance.getLineItems().stream()
+				.filter(item -> !item.getVoided() && 
+						(item.getPaymentStatus() == null || !item.getPaymentStatus().equals("EXEMPTED")))
+				.map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		BigDecimal totalPayments = getTotalPayments(instance);
+		BigDecimal totalDeposits = getTotalDeposits(instance);
+
+		return totalBillAmount.subtract(totalPayments).subtract(totalDeposits);
 	}
 }
