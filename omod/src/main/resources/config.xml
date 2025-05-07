@@ -39,6 +39,12 @@
 	</advice>
 
 	<globalProperty>
+		<property>cashier.current.exchange.rate</property>
+		<defaultValue>1</defaultValue>
+		<description>Captures today's exchange rate</description>
+	</globalProperty>
+
+	<globalProperty>
 		<property>${project.parent.artifactId}.defaultReceiptReportId</property>
 		<description>ID of the default Jasper report to use for generating a receipt on the Bill page</description>
 	</globalProperty>
