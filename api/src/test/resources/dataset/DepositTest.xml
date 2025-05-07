@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <cashier_deposit deposit_id="1" patient_id="1" amount="1000.00" deposit_type="Surgery" status="PENDING"
+                     reference_number="DEP001" description="Deposit for surgery"
+                     creator="1" date_created="2024-03-26 00:00:00.0" voided="false" uuid="deposit-uuid-1"/>
+
+    <cashier_deposit_transaction deposit_transaction_id="1" deposit_id="1" amount="500.00" transaction_type="APPLY"
+                               reason="Applied to surgery bill" creator="1" date_created="2024-03-26 00:00:00.0"
+                               voided="false" uuid="deposit-transaction-uuid-1"/>
+</dataset> 
