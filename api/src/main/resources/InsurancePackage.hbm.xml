@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+		"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+		"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<hibernate-mapping package="org.openmrs.module.kenyaemr.cashier.api.model">
+
+
+	<class name="org.openmrs.module.kenyaemr.cashier.api.model.InsuranceBenefitsPackageService" table="insurance_benefits_package">
+		<cache usage="read-write"/>
+
+		<id name="id" type="int" column="benefit_id">
+			<generator class="native">
+				<param name="sequence">insurance_benefits_package_id_seq</param>
+			</generator>
+		</id>
+		<discriminator column="benefit_id" insert="false" />
+
+		<property name="interventionName" type="java.lang.String" column="intervention_name"  length="19" />
+		<property name="shaCode" type="java.lang.String" column="sha_code" length="19" />
+		<property name="interventionType" type="java.lang.String" column="intervention_type" length="19" />
+		<property name="description" type="java.lang.String" column="description" length="255" />
+		<property name="requiresPreAuth" type="java.lang.Boolean" column="requires_pre_auth" />
+		<property name="gender" type="java.lang.String" column="gender" length="15" />
+		<property name="benefitDistribution" type="java.lang.String" column="benefit_distribution" length="50" />
+		<property name="tariff" type="java.lang.Integer" column="tariff" length="50" />
+		<property name="lowerAgeLimit" type="int" column="lower_age_limit" />
+		<property name="upperAgeLimit" type="int" column="upper_age_limit" />
+		<property name="needsReferral" type="java.lang.Boolean" column="needs_referral" />
+		<property name="packageName" type="java.lang.String" column="package_name" length="255" />
+		<property name="packageCode" type="java.lang.String" column="package_code" length="255" />
+		<property name="insurer" type="int" column="insurer" />
+		<property name="accessPoint" type="java.lang.String" column="access_point" length="255" />
+		<property name="subCategory" type="java.lang.String" column="sub_category" length="255" />
+		<many-to-one name="creator" class="org.openmrs.User" not-null="true" column="creator" />
+		<property name="dateCreated" type="java.util.Date" column="date_created" not-null="true" length="19" />
+
+		<many-to-one name="changedBy" class="org.openmrs.User" column="changed_by" />
+		<property name="dateChanged" type="java.util.Date" column="date_changed" length="19" />
+
+		<property name="voided" type="java.lang.Boolean" column="voided" length="1" not-null="true" />
+		<many-to-one name="voidedBy" class="org.openmrs.User" column="voided_by" />
+
+		<property name="dateVoided" type="java.util.Date" column="date_voided" length="19" />
+		<property name="voidReason" type="java.lang.String" column="void_reason" length="255" />
+
+		<property name="uuid" type="java.lang.String" column="uuid" length="38" unique="true" />
+	</class>
+
+</hibernate-mapping>
