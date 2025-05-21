@@ -57,6 +57,7 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 			description.addProperty("attributes");
 			description.addProperty("amount");
 			description.addProperty("amountTendered");
+			description.addProperty("forexRate");
 			description.addProperty("item");
 			description.addProperty("dateCreated");
 			description.addProperty("voided");
@@ -72,6 +73,7 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 		description.addProperty("attributes");
 		description.addProperty("amount");
 		description.addProperty("amountTendered");
+		description.addProperty("forexRate");
 		description.addProperty("item");
 
 		return description;
@@ -132,6 +134,12 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 			instance.setAmountTendered(BigDecimal.valueOf((Double) price));
 		}
 	}
+
+	@PropertySetter("forexRate")
+	public void setForexRate(Payment instance, Double forexRate) {
+	     instance.setForexRate(BigDecimal.valueOf(forexRate));
+	}
+
 
 	@PropertyGetter("dateCreated")
 	public Long getPaymentDate(Payment instance) {
