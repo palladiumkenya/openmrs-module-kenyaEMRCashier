@@ -29,7 +29,7 @@ public class Payment extends BaseInstanceCustomizableData<PaymentMode, PaymentAt
 	private BigDecimal amount;
 	private BigDecimal amountTendered;
 	private StockItem item;
-
+	private BigDecimal forexRate;
 
 	public Integer getId() {
 		return paymentId;
@@ -54,6 +54,14 @@ public class Payment extends BaseInstanceCustomizableData<PaymentMode, PaymentAt
 		addAttribute(attribute);
 
 		return attribute;
+	}
+
+	public BigDecimal getForexRate() {
+		return forexRate;
+	}
+
+	public void setForexRate(BigDecimal forexRate) {
+		this.forexRate = forexRate;
 	}
 
 	public BigDecimal getAmount() {

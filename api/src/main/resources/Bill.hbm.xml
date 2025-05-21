@@ -197,6 +197,7 @@
 
 		<property name="amount" type="java.math.BigDecimal" column="amount" not-null="true" />
 		<property name="amountTendered" type="java.math.BigDecimal" column="amount_tendered" not-null="true" />
+		<property name="forexRate" type="java.math.BigDecimal" column="forex_rate" not-null="true" />
 
 		<set name="attributes" lazy="false" inverse="true" cascade="all-delete-orphan">
 			<key column="bill_payment_id" />

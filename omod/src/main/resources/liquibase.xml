@@ -922,4 +922,10 @@
 		</addColumn>
 	</changeSet>
 
+	<changeSet id="openhmis.cashier-payment_forex_rate" author="abertnamanya">
+		<addColumn tableName="cashier_bill_payment">
+			<column name="forex_rate" type="decimal(10,2)"><constraints nullable="false"/></column>
+		</addColumn>
+	</changeSet>
+
 </databaseChangeLog>
