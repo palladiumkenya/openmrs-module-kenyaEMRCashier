@@ -30,21 +30,21 @@ public class PrivilegeConstants {
 
 	private static PrivilegeConstantsCompatibility privilegeConstantsCompatibility;
 
-	public static final String MANAGE_BILLS = "Manage Cashier Bills";
-	public static final String ADJUST_BILLS = "Adjust Cashier Bills";
-	public static final String VIEW_BILLS = "View Cashier Bills";
-	public static final String PURGE_BILLS = "Purge Cashier Bills";
+	public static final String MANAGE_BILLS = "Manage Bills";
+	public static final String ADJUST_BILLS = "Adjust Bills";
+	public static final String VIEW_BILLS = "View Bills";
+	public static final String PURGE_BILLS = "Purge Bills";
 
 	public static final String REFUND_MONEY = "Refund Money";
 	public static final String REPRINT_RECEIPT = "Reprint Receipt";
 
-	public static final String MANAGE_METADATA = "Manage Cashier Metadata";
-	public static final String VIEW_METADATA = "View Cashier Metadata";
-	public static final String PURGE_METADATA = "Purge Cashier Metadata";
+	public static final String MANAGE_METADATA = "Manage Metadata";
+	public static final String VIEW_METADATA = "View Metadata";
+	public static final String PURGE_METADATA = "Purge Metadata";
 
-	public static final String MANAGE_TIMESHEETS = "Manage Cashier Timesheets";
-	public static final String VIEW_TIMESHEETS = "View Cashier Timesheets";
-	public static final String PURGE_TIMESHEETS = "Purge Cashier Timesheets";
+	public static final String MANAGE_TIMESHEETS = "Manage Timesheets";
+	public static final String VIEW_TIMESHEETS = "View Timesheets";
+	public static final String PURGE_TIMESHEETS = "Purge Timesheets";
 
 	public static final String APP_VIEW_CASHIER_APP = "App: View Cashier App";
 	public static final String APP_ACCESS_CASHIER_TASKS_PAGE = "App: Access Cashier Tasks";
@@ -56,12 +56,16 @@ public class PrivilegeConstants {
 	public static final String TASK_MANAGE_CASHIER_METADATA = "Task: Manage Cashier Metadata";
 	public static final String TASK_VIEW_CASHIER_REPORTS = "Task: View Cashier Reports";
 
+	public static final String MANAGE_DEPOSITS = "Manage Deposits";
+	public static final String VIEW_DEPOSITS = "View Deposits";
+	public static final String PURGE_DEPOSITS = "Purge Deposits";
+
 	public static final String[] PRIVILEGE_NAMES = new String[] { MANAGE_BILLS, ADJUST_BILLS, VIEW_BILLS, PURGE_BILLS,
 	        REFUND_MONEY, REPRINT_RECEIPT, MANAGE_TIMESHEETS, VIEW_TIMESHEETS, PURGE_TIMESHEETS, MANAGE_METADATA,
 	        VIEW_METADATA, PURGE_METADATA, APP_VIEW_CASHIER_APP, TASK_CREATE_NEW_BILL_PAGE, TASK_ADJUST_CASHIER_BILL,
 	        TASK_CASHIER_TIMESHEETS_PAGE, TASK_MANAGE_CASHIER_MODULE_PAGE, TASK_MANAGE_CASHIER_METADATA,
 	        TASK_CASHIER_TIMESHEETS_PAGE, TASK_MANAGE_CASHIER_MODULE_PAGE, TASK_VIEW_CASHIER_REPORTS,
-	        APP_ACCESS_CASHIER_TASKS_PAGE };
+	        APP_ACCESS_CASHIER_TASKS_PAGE, MANAGE_DEPOSITS, VIEW_DEPOSITS, PURGE_DEPOSITS };
 
 	private static PrivilegeConstantsCompatibility getPrivilegeConstantsCompatibility() {
 		if (privilegeConstantsCompatibility == null) {
