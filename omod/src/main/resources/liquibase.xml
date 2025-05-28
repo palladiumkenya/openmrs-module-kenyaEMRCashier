@@ -928,4 +928,13 @@
 		</addColumn>
 	</changeSet>
 
+	<changeSet id="openhmis.cashier-001-v3.0.0-202505270728" author="abertnamanya">
+		<comment>Adding the column old_price to the table cashier_item_price</comment>
+		<addColumn tableName="cashier_item_price">
+			<column name="old_price" type="decimal(10,2)">
+				<constraints nullable="true"/>
+			</column>
+		</addColumn>
+	</changeSet>
+
 </databaseChangeLog>

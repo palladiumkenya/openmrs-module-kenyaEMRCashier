@@ -3,6 +3,7 @@ package org.openmrs.module.kenyaemr.cashier.rest.restmapper;
 import org.apache.commons.lang3.StringUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillableItemsService;
+import org.openmrs.module.kenyaemr.cashier.api.ICashierItemPriceService;
 import org.openmrs.module.kenyaemr.cashier.api.IPaymentModeService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableService;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillableServiceStatus;
@@ -136,6 +137,16 @@ public class BillableServiceMapper {
             CashierItemPrice price = new CashierItemPrice();
             price.setName(itemPrice.getName());
             price.setPrice(itemPrice.getPrice());
+            if (itemPrice.getUuid() != null) {
+                CashierItemPrice existingItem = Context.getService(ICashierItemPriceService.class).getByUuid(itemPrice.getUuid());
+                if (!existingItem.getPrice().equals(itemPrice.getPrice())) {
+                    price.setOldPrice(existingItem.getPrice());
+                } else {
+                    //No change with the price of the item/ keep the old price
+                    price.setOldPrice(existingItem.getOldPrice());
+                }
+            }
+
             price.setPaymentMode(Context.getService(IPaymentModeService.class).getByUuid(itemPrice.getPaymentMode()));
             price.setBillableService(service);
             return price;
@@ -163,6 +174,7 @@ public class BillableServiceMapper {
             } else {
                 existingPrice.setName(newPrice.getName());
                 existingPrice.setPrice(newPrice.getPrice());
+                existingPrice.setOldPrice(newPrice.getOldPrice());
                 existingPrice.setPaymentMode(newPrice.getPaymentMode());
                 existingPrice.setBillableService(newPrice.getBillableService());
             }
