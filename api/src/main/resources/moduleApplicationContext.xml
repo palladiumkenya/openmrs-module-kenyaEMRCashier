@@ -106,6 +106,22 @@
 			</list>
 		</property>
 	</bean>
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list merge="true">
+				<value>org.openmrs.module.kenyaemr.cashier.api.IDepositService</value>
+				<ref bean="depositService" />
+			</list>
+		</property>
+	</bean>
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list merge="true">
+				<value>org.openmrs.module.kenyaemr.cashier.api.IDepositTransactionService</value>
+				<ref bean="depositTransactionService" />
+			</list>
+		</property>
+	</bean>
 
 	<!-- Service Bean Definitions -->
 	<bean id="itemPriceService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
@@ -216,7 +232,47 @@
 		<property name="preInterceptors" ref="serviceInterceptors" />
 		<property name="transactionAttributeSource" ref="transactionAttributeSource" />
 	</bean>
+	<bean id="depositService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="target">
+			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositServiceImpl">
+				<property name="repository" ref="depositEntityDataService" />
+			</bean>
+		</property>
+		<property name="preInterceptors" ref="serviceInterceptors" />
+		<property name="transactionAttributeSource" ref="transactionAttributeSource" />
+	</bean>
+	<bean id="depositTransactionService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="target">
+			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositTransactionServiceImpl">
+				<property name="repository" ref="depositTransactionEntityDataService" />
+			</bean>
+		</property>
+		<property name="preInterceptors" ref="serviceInterceptors" />
+		<property name="transactionAttributeSource" ref="transactionAttributeSource" />
+	</bean>
 	<bean id="genericRepositoryDao" class="org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepositoryImpl">
 		<constructor-arg name="sessionFactory" ref="dbSessionFactory"/>
+	</bean>
+
+	<!-- Deposit Repository -->
+	<bean id="depositRepository" class="org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepositoryImpl">
+		<constructor-arg name="sessionFactory" ref="dbSessionFactory"/>
+	</bean>
+
+	<!-- Deposit Entity Data Service -->
+	<bean id="depositEntityDataService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositEntityDataServiceImpl">
+		<property name="repository" ref="depositRepository"/>
+	</bean>
+
+	<!-- DepositTransaction Repository -->
+	<bean id="depositTransactionRepository" class="org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepositoryImpl">
+		<constructor-arg name="sessionFactory" ref="dbSessionFactory"/>
+	</bean>
+
+	<!-- DepositTransaction Entity Data Service -->
+	<bean id="depositTransactionEntityDataService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositTransactionEntityDataServiceImpl">
+		<property name="repository" ref="depositTransactionRepository"/>
 	</bean>
 </beans>
