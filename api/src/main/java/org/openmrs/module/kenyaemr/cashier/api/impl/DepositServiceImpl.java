@@ -12,6 +12,7 @@ import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
 import org.openmrs.module.kenyaemr.cashier.api.IDepositService;
 import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
+import org.openmrs.module.kenyaemr.cashier.api.base.entity.impl.BaseEntityDataServiceImpl;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepository;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
@@ -40,7 +41,9 @@ public class DepositServiceImpl extends BaseOpenmrsService implements IDepositSe
 
     @Override
     public void setRepository(BaseHibernateRepository repository) {
-        this.repository.setRepository(repository);
+        if (this.repository instanceof BaseEntityDataServiceImpl) {
+            ((BaseEntityDataServiceImpl<Deposit>) this.repository).setRepository(repository);
+        }
     }
 
     @Override
