@@ -1,4 +1,4 @@
-name: Build and Publish to Nexus
+name: KenyaEMR Cashier CI/CD
 
 on:
   # Manually triggered workflow using the "Run workflow" button
@@ -6,7 +6,7 @@ on:
   push:
     branches: [master]
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
     branches: [master]
 
@@ -19,16 +19,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+
       - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "8"
-
-      - name: Configure Git
-        run: |
-          git config --global user.email "github-actions@github.com"
-          git config --global user.name "GitHub Actions"
 
       - name: Build with Maven
         run: |
@@ -53,6 +53,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
@@ -92,17 +98,29 @@ jobs:
       - name: Increment Version After Release
         if: startsWith(github.ref, 'refs/tags/')
         run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+
           VERSION=${GITHUB_REF#refs/tags/v}
           # Split version into components
           IFS='.' read -r major minor patch <<< "$VERSION"
           # Increment patch version
           new_patch=$((patch + 1))
           NEW_VERSION="$major.$minor.$new_patch-SNAPSHOT"
-          
+
+          echo "Current version: $VERSION"
+          echo "New version: $NEW_VERSION"
+
           # Update version in pom.xml
           mvn versions:set -DnewVersion=$NEW_VERSION
-          
+
+          # Check if there are changes to commit
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
           # Commit and push changes
-          git add pom.xml
-          git commit -m "Increment version to $NEW_VERSION"
+          git add pom.xml */pom.xml
+          git commit -m "Increment version to $NEW_VERSION [skip ci]"
           git push origin master
