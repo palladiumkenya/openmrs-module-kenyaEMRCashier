@@ -5,6 +5,8 @@ on:
   workflow_dispatch:
   push:
     branches: [master]
+    tags:
+      - 'v*'
   pull_request:
     branches: [master]
 
@@ -14,6 +16,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
@@ -21,25 +25,40 @@ jobs:
           distribution: "temurin"
           java-version: "8"
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+
       - name: Build with Maven
-        run: mvn -B clean install -DskipTests
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # Release build
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "Building release version: $VERSION"
+            mvn versions:set -DnewVersion=$VERSION
+            mvn -B clean install -DskipTests
+          else
+            # Snapshot build
+            echo "Building snapshot version"
+            mvn -B clean install -DskipTests
+          fi
 
   publish:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) }}
     needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "8"
-
-      - name: Build with Maven
-        run: mvn -B clean install -DskipTests
 
       - name: Set settings.xml
         uses: s4u/maven-settings-action@v3.0.0
@@ -57,4 +76,33 @@ jobs:
             }]
 
       - name: Publish
-        run: mvn --batch-mode deploy -DskipTests
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # Release publish
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "Publishing release version: $VERSION"
+            mvn versions:set -DnewVersion=$VERSION
+            mvn --batch-mode deploy -DskipTests
+          else
+            # Snapshot publish
+            echo "Publishing snapshot version"
+            mvn --batch-mode deploy -DskipTests
+          fi
+
+      - name: Increment Version After Release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          # Split version into components
+          IFS='.' read -r major minor patch <<< "$VERSION"
+          # Increment patch version
+          new_patch=$((patch + 1))
+          NEW_VERSION="$major.$minor.$new_patch-SNAPSHOT"
+          
+          # Update version in pom.xml
+          mvn versions:set -DnewVersion=$NEW_VERSION
+          
+          # Commit and push changes
+          git add pom.xml
+          git commit -m "Increment version to $NEW_VERSION"
+          git push origin master
