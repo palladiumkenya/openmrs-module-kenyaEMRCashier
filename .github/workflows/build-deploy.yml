@@ -32,17 +32,8 @@ jobs:
 
       - name: Build with Maven
         run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            # Release build
-            VERSION=${GITHUB_REF#refs/tags/v}
-            echo "Building release version: $VERSION"
-            mvn versions:set -DnewVersion=$VERSION
-            mvn -B clean install -DskipTests
-          else
-            # Snapshot build
-            echo "Building snapshot version"
-            mvn -B clean install -DskipTests
-          fi
+          echo "Building project with current version"
+          mvn -B clean install -DskipTests
 
   publish:
     if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')) }}
@@ -84,13 +75,21 @@ jobs:
       - name: Publish
         run: |
           if [[ $GITHUB_REF == refs/tags/* ]]; then
-            # Release publish
             VERSION=${GITHUB_REF#refs/tags/v}
             echo "Publishing release version: $VERSION"
+
+            # Check if version already exists in Nexus
+            URL="https://nexus.mekomsolutions.net/repository/maven-releases/org/openmrs/module/kenyaemr.cashier/${VERSION}/kenyaemr.cashier-${VERSION}.pom"
+            echo "Checking if $URL exists..."
+
+            if curl --silent --head --fail "$URL" > /dev/null; then
+              echo "Version $VERSION already exists in Nexus. Skipping publish."
+              exit 0
+            fi
+
             mvn versions:set -DnewVersion=$VERSION
             mvn --batch-mode deploy -DskipTests
           else
-            # Snapshot publish
             echo "Publishing snapshot version"
             mvn --batch-mode deploy -DskipTests
           fi
@@ -102,21 +101,17 @@ jobs:
           git config user.name "GitHub Actions"
 
           VERSION=${GITHUB_REF#refs/tags/v}
-          # Split version into components
           IFS='.' read -r major minor patch <<< "$VERSION"
-          # Increment patch version
           new_patch=$((patch + 1))
           NEW_VERSION="$major.$minor.$new_patch-SNAPSHOT"
 
           echo "Current version: $VERSION"
           echo "New version: $NEW_VERSION"
 
-          # Update version in pom.xml
           mvn versions:set -DnewVersion=$NEW_VERSION
 
-          # Check if there are changes to commit
           if git diff --quiet; then
-            echo "No changes to commit"
+            echo "No version changes to commit."
             exit 0
           fi
 
