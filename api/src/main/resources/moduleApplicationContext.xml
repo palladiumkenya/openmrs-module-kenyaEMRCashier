@@ -236,7 +236,7 @@
 		<property name="transactionManager" ref="transactionManager" />
 		<property name="target">
 			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositServiceImpl">
-				<property name="repository" ref="depositEntityDataService" />
+				<property name="repository" ref="genericRepositoryDao" />
 			</bean>
 		</property>
 		<property name="preInterceptors" ref="serviceInterceptors" />
