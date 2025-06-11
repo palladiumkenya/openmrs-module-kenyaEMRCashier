@@ -6,7 +6,7 @@
 
 	<groupId>org.openmrs.module</groupId>
 	<artifactId>kenyaemr.cashier</artifactId>
-	<version>4.2.2</version>
+	<version>4.2.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>OpenHMIS Cashier Module</name>
 	<description>Module to provide basic cashier functionality</description>
