@@ -256,23 +256,13 @@
 		<constructor-arg name="sessionFactory" ref="dbSessionFactory"/>
 	</bean>
 
-	<!-- Deposit Repository -->
-	<bean id="depositRepository" class="org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepositoryImpl">
-		<constructor-arg name="sessionFactory" ref="dbSessionFactory"/>
-	</bean>
-
 	<!-- Deposit Entity Data Service -->
 	<bean id="depositEntityDataService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositEntityDataServiceImpl">
-		<property name="repository" ref="depositRepository"/>
-	</bean>
-
-	<!-- DepositTransaction Repository -->
-	<bean id="depositTransactionRepository" class="org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepositoryImpl">
-		<constructor-arg name="sessionFactory" ref="dbSessionFactory"/>
+		<property name="repository" ref="genericRepositoryDao"/>
 	</bean>
 
 	<!-- DepositTransaction Entity Data Service -->
 	<bean id="depositTransactionEntityDataService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositTransactionEntityDataServiceImpl">
-		<property name="repository" ref="depositTransactionRepository"/>
+		<property name="repository" ref="genericRepositoryDao"/>
 	</bean>
 </beans>
