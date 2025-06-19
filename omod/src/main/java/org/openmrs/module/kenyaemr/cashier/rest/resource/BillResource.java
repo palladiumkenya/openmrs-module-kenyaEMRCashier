@@ -226,7 +226,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 				if (bill.getLineItems() != null) {
 					List<BillLineItem> filteredItems = bill.getLineItems()
 							.stream()
-							.filter(item -> !item.getVoided())
+							.filter(item -> item != null && !item.getVoided())
 							.collect(Collectors.toList());
 					bill.setLineItems(new ArrayList<>(filteredItems));
 				}
@@ -345,6 +345,10 @@ public class BillResource extends BaseRestDataResource<Bill> {
 
 	@PropertyGetter("balance")
 	public BigDecimal getBalance(Bill instance) {
+		if (instance.getLineItems() == null) {
+			return BigDecimal.ZERO;
+		}
+		
 		BigDecimal totalBillAmount = instance.getLineItems().stream()
 				.filter(item -> !item.getVoided() && 
 						(item.getPaymentStatus() == null || !item.getPaymentStatus().equals("EXEMPTED")))
