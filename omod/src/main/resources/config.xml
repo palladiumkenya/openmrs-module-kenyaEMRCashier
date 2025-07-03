@@ -218,6 +218,16 @@
 		<description>Able to purge bills</description>
 	</privilege>
 
+	<privilege>
+		<name>Close Cashier Bills</name>
+		<description>Able to manually close bills to prevent new items from being added</description>
+	</privilege>
+
+	<privilege>
+		<name>Reopen Cashier Bills</name>
+		<description>Able to reopen closed bills to allow new items to be added</description>
+	</privilege>
+
 	<!--  Metadata  -->
 	<privilege>
 		<name>View Cashier Metadata</name>
