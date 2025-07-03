@@ -54,7 +54,13 @@ import org.openmrs.module.webservices.rest.web.resource.impl.AlreadyPaged;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingSubResource;
 import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
+import org.openmrs.module.webservices.rest.web.response.ObjectNotFoundException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
@@ -88,6 +94,10 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			description.addProperty("status");
 			description.addProperty("adjustmentReason");
 			description.addProperty("id");
+			description.addProperty("closed");
+			description.addProperty("closeReason");
+			description.addProperty("closedBy");
+			description.addProperty("dateClosed");
 			// Add new properties for cumulative totals
 			description.addProperty("totalPayments", findMethod("getTotalPayments"), Representation.DEFAULT);
 			description.addProperty("totalExempted", findMethod("getTotalExempted"), Representation.DEFAULT);
@@ -193,6 +203,10 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		boolean includeVoidedBills = Strings.isNotEmpty(includedVoidedBillsStr)
 				? Boolean.parseBoolean(includedVoidedBillsStr) : false;
 
+		// Add includeClosedBills parameter with default false (exclude closed bills by default)
+		String includeClosedBillsStr = context.getRequest().getParameter("includeClosedBills");
+		boolean includeClosedBills = Strings.isNotEmpty(includeClosedBillsStr)
+				? Boolean.parseBoolean(includeClosedBillsStr) : false;
 
 		String includedVoidedLineItemsStr = context.getRequest().getParameter("includeVoided"); //TODO: rename the request param to includeVoidedItems
 		boolean includeVoidedLineItems = Strings.isNotEmpty(includedVoidedLineItemsStr)
@@ -218,7 +232,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		IBillService service = Context.getService(IBillService.class);
 
 		List<Bill> result = service
-				.getBills(new BillSearch(searchTemplate, createdOnOrAfterDate, createdOnOrBeforeDate, includeVoidedBills));
+				.getBills(new BillSearch(searchTemplate, createdOnOrAfterDate, createdOnOrBeforeDate, includeVoidedBills, includeClosedBills));
 
 		// Filter out voided line items if includeVoidedLineItems is false
 		if (!includeVoidedLineItems) {
@@ -308,8 +322,10 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			return BigDecimal.ZERO;
 		}
 		return instance.getLineItems().stream()
-				.filter(item -> !item.getVoided() && item.getPaymentStatus() != null && 
-						item.getPaymentStatus().equals("EXEMPTED"))
+				.filter(item -> item != null && !item.getVoided() && 
+						item.getPaymentStatus() != null && 
+						item.getPaymentStatus().equals("EXEMPTED") &&
+						item.getPrice() != null)
 				.map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
@@ -350,7 +366,8 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		}
 		
 		BigDecimal totalBillAmount = instance.getLineItems().stream()
-				.filter(item -> !item.getVoided() && 
+				.filter(item -> item != null && !item.getVoided() && 
+						item.getPrice() != null &&
 						(item.getPaymentStatus() == null || !item.getPaymentStatus().equals("EXEMPTED")))
 				.map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -359,5 +376,40 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		BigDecimal totalDeposits = getTotalDeposits(instance);
 
 		return totalBillAmount.subtract(totalPayments).subtract(totalDeposits);
+	}
+
+	/**
+	 * Closes a bill manually, preventing new items from being added.
+	 * @param billUuid The UUID of the bill to close
+	 * @param reason The reason for closing the bill
+	 * @return The updated bill
+	 */
+	@RequestMapping(value = "/{uuid}/close", method = RequestMethod.POST)
+	@ResponseBody
+	public Bill closeBill(@PathVariable("uuid") String billUuid, @RequestParam("reason") String reason) {
+		Bill bill = getByUniqueId(billUuid);
+		if (bill == null) {
+			throw new ObjectNotFoundException();
+		}
+		
+		IBillService service = Context.getService(IBillService.class);
+		return service.closeBill(bill, reason);
+	}
+
+	/**
+	 * Reopens a closed bill, allowing new items to be added.
+	 * @param billUuid The UUID of the bill to reopen
+	 * @return The updated bill
+	 */
+	@RequestMapping(value = "/{uuid}/reopen", method = RequestMethod.POST)
+	@ResponseBody
+	public Bill reopenBill(@PathVariable("uuid") String billUuid) {
+		Bill bill = getByUniqueId(billUuid);
+		if (bill == null) {
+			throw new ObjectNotFoundException();
+		}
+		
+		IBillService service = Context.getService(IBillService.class);
+		return service.reopenBill(bill);
 	}
 }

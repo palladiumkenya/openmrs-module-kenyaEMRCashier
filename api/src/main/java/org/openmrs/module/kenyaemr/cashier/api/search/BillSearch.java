@@ -14,7 +14,6 @@
 package org.openmrs.module.kenyaemr.cashier.api.search;
 
 import org.hibernate.Criteria;
-import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.search.BaseDataTemplateSearch;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
@@ -29,6 +28,8 @@ import java.util.Date;
 public class BillSearch extends BaseDataTemplateSearch<Bill> {
 	private Date createdOnOrBefore;
 	private Date createdOnOrAfter;
+	private Boolean includeClosedBills = false;
+
 	public BillSearch() {
 		this(new Bill(), false);
 	}
@@ -47,6 +48,14 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 		this.createdOnOrBefore = createdOnOrBefore;
 	}
 
+	public BillSearch(Bill template, Date createdOnOrAfter, Date createdOnOrBefore, Boolean includeRetired,
+			Boolean includeClosedBills) {
+		super(template, includeRetired);
+		this.createdOnOrAfter = createdOnOrAfter;
+		this.createdOnOrBefore = createdOnOrBefore;
+		this.includeClosedBills = includeClosedBills != null ? includeClosedBills : false;
+	}
+
 	@Override
 	public void updateCriteria(Criteria criteria) {
 		super.updateCriteria(criteria);
@@ -63,6 +72,12 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 		}
 		if (bill.getStatus() != null) {
 			criteria.add(Restrictions.eq("status", bill.getStatus()));
+		}
+
+		// Exclude closed bills by default unless explicitly requested
+		// Use only the 'closed' property to identify closed bills, not BillStatus
+		if (!includeClosedBills) {
+			criteria.add(Restrictions.eq("closed", false));
 		}
 
 		if (getCreatedOnOrBefore() != null) {
@@ -93,5 +108,13 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 
 	public void setCreatedOnOrAfter(Date createdOnOrAfter) {
 		this.createdOnOrAfter = createdOnOrAfter;
+	}
+
+	public Boolean getIncludeClosedBills() {
+		return includeClosedBills;
+	}
+
+	public void setIncludeClosedBills(Boolean includeClosedBills) {
+		this.includeClosedBills = includeClosedBills != null ? includeClosedBills : false;
 	}
 }

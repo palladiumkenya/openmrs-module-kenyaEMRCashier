@@ -14,7 +14,8 @@
 package org.openmrs.module.kenyaemr.cashier.api.model;
 
 /**
- * The allowable statuses that a {@link Bill} can have.
+ * The allowable payment statuses that a {@link Bill} can have.
+ * Note: Bill closure is handled by the 'closed' property, not by status.
  */
 public enum BillStatus {
 	PENDING(0), POSTED(4), PAID(1), CANCELLED(2), ADJUSTED(3), EXEMPTED(5), CREDITED(6);

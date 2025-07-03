@@ -34,6 +34,8 @@ public class PrivilegeConstants {
 	public static final String ADJUST_BILLS = "Adjust Cashier Bills";
 	public static final String VIEW_BILLS = "View Cashier Bills";
 	public static final String PURGE_BILLS = "Purge Cashier Bills";
+	public static final String CLOSE_BILLS = "Close Cashier Bills";
+	public static final String REOPEN_BILLS = "Reopen Cashier Bills";
 
 	public static final String REFUND_MONEY = "Refund Money";
 	public static final String REPRINT_RECEIPT = "Reprint Receipt";
@@ -61,7 +63,7 @@ public class PrivilegeConstants {
 	public static final String PURGE_DEPOSITS = "Purge Deposits";
 
 	public static final String[] PRIVILEGE_NAMES = new String[] { MANAGE_BILLS, ADJUST_BILLS, VIEW_BILLS, PURGE_BILLS,
-	        REFUND_MONEY, REPRINT_RECEIPT, MANAGE_TIMESHEETS, VIEW_TIMESHEETS, PURGE_TIMESHEETS, MANAGE_METADATA,
+	        CLOSE_BILLS, REOPEN_BILLS, REFUND_MONEY, REPRINT_RECEIPT, MANAGE_TIMESHEETS, VIEW_TIMESHEETS, PURGE_TIMESHEETS, MANAGE_METADATA,
 	        VIEW_METADATA, PURGE_METADATA, APP_VIEW_CASHIER_APP, TASK_CREATE_NEW_BILL_PAGE, TASK_ADJUST_CASHIER_BILL,
 	        TASK_CASHIER_TIMESHEETS_PAGE, TASK_MANAGE_CASHIER_MODULE_PAGE, TASK_MANAGE_CASHIER_METADATA,
 	        TASK_CASHIER_TIMESHEETS_PAGE, TASK_MANAGE_CASHIER_MODULE_PAGE, TASK_VIEW_CASHIER_REPORTS,
