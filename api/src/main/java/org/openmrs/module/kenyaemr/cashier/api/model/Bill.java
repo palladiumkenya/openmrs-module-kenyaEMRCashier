@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Date;
+import org.openmrs.User;
 
 /**
  * Model class that represents a list of {@link BillLineItem}s and {@link Payment}s created by a cashier for a patient.
@@ -45,6 +47,11 @@ public class Bill extends BaseOpenmrsData {
 	private Set<Bill> adjustedBy;
 	private Boolean receiptPrinted = false;
 	private String adjustmentReason;
+	private Boolean closed = false;
+	private String closeReason;
+	private User closedBy;
+	private Date dateClosed;
+
 	public String getAdjustmentReason() {
 		return adjustmentReason;
 	}
@@ -331,5 +338,90 @@ public class Bill extends BaseOpenmrsData {
 		String dateString = (changedStr != null) ? changedStr : createdStr;
 
 		return dateString;
+	}
+
+	public Boolean isClosed() {
+		return closed;
+	}
+
+	public void setClosed(Boolean closed) {
+		this.closed = closed;
+	}
+
+	public String getCloseReason() {
+		return closeReason;
+	}
+
+	public void setCloseReason(String closeReason) {
+		this.closeReason = closeReason;
+	}
+
+	public User getClosedBy() {
+		return closedBy;
+	}
+
+	public void setClosedBy(User closedBy) {
+		this.closedBy = closedBy;
+	}
+
+	public Date getDateClosed() {
+		return dateClosed;
+	}
+
+	public void setDateClosed(Date dateClosed) {
+		this.dateClosed = dateClosed;
+	}
+
+	/**
+	 * Closes the bill manually, preventing new items from being added.
+	 * Only users with CLOSE_BILLS privilege can close bills.
+	 * @param reason The reason for closing the bill
+	 */
+	public void closeBill(String reason) {
+		checkAuthorizedToClose();
+		if (reason == null || reason.trim().isEmpty()) {
+			throw new IllegalArgumentException("Close reason must be provided.");
+		}
+		
+		this.closed = true;
+		this.closeReason = reason;
+		this.closedBy = Context.getAuthenticatedUser();
+		this.dateClosed = new Date();
+	}
+
+	/**
+	 * Reopens a closed bill, allowing new items to be added.
+	 * Only users with REOPEN_BILLS privilege can reopen bills.
+	 */
+	public void reopenBill() {
+		checkAuthorizedToReopen();
+		if (!this.closed) {
+			throw new IllegalStateException("Bill is not closed and cannot be reopened.");
+		}
+		
+		this.closed = false;
+		this.closeReason = null;
+		this.closedBy = null;
+		this.dateClosed = null;
+	}
+
+	/**
+	 * Checks if the bill can accept new line items.
+	 * @return true if the bill is not closed and can accept new items
+	 */
+	public boolean canAcceptNewItems() {
+		return !this.closed;
+	}
+
+	private void checkAuthorizedToClose() {
+		if (!Context.hasPrivilege(PrivilegeConstants.CLOSE_BILLS)) {
+			throw new AccessControlException("Access denied to close bill.");
+		}
+	}
+
+	private void checkAuthorizedToReopen() {
+		if (!Context.hasPrivilege(PrivilegeConstants.REOPEN_BILLS)) {
+			throw new AccessControlException("Access denied to reopen bill.");
+		}
 	}
 }

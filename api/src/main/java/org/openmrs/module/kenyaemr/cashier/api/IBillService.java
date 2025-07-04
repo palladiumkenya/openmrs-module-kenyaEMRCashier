@@ -110,4 +110,34 @@ public interface IBillService extends IEntityDataService<Bill> {
 	@Transactional(readOnly = true)
 	@Authorized({ PrivilegeConstants.VIEW_BILLS })
 	File downloadBillReceipt(Bill bill);
+
+	/**
+	 * Closes a bill manually, preventing new items from being added.
+	 * @param bill The bill to close.
+	 * @param reason The reason for closing the bill.
+	 * @return The updated bill.
+	 * @should throw IllegalArgumentException if reason is null or empty
+	 * @should throw AccessControlException if user lacks CLOSE_BILLS privilege
+	 * @should close the bill and set close metadata
+	 */
+	@Authorized({ PrivilegeConstants.CLOSE_BILLS })
+	Bill closeBill(Bill bill, String reason);
+
+	/**
+	 * Reopens a closed bill, allowing new items to be added.
+	 * @param bill The bill to reopen.
+	 * @return The updated bill.
+	 * @should throw IllegalStateException if bill is not closed
+	 * @should throw AccessControlException if user lacks REOPEN_BILLS privilege
+	 * @should reopen the bill and clear close metadata
+	 */
+	@Authorized({ PrivilegeConstants.REOPEN_BILLS })
+	Bill reopenBill(Bill bill);
+
+	/**
+	 * Searches for non-closed bills for a patient created on the same day.
+	 * @param patient The patient to search for bills.
+	 * @return List of non-closed bills for the patient on the same day.
+	 */
+	List<Bill> searchBill(Patient patient);
 }
