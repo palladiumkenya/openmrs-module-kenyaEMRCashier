@@ -171,7 +171,20 @@
 		<description>
 			JSON formatted facility information containing name, tagline, and contact details for invoice letterhead
 		</description>
-		<defaultValue>{}</defaultValue>
+		<defaultValue>
+			{
+				"facilityName": "",
+				"tagline": "",
+				"logoPath": "",
+				"contacts": {
+					"tel": "",
+					"email": "",
+					"emergency": "",
+					"address": "",
+					"website": ""
+				}
+			}
+		</defaultValue>
 	</globalProperty>
 	<!-- Privileges -->
 	<!--  Bills  -->

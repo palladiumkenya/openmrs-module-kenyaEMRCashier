@@ -7,8 +7,6 @@ import org.openmrs.module.kenyaemr.cashier.api.util.invoice.PdfDocumentService;
 import org.openmrs.module.kenyaemr.cashier.api.impl.PdfDocumentServiceImpl;
 import org.openmrs.module.kenyaemr.cashier.api.util.invoice.InvoiceLetterheadSection;
 import org.openmrs.module.kenyaemr.cashier.api.util.invoice.InvoiceContentSection;
-import org.openmrs.module.kenyaemr.cashier.api.util.invoice.InvoiceFooterSection;
-import org.openmrs.module.kenyaemr.cashier.api.util.invoice.InvoicePageHeaderHandler;
 import org.openmrs.module.kenyaemr.cashier.api.util.invoice.InvoicePageFooterHandler;
 import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.v1_0.controller.BaseRestController;

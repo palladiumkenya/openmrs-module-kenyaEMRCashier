@@ -94,7 +94,7 @@ public class InvoicePageFooterHandler implements PdfDocumentService.PageFooterHa
             }
         }
 
-        return "Railways Dispensary (Kisumu)";
+        return "No facility name configured, please add facility name in the global property kenyaemr.cashier.receipt.facilityInformation";
     }
 
     /**
@@ -102,17 +102,17 @@ public class InvoicePageFooterHandler implements PdfDocumentService.PageFooterHa
      */
     private Paragraph createCompactSystemNote(Bill bill, int pageNumber) {
         String invoiceNumber = bill != null && bill.getReceiptNumber() != null ? bill.getReceiptNumber() : "N/A";
-        String generatedDate = bill != null && bill.getDateCreated() != null ? dateFormat.format(bill.getDateCreated())
-                : dateFormat.format(new java.util.Date());
-        String generatedBy = bill != null && bill.getCreator() != null ? bill.getCreator().getUsername() : "system";
+        String generatedDateTime = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(new java.util.Date());
+        String generatedBy = Context.getAuthenticatedUser().getUsername();
+        String generateByUserId = Context.getAuthenticatedUser().getId().toString();
 
         return new Paragraph()
                 .add(new Text("Computer-generated invoice. DOC NO: ").setFontSize(6))
                 .add(new Text(invoiceNumber).setBold().setFontSize(6))
                 .add(new Text(" | ").setFontSize(6))
-                .add(new Text(generatedDate).setFontSize(6))
+                .add(new Text(generatedDateTime).setFontSize(6))
                 .add(new Text(" | ").setFontSize(6))
-                .add(new Text(generatedBy).setItalic().setFontSize(6))
+                .add(new Text(generatedBy + " (" + generateByUserId + ")").setItalic().setFontSize(6))
                 .add(new Text(" | Page ").setFontSize(6))
                 .add(new Text(String.valueOf(pageNumber)).setBold().setFontSize(6))
                 .setTextAlignment(TextAlignment.CENTER)

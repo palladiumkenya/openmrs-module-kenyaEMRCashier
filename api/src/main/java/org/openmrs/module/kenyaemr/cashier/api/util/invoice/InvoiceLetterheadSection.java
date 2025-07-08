@@ -6,19 +6,25 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.element.Text;
 import com.itextpdf.layout.properties.UnitValue;
+import com.itextpdf.layout.properties.VerticalAlignment;
+import com.itextpdf.io.image.ImageDataFactory;
 import org.apache.commons.lang.StringUtils;
 import org.openmrs.api.context.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 
 public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSection {
 
     private static final Logger log = LoggerFactory.getLogger(InvoiceLetterheadSection.class);
     private static final String GP_FACILITY_INFORMATION = "kenyaemr.cashier.receipt.facilityInformation";
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    public static final String OPENMRS_ID = "dfacd928-0370-4315-99d7-6ec1c9f7ae76";
 
     // Design constants
     private static final float HEADER_SPACING = 8f;
@@ -45,6 +51,8 @@ public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSe
                 JsonNode facilityNode = objectMapper.readTree(facilityInfoJson);
                 info.facilityName = getJsonValue(facilityNode, "facilityName", info.facilityName);
                 info.tagline = getJsonValue(facilityNode, "tagline", info.tagline);
+                info.logoPath = getJsonValue(facilityNode, "logoPath", info.logoPath);
+                info.logoData = getJsonValue(facilityNode, "logoData", info.logoData);
 
                 if (facilityNode.has("contacts")) {
                     JsonNode contacts = facilityNode.get("contacts");
@@ -70,35 +78,166 @@ public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSe
     }
 
     /**
-     * Create compact letterhead layout
+     * Create letterhead layout with logo and facility name/tagline stacked, both
+     * left-aligned and vertically aligned from the top
      */
     private void createLetterhead(Document doc, FacilityInfo info) {
-        // Facility name - compact and professional
+        // Create the text block (facility name + tagline)
         Paragraph facilityName = new Paragraph(info.facilityName)
-                .setFontSize(16)
+                .setFontSize(14)
                 .setBold()
                 .setTextAlignment(TextAlignment.CENTER)
-                .setMarginBottom(2f);
+                .setMarginBottom(2f)
+                .setMarginTop(0f)
+                .setMarginRight(0)
+                .setMarginLeft(0);
 
-        // Tagline - compact
         Paragraph tagline = new Paragraph(info.tagline)
                 .setFontSize(9)
                 .setItalic()
                 .setTextAlignment(TextAlignment.CENTER)
-                .setMarginBottom(CONTENT_SPACING);
+                .setMarginBottom(0f)
+                .setMarginTop(0)
+                .setMarginRight(0)
+                .setMarginLeft(0);
 
-        doc.add(facilityName);
-        doc.add(tagline);
+        com.itextpdf.layout.element.Div textBlock = new com.itextpdf.layout.element.Div()
+                .add(facilityName)
+                .add(tagline)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setPadding(0)
+                .setMargin(0)
+                .setVerticalAlignment(VerticalAlignment.TOP);
 
-        // Contact information in compact format
+        // Calculate logo height to match text block height
+        float logoHeight = 40f;
+        if (info.facilityName != null && !info.facilityName.isEmpty()) {
+            logoHeight += 10f;
+        }
+        if (info.tagline != null && !info.tagline.isEmpty()) {
+            logoHeight += 8f;
+        }
+
+        // Create and scale the logo
+        Image logo = createCenteredLogo(info);
+        if (logo != null) {
+            logo.setAutoScale(true);
+            logo.setHeight(logoHeight);
+            logo.setMarginRight(6f);
+            logo.setMarginLeft(0);
+            logo.setMarginTop(0);
+            logo.setMarginBottom(0);
+        }
+
+        Table headerTable = new Table(UnitValue.createPercentArray(new float[] { 1, 4 }))
+                .setWidth(UnitValue.createPercentValue(60))
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMargin(0)
+                .setPadding(0)
+                .setHorizontalAlignment(com.itextpdf.layout.properties.HorizontalAlignment.CENTER);
+
+        if (logo != null) {
+            headerTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(logo)
+                    .setBorder(null)
+                    .setVerticalAlignment(VerticalAlignment.TOP)
+                    .setPadding(0)
+                    .setMargin(0));
+        } else {
+            headerTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph("LOGO").setFontSize(22).setBold().setTextAlignment(TextAlignment.CENTER))
+                    .setBorder(null)
+                    .setVerticalAlignment(VerticalAlignment.TOP)
+                    .setPadding(0)
+                    .setMargin(0));
+        }
+
+        headerTable.addCell(new com.itextpdf.layout.element.Cell()
+                .add(textBlock)
+                .setBorder(null)
+                .setVerticalAlignment(VerticalAlignment.TOP)
+                .setPadding(0)
+                .setMargin(0));
+
+        doc.add(headerTable);
+
         if (hasContactInformation(info)) {
             Paragraph contacts = createCompactContactInfo(info);
+            contacts.setTextAlignment(TextAlignment.CENTER);
             doc.add(contacts);
         }
 
-        // Simple divider
         doc.add(new Paragraph(" ").setMarginBottom(HEADER_SPACING)
                 .setBorderBottom(new SolidBorder(1f)));
+    }
+
+    /**
+     * Create a centered logo image (returns null if not found)
+     */
+    private Image createCenteredLogo(FacilityInfo info) {
+        try {
+            byte[] imageBytes = null;
+            // First try to use logo data from global property (base64 encoded)
+            if (StringUtils.isNotEmpty(info.logoData)) {
+                try {
+                    imageBytes = java.util.Base64.getDecoder().decode(info.logoData);
+                } catch (Exception e) {
+                    log.warn("Failed to decode base64 logo data", e);
+                }
+            }
+            // If no logo data, try to use logo path from global property
+            if (imageBytes == null && StringUtils.isNotEmpty(info.logoPath)) {
+                try {
+                    java.io.File logoFile = new java.io.File(info.logoPath);
+                    if (logoFile.exists()) {
+                        imageBytes = java.nio.file.Files.readAllBytes(logoFile.toPath());
+                    } else {
+                        InputStream inputStream = getClass().getResourceAsStream(info.logoPath);
+                        if (inputStream != null) {
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            byte[] buffer = new byte[1024];
+                            int length;
+                            while ((length = inputStream.read(buffer)) != -1) {
+                                baos.write(buffer, 0, length);
+                            }
+                            imageBytes = baos.toByteArray();
+                            inputStream.close();
+                            baos.close();
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to load logo from path: " + info.logoPath, e);
+                }
+            }
+            // Fallback to default logo if no custom logo is configured
+            if (imageBytes == null) {
+                String defaultLogoPath = "";
+                InputStream inputStream = getClass().getResourceAsStream(defaultLogoPath);
+                if (inputStream != null) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = inputStream.read(buffer)) != -1) {
+                        baos.write(buffer, 0, length);
+                    }
+                    imageBytes = baos.toByteArray();
+                    inputStream.close();
+                    baos.close();
+                }
+            }
+            if (imageBytes != null) {
+                Image logo = new Image(ImageDataFactory.create(imageBytes))
+                        .setWidth(60)
+                        .setHeight(60)
+                        .setAutoScale(true)
+                        .setMarginBottom(2f)
+                        .setMarginTop(2f);
+                return logo;
+            }
+        } catch (Exception e) {
+            log.warn("Could not load logo image.", e);
+        }
+        return null;
     }
 
     /**
@@ -149,7 +288,7 @@ public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSe
         return new Paragraph(contactText.toString())
                 .setFontSize(8)
                 .setTextAlignment(TextAlignment.CENTER)
-                .setMarginBottom(CONTENT_SPACING + 4f); // Extra space before patient info
+                .setMarginBottom(CONTENT_SPACING + 4f);
     }
 
     /**
@@ -220,15 +359,15 @@ public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSe
             // Patient Information
             if (bill.getPatient() != null) {
                 org.openmrs.Patient patient = bill.getPatient();
-                
+
                 // Get patient identifier
                 org.openmrs.PatientIdentifierType openmrsIdType = org.openmrs.api.context.Context.getPatientService()
-                        .getPatientIdentifierTypeByUuid("dfacd928-0370-4315-99d7-6ec1c9f7ae76");
+                        .getPatientIdentifierTypeByUuid(OPENMRS_ID);
                 org.openmrs.PatientIdentifier openmrsId = patient.getPatientIdentifier(openmrsIdType);
                 if (openmrsId != null) {
                     invoiceData.patientIdentifier = openmrsId.getIdentifier();
                 }
-                
+
                 // Get patient name
                 String fullName = "";
                 if (patient.getGivenName() != null) {
@@ -241,17 +380,17 @@ public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSe
                     fullName += " " + patient.getFamilyName();
                 }
                 invoiceData.patientName = fullName.trim();
-                
+
                 // Get patient age
                 if (patient.getAge() != null) {
                     invoiceData.age = patient.getAge() + " Years";
                 }
-                
+
                 // Get patient gender
                 if (patient.getGender() != null) {
                     invoiceData.gender = patient.getGender();
                 }
-                
+
                 // Get patient address information
                 org.openmrs.PersonAddress address = patient.getPersonAddress();
                 if (address != null) {
@@ -263,40 +402,40 @@ public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSe
                     }
                 }
             }
-            
+
             // Invoice Summary
             invoiceData.invoiceNumber = bill.getReceiptNumber() != null ? bill.getReceiptNumber() : "";
-            
+
             // Format date and time
             if (bill.getDateCreated() != null) {
                 java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
                 invoiceData.dateTime = sdf.format(bill.getDateCreated());
             }
-            
+
             // Get total amount
             if (bill.getTotal() != null) {
                 java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
                 invoiceData.totalAmount = "Ksh " + df.format(bill.getTotal());
             }
-            
+
             // Get total paid
             if (bill.getTotalPayments() != null) {
                 java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
                 invoiceData.totalPaid = "Ksh " + df.format(bill.getTotalPayments());
             }
-            
+
             // Calculate balance
             if (bill.getTotal() != null && bill.getTotalPayments() != null) {
                 java.math.BigDecimal balance = bill.getTotal().subtract(bill.getTotalPayments());
                 java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.00");
                 invoiceData.balance = "Ksh " + df.format(balance);
             }
-            
+
             // Get bill status
             if (bill.getStatus() != null) {
                 invoiceData.status = bill.getStatus().toString();
             }
-            
+
         } catch (Exception e) {
             log.warn("Error extracting data from Bill object", e);
         }
@@ -431,6 +570,8 @@ public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSe
     private static class FacilityInfo {
         String facilityName = "";
         String tagline = "";
+        String logoPath = "";
+        String logoData = "";
         String telephone = "";
         String email = "";
         String emergency = "";

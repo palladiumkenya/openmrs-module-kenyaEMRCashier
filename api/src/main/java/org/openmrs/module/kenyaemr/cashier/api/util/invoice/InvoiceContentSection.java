@@ -9,7 +9,9 @@ import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
+import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
 public class InvoiceContentSection implements PdfDocumentService.ContentSection {
@@ -27,6 +29,9 @@ public class InvoiceContentSection implements PdfDocumentService.ContentSection 
 
         // Add table summary
         createTableSummary(doc, bill);
+
+        // Add payment table
+        createPaymentTable(doc, bill);
     }
 
     /**
@@ -40,15 +45,13 @@ public class InvoiceContentSection implements PdfDocumentService.ContentSection 
                 .setMarginBottom(TABLE_MARGIN)
                 .setKeepTogether(false); // Allow table to break across pages
 
-        // Clean table headers without background colors - these will repeat on each page
+        // Clean table headers without background colors - these will repeat on each
+        // page
         itemsTable.addHeaderCell(createHeaderCell("No"));
-        itemsTable.addHeaderCell(createHeaderCell("Chargeable service/Item"));
+        itemsTable.addHeaderCell(createHeaderCell("Chargeable service/Item", TextAlignment.LEFT));
         itemsTable.addHeaderCell(createHeaderCell("Quantity"));
-        itemsTable.addHeaderCell(createHeaderCell("Unit price"));
-        itemsTable.addHeaderCell(createHeaderCell("Total"));
-        
-        // Enable header row repetition across pages
-        itemsTable.setSkipFirstHeader(true);
+        itemsTable.addHeaderCell(createHeaderCell("Unit price", TextAlignment.LEFT));
+        itemsTable.addHeaderCell(createHeaderCell("Total", TextAlignment.LEFT));
 
         // Add bill line items
         int itemNumber = 1;
@@ -56,8 +59,8 @@ public class InvoiceContentSection implements PdfDocumentService.ContentSection 
             itemsTable.addCell(createCenterCell(String.valueOf(itemNumber++)));
             itemsTable.addCell(createLeftCell(getItemName(item)));
             itemsTable.addCell(createCenterCell(formatQuantity(item.getQuantity())));
-            itemsTable.addCell(createRightCell("Ksh " + CURRENCY_FORMAT.format(item.getPrice())));
-            itemsTable.addCell(createRightCell("Ksh " + CURRENCY_FORMAT.format(item.getTotal())));
+            itemsTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(item.getPrice())));
+            itemsTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(item.getTotal())));
         }
 
         doc.add(itemsTable);
@@ -105,17 +108,22 @@ public class InvoiceContentSection implements PdfDocumentService.ContentSection 
     // Utility methods for minimalist cell formatting
 
     /**
-     * Create clean header cell without background color
+     * Create clean header cell without background color (defaults to center
+     * alignment)
      */
     private Cell createHeaderCell(String text) {
+        return createHeaderCell(text, TextAlignment.CENTER);
+    }
+
+    private Cell createHeaderCell(String text, TextAlignment alignment) {
         return new Cell()
                 .add(new Paragraph(text).setBold().setFontSize(9))
-                .setTextAlignment(TextAlignment.CENTER)
+                .setTextAlignment(alignment)
                 .setBorderBottom(new SolidBorder(1f))
                 .setBorderTop(new SolidBorder(1f))
                 .setBorderLeft(null)
                 .setBorderRight(null)
-                .setPadding(4f);
+                .setPadding(2f);
     }
 
     /**
@@ -129,7 +137,7 @@ public class InvoiceContentSection implements PdfDocumentService.ContentSection 
                 .setBorderBottom(null)
                 .setBorderLeft(null)
                 .setBorderRight(null)
-                .setPadding(4f);
+                .setPadding(2f);
     }
 
     /**
@@ -143,7 +151,7 @@ public class InvoiceContentSection implements PdfDocumentService.ContentSection 
                 .setBorderBottom(null)
                 .setBorderLeft(null)
                 .setBorderRight(null)
-                .setPadding(4f);
+                .setPadding(2f);
     }
 
     /**
@@ -157,6 +165,91 @@ public class InvoiceContentSection implements PdfDocumentService.ContentSection 
                 .setBorderBottom(null)
                 .setBorderLeft(null)
                 .setBorderRight(null)
+                .setPadding(2f);
+    }
+
+    private void createPaymentTable(Document doc, Bill bill) {
+        // Create payment table with running balance
+        Table paymentTable = new Table(UnitValue.createPercentArray(new float[] { 0.5f, 2f, 1.5f, 1.5f, 1.5f }))
+                .useAllAvailableWidth()
+                .setMarginBottom(TABLE_MARGIN);
+
+        // Add payment table headers
+        paymentTable.addHeaderCell(createHeaderCell("No"));
+        paymentTable.addHeaderCell(createHeaderCell("Payment Method", TextAlignment.LEFT));
+        paymentTable.addHeaderCell(createHeaderCell("Amount Paid", TextAlignment.LEFT));
+        paymentTable.addHeaderCell(createHeaderCell("Balance Due", TextAlignment.LEFT));
+        paymentTable.addHeaderCell(createHeaderCell("Date & Time", TextAlignment.LEFT));
+
+        // Calculate running balance
+        BigDecimal totalBillAmount = bill.getTotal();
+        BigDecimal runningBalance = totalBillAmount;
+
+        // Add initial balance row
+        paymentTable.addCell(createCenterCell("1"));
+        paymentTable.addCell(createLeftCell("Bill Total"));
+        paymentTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(totalBillAmount)));
+        paymentTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(runningBalance)));
+        paymentTable.addCell(createLeftCell("-"));
+
+        // Add payment table rows with running balance
+        int paymentNumber = 2;
+        for (Payment payment : bill.getPayments()) {
+            BigDecimal paymentAmount = payment.getAmountTendered();
+            runningBalance = runningBalance.subtract(paymentAmount);
+
+            paymentTable.addCell(createCenterCell(String.valueOf(paymentNumber++)));
+            paymentTable.addCell(createLeftCell(payment.getInstanceType().getName()));
+            paymentTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(paymentAmount)));
+            paymentTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(runningBalance)));
+            paymentTable.addCell(createLeftCell(formatDate(payment.getDateCreated())));
+        }
+
+        doc.add(paymentTable);
+
+        if (!bill.getPayments().isEmpty()) {
+            createBalanceSummary(doc, runningBalance);
+        }
+    }
+
+    /**
+     * Format date and time for display in payment table
+     */
+    private String formatDate(java.util.Date date) {
+        if (date == null) {
+            return "-";
+        }
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm");
+        return dateFormat.format(date);
+    }
+
+    /**
+     * Create professionally formatted remaining balance summary
+     */
+    private void createBalanceSummary(Document doc, BigDecimal remainingBalance) {
+        doc.add(new Paragraph(" ").setMarginBottom(SUMMARY_SPACING));
+        Table summaryTable = new Table(UnitValue.createPercentArray(new float[] { 3f, 1f }))
+                .useAllAvailableWidth()
+                .setMarginBottom(TABLE_MARGIN);
+
+        summaryTable.addCell(createSummaryCell("Balance:", true));
+        summaryTable.addCell(createSummaryCell("Ksh " + CURRENCY_FORMAT.format(remainingBalance), false));
+
+        doc.add(summaryTable);
+    }
+
+    private Cell createSummaryCell(String text, boolean isLabel) {
+        Cell cell = new Cell()
+                .add(new Paragraph(text)
+                        .setFontSize(isLabel ? 10 : 11)
+                        .setBold()
+                        .setTextAlignment(isLabel ? TextAlignment.LEFT : TextAlignment.RIGHT))
+                .setBorderTop(new SolidBorder(1f))
+                .setBorderBottom(new SolidBorder(1f))
+                .setBorderLeft(null)
+                .setBorderRight(null)
                 .setPadding(4f);
+
+        return cell;
     }
 }

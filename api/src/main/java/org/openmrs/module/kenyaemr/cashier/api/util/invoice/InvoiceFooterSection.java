@@ -79,7 +79,7 @@ public class InvoiceFooterSection implements PdfDocumentService.FooterSection {
             }
         }
 
-        return "Railways Dispensary (Kisumu)";
+        return "No facility name configured, please add facility name in the global property kenyaemr.cashier.receipt.facilityInformation";
     }
 
     /**
