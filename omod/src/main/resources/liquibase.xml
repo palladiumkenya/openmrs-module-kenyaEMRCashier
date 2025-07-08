@@ -1008,51 +1008,69 @@
 	<changeSet id="kenyaemr.cashier-20240507-1" author="Donald Kibet">
 		<preConditions onFail="MARK_RAN">
 			<not>
-				<columnExists tableName="cashier_deposit_transaction" columnName="bill_line_item_id"/>
+				<columnExists tableName="cashier_deposit_transaction" columnName="bill_line_item_id" />
 			</not>
 		</preConditions>
-		
+
 		<addColumn tableName="cashier_deposit_transaction">
 			<column name="bill_line_item_id" type="int">
-				<constraints nullable="true" foreignKeyName="fk_deposit_transaction_bill_line_item" 
-							references="cashier_bill_line_item(bill_line_item_id)"/>
+				<constraints nullable="true" foreignKeyName="fk_deposit_transaction_bill_line_item"
+					references="cashier_bill_line_item(bill_line_item_id)" />
 			</column>
 		</addColumn>
-		
-		<createIndex tableName="cashier_deposit_transaction" indexName="idx_deposit_transaction_bill_line_item">
-			<column name="bill_line_item_id"/>
+
+		<createIndex tableName="cashier_deposit_transaction"
+			indexName="idx_deposit_transaction_bill_line_item">
+			<column name="bill_line_item_id" />
 		</createIndex>
 	</changeSet>
 
-	<changeSet id="kenyaemr.cashier-001-add-bill-closure-feature" author="kenyaemr-cashier">
-		<comment>Add bill closure feature to prevent new items from being added to closed bills</comment>
+	<changeSet id="kenyaemr.cashier-001-add-bill-closure-feature" author="Donald Kibet">
+		<preConditions onError="WARN" onFail="MARK_RAN">
+			<tableExists tableName="cashier_bill" />
+			<not>
+				<columnExists columnName="closed" tableName="cashier_bill" />
+			</not>
+			<not>
+				<columnExists columnName="close_reason" tableName="cashier_bill" />
+			</not>
+			<not>
+				<columnExists columnName="closed_by" tableName="cashier_bill" />
+			</not>
+			<not>
+				<columnExists columnName="date_closed" tableName="cashier_bill" />
+			</not>
+		</preConditions>
 		
+		<comment>Add bill closure feature to prevent new items from being added to closed bills</comment>
+
 		<!-- Add new columns to cashier_bill table -->
 		<addColumn tableName="cashier_bill">
 			<column name="closed" type="boolean" defaultValueBoolean="false">
 				<constraints nullable="false" />
 			</column>
 		</addColumn>
-		
+
 		<addColumn tableName="cashier_bill">
 			<column name="close_reason" type="varchar(255)" />
 		</addColumn>
-		
+
 		<addColumn tableName="cashier_bill">
 			<column name="closed_by" type="int" />
 		</addColumn>
-		
+
 		<addColumn tableName="cashier_bill">
 			<column name="date_closed" type="datetime" />
 		</addColumn>
-		
+
 		<!-- Add foreign key constraint for closed_by -->
-		<addForeignKeyConstraint 
-			baseTableName="cashier_bill" 
-			baseColumnNames="closed_by" 
-			constraintName="fk_cashier_bill_closed_by" 
-			referencedTableName="users" 
+		<addForeignKeyConstraint
+			baseTableName="cashier_bill"
+			baseColumnNames="closed_by"
+			constraintName="fk_cashier_bill_closed_by"
+			referencedTableName="users"
 			referencedColumnNames="user_id" />
+			
 	</changeSet>
 
 </databaseChangeLog>

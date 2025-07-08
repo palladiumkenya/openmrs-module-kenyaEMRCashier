@@ -132,12 +132,12 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		List<Bill> bills = searchBill(bill.getPatient());
 		if(!bills.isEmpty()) {
 			Bill billToUpdate = bills.get(0);
-			LOG.info("Found existing bill: " + billToUpdate.getReceiptNumber() + " with status: " + billToUpdate.getStatus() + ", closed: " + billToUpdate.isClosed());
+			LOG.info("Found existing bill: " + billToUpdate.getReceiptNumber() + " with status: " + billToUpdate.getStatus() + ", closed: " + billToUpdate.isClosed() + ", voided: " + billToUpdate.getVoided());
 			
-			// Check if the existing bill is closed
-			if (billToUpdate.isClosed()) {
-				// If the bill is closed, create a new bill instead of adding to the existing one
-				LOG.info("Bill " + billToUpdate.getReceiptNumber() + " is closed. Creating new bill for patient " + bill.getPatient().getPatientId());
+			// Check if the existing bill is closed or voided
+			if (billToUpdate.isClosed() || billToUpdate.getVoided()) {
+				// If the bill is closed or voided, create a new bill instead of adding to the existing one
+				LOG.info("Bill " + billToUpdate.getReceiptNumber() + " is closed or voided. Creating new bill for patient " + bill.getPatient().getPatientId());
 				return super.save(bill);
 			}
 			
@@ -221,12 +221,16 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 			throw new NullPointerException("The bill search template must be defined.");
 		}
 
-		return executeCriteria(Bill.class, pagingInfo, new Action1<Criteria>() {
+		List<Bill> results = executeCriteria(Bill.class, pagingInfo, new Action1<Criteria>() {
 			@Override
 			public void apply(Criteria criteria) {
 				billSearch.updateCriteria(criteria);
 			}
 		}, Order.desc("id"));
+		
+		// Clean up null line items before returning
+		removeNullLineItems(results);
+		return results;
 	}
 
 	/*
@@ -283,8 +287,8 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 
 			index = bill.getLineItems().indexOf(null);
 		}
-		// We also want to remove voided line items
-		bill.getLineItems().removeIf(billLineItem -> billLineItem.getVoided());
+		// Note: We don't remove voided line items here to avoid conflicts with REST API filtering
+		// The REST layer will handle voided item filtering based on the includeVoidedLineItems parameter
 	}
 
 	@Override
@@ -315,11 +319,29 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		// Look for any non-closed bills for the same patient, regardless of date
 		// This ensures that bills spanning multiple days remain as one bill
 		// until explicitly closed
+		// Also treat voided bills as closed bills
 		criteria.add(Restrictions.eq("patient", patient));
 		criteria.add(Restrictions.eq("closed", false)); // Exclude closed bills
+		criteria.add(Restrictions.eq("voided", false)); // Exclude voided bills (treat as closed)
 		criteria.addOrder(Order.desc("id"));
 
-		return getRepository().select(Bill.class, criteria);
+		List<Bill> results = getRepository().select(Bill.class, criteria);
+		removeNullLineItems(results);
+		return results;
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	public List<Bill> getAllBillsForPatient(Patient patient) {
+		Criteria criteria = getRepository().createCriteria(Bill.class);
+
+		// Look for all bills for the same patient, including closed ones
+		criteria.add(Restrictions.eq("patient", patient));
+		criteria.addOrder(Order.desc("id"));
+
+		List<Bill> results = getRepository().select(Bill.class, criteria);
+		removeNullLineItems(results);
+		return results;
 	}
 
 	/**

@@ -97,11 +97,8 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                     DrugOrder drugOrder = (DrugOrder) order;
                     Integer drugID = drugOrder.getDrug() != null ? drugOrder.getDrug().getDrugId() : 0;
                     double drugQuantity = drugOrder.getQuantity() != null ? drugOrder.getQuantity() : 0.0;
-                    List<StockItem> stockItems = stockService.getStockItemByDrug(drugID); // we expect a one-to-one
-                                                                                          // mapping of drug to stock
-                                                                                          // item in the inventory
-                                                                                          // module
-
+                    // we expect a one-to-one mapping of drug to stock item in the inventory module
+                    List<StockItem> stockItems = stockService.getStockItemByDrug(drugID); 
                     if (!stockItems.isEmpty()) {
                         // check from the list for all exemptions
                         boolean isExempted = checkIfOrderIsExempted(workflowService, order,
@@ -267,12 +264,12 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
             Bill activeBill = null;
 
             if (!existingBills.isEmpty()) {
-                // Use existing bill if it's not closed
+                // Use existing bill if it's not closed or voided
                 activeBill = existingBills.get(0);
-                if (activeBill.isClosed()) {
-                    // If the existing bill is closed, create a new one
+                if (activeBill.isClosed() || activeBill.getVoided()) {
+                    // If the existing bill is closed or voided, create a new one
                     System.out.println(
-                            "Existing bill is closed, creating new bill for patient: " + patient.getPatientId());
+                            "Existing bill is closed or voided, creating new bill for patient: " + patient.getPatientId());
                     activeBill = null;
                 } else {
                     // If the existing bill is PAID, set it back to PENDING to allow new items
@@ -347,8 +344,17 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
 
             // check if the bill has any other bill line items if not void or close the bill
             Bill bill = billLineItem.getBill();
-            if (bill.getLineItems().isEmpty()) {
-                bill.setStatus(BillStatus.CANCELLED);
+            
+            // Check if all line items in the bill are voided
+            boolean allItemsVoided = bill.getLineItems().stream()
+                    .allMatch(item -> item.getVoided());
+            
+            if (allItemsVoided) {
+                // If all items are voided, void the entire bill
+                bill.setVoided(true);
+                bill.setVoidReason("All line items voided");
+                bill.setVoidedBy(Context.getAuthenticatedUser());
+                bill.setDateVoided(new Date());
                 billService.save(bill);
             }
         } catch (Exception e) {

@@ -42,6 +42,7 @@ import org.openmrs.module.webservices.rest.web.representation.FullRepresentation
 import org.openmrs.module.webservices.rest.web.representation.Representation;
 import org.openmrs.module.webservices.rest.web.resource.impl.AlreadyPaged;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
+import org.openmrs.module.kenyaemr.cashier.api.ICashierItemPriceService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -131,11 +132,20 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 
     @PropertySetter(value = "priceUuid")
     public void setItemPrice(BillLineItem instance, String uuid) {
-        StockManagementService itemDataService = Context.getService(StockManagementService.class);
-        CashierItemPrice itemPrice = null;
-        if (itemPrice != null) {
-            instance.setItemPrice(itemPrice);
-            instance.setPriceName("");
+        if (StringUtils.isNotBlank(uuid)) {
+            try {
+                ICashierItemPriceService itemPriceService = Context.getService(ICashierItemPriceService.class);
+                CashierItemPrice itemPrice = itemPriceService.getByUuid(uuid);
+                if (itemPrice != null) {
+                    instance.setItemPrice(itemPrice);
+                    instance.setPrice(itemPrice.getPrice());
+                    instance.setPriceName(itemPrice.getName());
+                } else {
+                    LOG.warn("CashierItemPrice not found for UUID: " + uuid);
+                }
+            } catch (Exception e) {
+                LOG.error("Error retrieving CashierItemPrice for UUID: " + uuid, e);
+            }
         }
     }
 
@@ -143,9 +153,9 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
     public String getItemPriceUuid(BillLineItem instance) {
         try {
             CashierItemPrice itemPrice = instance.getItemPrice();
-            return "";
+            return itemPrice != null ? itemPrice.getUuid() : "";
         } catch (Exception e) {
-            LOG.warn("Price probably was deleted", e);
+            LOG.warn("Error getting itemPrice UUID for bill line item " + instance.getUuid(), e);
             return "";
         }
     }

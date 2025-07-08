@@ -140,4 +140,13 @@ public interface IBillService extends IEntityDataService<Bill> {
 	 * @return List of non-closed bills for the patient on the same day.
 	 */
 	List<Bill> searchBill(Patient patient);
+
+	/**
+	 * Searches for all bills (including closed ones) for a patient.
+	 * @param patient The patient to search for bills.
+	 * @return List of all bills for the patient, including closed ones.
+	 */
+	@Transactional(readOnly = true)
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	List<Bill> getAllBillsForPatient(Patient patient);
 }

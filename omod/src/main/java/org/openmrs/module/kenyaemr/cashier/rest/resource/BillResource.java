@@ -56,11 +56,7 @@ import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingSubResour
 import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
 import org.openmrs.module.webservices.rest.web.response.ObjectNotFoundException;
 import org.openmrs.module.webservices.rest.web.response.ResponseException;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+
 import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
@@ -115,11 +111,32 @@ public class BillResource extends BaseRestDataResource<Bill> {
 	@PropertySetter("lineItems")
 	public void setBillLineItems(Bill instance, List<BillLineItem> lineItems) {
 		if (instance.getLineItems() == null) {
-			instance.setLineItems(new ArrayList<BillLineItem>(lineItems.size()));
+			instance.setLineItems(new ArrayList<BillLineItem>());
 		}
-		BaseRestDataResource.syncCollection(instance.getLineItems(), lineItems);
-		for (BillLineItem item : instance.getLineItems()) {
-			item.setBill(instance);
+		
+		// Clear existing line items and add new ones directly
+		// This avoids issues with syncCollection when new items don't have UUIDs yet
+		instance.getLineItems().clear();
+
+		if (lineItems != null) {
+			for (BillLineItem item : lineItems) {
+				if (item != null) {
+					// Validate required fields
+					if (item.getPrice() == null) {
+						throw new IllegalArgumentException("Line item price cannot be null");
+					}
+					if (item.getQuantity() == null || item.getQuantity() <= 0) {
+						throw new IllegalArgumentException("Line item quantity must be greater than 0");
+					}
+					if (item.getPaymentStatus() == null) {
+						// Set default payment status if not provided
+						item.setPaymentStatus(BillStatus.PENDING);
+					}
+
+					item.setBill(instance);
+					instance.getLineItems().add(item);
+				}
+			}
 		}
 	}
 
@@ -201,16 +218,22 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		// Add voided parameter with default false
 		String includedVoidedBillsStr = context.getRequest().getParameter("includeVoidedBills");
 		boolean includeVoidedBills = Strings.isNotEmpty(includedVoidedBillsStr)
-				? Boolean.parseBoolean(includedVoidedBillsStr) : false;
+				? Boolean.parseBoolean(includedVoidedBillsStr)
+				: false;
 
-		// Add includeClosedBills parameter with default false (exclude closed bills by default)
+		// Add includeClosedBills parameter with default true (include all bills by
+		// default)
 		String includeClosedBillsStr = context.getRequest().getParameter("includeClosedBills");
 		boolean includeClosedBills = Strings.isNotEmpty(includeClosedBillsStr)
-				? Boolean.parseBoolean(includeClosedBillsStr) : false;
+				? Boolean.parseBoolean(includeClosedBillsStr)
+				: true;
 
-		String includedVoidedLineItemsStr = context.getRequest().getParameter("includeVoided"); //TODO: rename the request param to includeVoidedItems
+		String includedVoidedLineItemsStr = context.getRequest().getParameter("includeVoided"); // TODO: rename the
+																								// request param to
+																								// includeVoidedItems
 		boolean includeVoidedLineItems = Strings.isNotEmpty(includedVoidedLineItemsStr)
-				? Boolean.parseBoolean(includedVoidedLineItemsStr) : false;
+				? Boolean.parseBoolean(includedVoidedLineItemsStr)
+				: false;
 
 		Patient patient = Strings.isNotEmpty(patientUuid) ? Context.getPatientService().getPatientByUuid(patientUuid)
 				: null;
@@ -232,17 +255,14 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		IBillService service = Context.getService(IBillService.class);
 
 		List<Bill> result = service
-				.getBills(new BillSearch(searchTemplate, createdOnOrAfterDate, createdOnOrBeforeDate, includeVoidedBills, includeClosedBills));
+				.getBills(new BillSearch(searchTemplate, createdOnOrAfterDate, createdOnOrBeforeDate,
+						includeVoidedBills, includeClosedBills));
 
 		// Filter out voided line items if includeVoidedLineItems is false
 		if (!includeVoidedLineItems) {
 			for (Bill bill : result) {
 				if (bill.getLineItems() != null) {
-					List<BillLineItem> filteredItems = bill.getLineItems()
-							.stream()
-							.filter(item -> item != null && !item.getVoided())
-							.collect(Collectors.toList());
-					bill.setLineItems(new ArrayList<>(filteredItems));
+					bill.getLineItems().removeIf(item -> item != null && item.getVoided());
 				}
 			}
 		}
@@ -322,8 +342,8 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			return BigDecimal.ZERO;
 		}
 		return instance.getLineItems().stream()
-				.filter(item -> item != null && !item.getVoided() && 
-						item.getPaymentStatus() != null && 
+				.filter(item -> item != null && !item.getVoided() &&
+						item.getPaymentStatus() != null &&
 						item.getPaymentStatus().equals("EXEMPTED") &&
 						item.getPrice() != null)
 				.map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
@@ -335,27 +355,28 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		if (instance.getLineItems() == null) {
 			return BigDecimal.ZERO;
 		}
-		
+
 		IDepositService depositService = Context.getService(IDepositService.class);
 		BigDecimal totalDeposits = BigDecimal.ZERO;
-		
+
 		// Get all deposits for the patient
 		List<Deposit> patientDeposits = depositService.getDepositsByPatient(instance.getPatient(), null);
-		
-		// For each deposit, sum up the transactions that are linked to this bill's line items
+
+		// For each deposit, sum up the transactions that are linked to this bill's line
+		// items
 		for (Deposit deposit : patientDeposits) {
 			if (deposit.getTransactions() != null) {
 				for (DepositTransaction transaction : deposit.getTransactions()) {
-					if (!transaction.getVoided() && 
-						transaction.getTransactionType() == TransactionType.APPLY &&
-						transaction.getBillLineItem() != null && 
-						instance.getLineItems().contains(transaction.getBillLineItem())) {
+					if (!transaction.getVoided() &&
+							transaction.getTransactionType() == TransactionType.APPLY &&
+							transaction.getBillLineItem() != null &&
+							instance.getLineItems().contains(transaction.getBillLineItem())) {
 						totalDeposits = totalDeposits.add(transaction.getAmount());
 					}
 				}
 			}
 		}
-		
+
 		return totalDeposits;
 	}
 
@@ -364,9 +385,9 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		if (instance.getLineItems() == null) {
 			return BigDecimal.ZERO;
 		}
-		
+
 		BigDecimal totalBillAmount = instance.getLineItems().stream()
-				.filter(item -> item != null && !item.getVoided() && 
+				.filter(item -> item != null && !item.getVoided() &&
 						item.getPrice() != null &&
 						(item.getPaymentStatus() == null || !item.getPaymentStatus().equals("EXEMPTED")))
 				.map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
@@ -378,38 +399,4 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		return totalBillAmount.subtract(totalPayments).subtract(totalDeposits);
 	}
 
-	/**
-	 * Closes a bill manually, preventing new items from being added.
-	 * @param billUuid The UUID of the bill to close
-	 * @param reason The reason for closing the bill
-	 * @return The updated bill
-	 */
-	@RequestMapping(value = "/{uuid}/close", method = RequestMethod.POST)
-	@ResponseBody
-	public Bill closeBill(@PathVariable("uuid") String billUuid, @RequestParam("reason") String reason) {
-		Bill bill = getByUniqueId(billUuid);
-		if (bill == null) {
-			throw new ObjectNotFoundException();
-		}
-		
-		IBillService service = Context.getService(IBillService.class);
-		return service.closeBill(bill, reason);
-	}
-
-	/**
-	 * Reopens a closed bill, allowing new items to be added.
-	 * @param billUuid The UUID of the bill to reopen
-	 * @return The updated bill
-	 */
-	@RequestMapping(value = "/{uuid}/reopen", method = RequestMethod.POST)
-	@ResponseBody
-	public Bill reopenBill(@PathVariable("uuid") String billUuid) {
-		Bill bill = getByUniqueId(billUuid);
-		if (bill == null) {
-			throw new ObjectNotFoundException();
-		}
-		
-		IBillService service = Context.getService(IBillService.class);
-		return service.reopenBill(bill);
-	}
 }

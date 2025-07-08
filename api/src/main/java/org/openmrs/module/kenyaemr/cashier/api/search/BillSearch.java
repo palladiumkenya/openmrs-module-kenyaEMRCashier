@@ -28,7 +28,7 @@ import java.util.Date;
 public class BillSearch extends BaseDataTemplateSearch<Bill> {
 	private Date createdOnOrBefore;
 	private Date createdOnOrAfter;
-	private Boolean includeClosedBills = false;
+	private Boolean includeClosedBills = true; // Changed default to true to show all bills by default
 
 	public BillSearch() {
 		this(new Bill(), false);
@@ -53,7 +53,7 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 		super(template, includeRetired);
 		this.createdOnOrAfter = createdOnOrAfter;
 		this.createdOnOrBefore = createdOnOrBefore;
-		this.includeClosedBills = includeClosedBills != null ? includeClosedBills : false;
+		this.includeClosedBills = includeClosedBills != null ? includeClosedBills : true; // Changed default to true
 	}
 
 	@Override
@@ -74,10 +74,12 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 			criteria.add(Restrictions.eq("status", bill.getStatus()));
 		}
 
-		// Exclude closed bills by default unless explicitly requested
+		// Include all bills by default unless explicitly requested to exclude closed bills
 		// Use only the 'closed' property to identify closed bills, not BillStatus
+		// Also treat voided bills as closed bills
 		if (!includeClosedBills) {
 			criteria.add(Restrictions.eq("closed", false));
+			criteria.add(Restrictions.eq("voided", false));
 		}
 
 		if (getCreatedOnOrBefore() != null) {
@@ -115,6 +117,6 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 	}
 
 	public void setIncludeClosedBills(Boolean includeClosedBills) {
-		this.includeClosedBills = includeClosedBills != null ? includeClosedBills : false;
+		this.includeClosedBills = includeClosedBills != null ? includeClosedBills : true; // Changed default to true
 	}
 }
