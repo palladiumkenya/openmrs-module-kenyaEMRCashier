@@ -114,6 +114,10 @@
 			<groupId>com.itextpdf</groupId>
 			<artifactId>font-asian</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 <!--		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>itext-core</artifactId>

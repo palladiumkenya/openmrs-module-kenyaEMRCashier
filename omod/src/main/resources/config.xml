@@ -166,6 +166,26 @@
 			Full address and contact details to put in the receipt. Use "\n" for line break
 		</description>
 	</globalProperty>
+	<globalProperty>
+		<property>${project.parent.artifactId}.receipt.facilityInformation</property>
+		<description>
+			JSON formatted facility information containing name, tagline, and contact details for invoice letterhead
+		</description>
+		<defaultValue>
+			{
+				"facilityName": "",
+				"tagline": "",
+				"logoPath": "",
+				"contacts": {
+					"tel": "",
+					"email": "",
+					"emergency": "",
+					"address": "",
+					"website": ""
+				}
+			}
+		</defaultValue>
+	</globalProperty>
 	<!-- Privileges -->
 	<!--  Bills  -->
 	<privilege>
