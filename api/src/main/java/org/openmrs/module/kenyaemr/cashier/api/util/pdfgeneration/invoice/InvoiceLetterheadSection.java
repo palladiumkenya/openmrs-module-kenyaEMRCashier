@@ -1,4 +1,4 @@
-package org.openmrs.module.kenyaemr.cashier.api.util.invoice;
+package org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.invoice;
 
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
@@ -6,9 +6,9 @@ import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import com.itextpdf.layout.properties.VerticalAlignment;
-import org.openmrs.module.kenyaemr.cashier.api.util.layout.DocumentHeader;
+import org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.layout.DocumentHeader;
 
-public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSection {
+public class InvoiceLetterheadSection implements org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.PdfDocumentService.LetterheadSection {
 
     public static final String OPENMRS_ID = "dfacd928-0370-4315-99d7-6ec1c9f7ae76";
 
@@ -24,7 +24,7 @@ public class InvoiceLetterheadSection implements PdfDocumentService.LetterheadSe
 
     @Override
     public void render(Document doc, Object data) {
-        documentHeader.render(doc, "Invoice", "");
+        documentHeader.setTitle("Invoice").render(doc);
         createInvoiceHeader(doc, data);
     }
 

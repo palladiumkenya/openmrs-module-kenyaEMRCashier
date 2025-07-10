@@ -1,8 +1,10 @@
-package org.openmrs.module.kenyaemr.cashier.api.util.layout;
+package org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.layout;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itextpdf.layout.Document;
+import com.itextpdf.kernel.geom.Rectangle;
+import com.itextpdf.kernel.pdf.PdfPage;
+import com.itextpdf.layout.Canvas;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Text;
@@ -16,18 +18,19 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Reusable document footer component with customizable document description and page handler support.
+ * Reusable page footer handler that renders footer on every page.
  * This component can be used across different document types.
  */
-public class DocumentFooter {
+public class PageFooterHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(DocumentFooter.class);
+    private static final Logger log = LoggerFactory.getLogger(PageFooterHandler.class);
     private static final String GP_FACILITY_INFORMATION = "kenyaemr.cashier.receipt.facilityInformation";
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy");
 
-    // Design constants
-    private static final float FOOTER_TOP_MARGIN = 12f;
+    // Footer positioning constants
+    private static final float FOOTER_BOTTOM_MARGIN = 20f;
+    private static final float FOOTER_HEIGHT = 60f;
     private static final float SECTION_SPACING = 4f;
     private static final float LINE_SPACING = 1.5f;
 
@@ -36,7 +39,7 @@ public class DocumentFooter {
     /**
      * Constructor with default configuration
      */
-    public DocumentFooter() {
+    public PageFooterHandler() {
         this.config = new FooterConfig();
     }
 
@@ -44,35 +47,50 @@ public class DocumentFooter {
      * Constructor with custom configuration
      * @param config Custom footer configuration
      */
-    public DocumentFooter(FooterConfig config) {
+    public PageFooterHandler(FooterConfig config) {
         this.config = config;
     }
 
     /**
-     * Renders the document footer
-     * @param doc The PDF document to add the footer to
+     * Renders the page footer
+     * @param canvas The PDF canvas to draw on
+     * @param page The PDF page
      * @param data Document data for customization
+     * @param pageNumber Current page number
      */
-    public void render(Document doc, Object data) {
+    public void renderFooter(Canvas canvas, PdfPage page, Object data, int pageNumber) {
         String facilityName = getFacilityName();
-
+        String documentNumber = extractDocumentNumber(data);
+        
+        // Get page dimensions
+        Rectangle pageSize = page.getPageSize();
+        float pageWidth = pageSize.getWidth();
+        float pageHeight = pageSize.getHeight();
+        
+        // Calculate footer position (bottom of page)
+        float footerY = FOOTER_BOTTOM_MARGIN;
+        float footerWidth = pageWidth - 100; // Leave margins
+        float footerX = 50; // Left margin
+        
+        // Create footer container with fixed position
+        canvas.setFixedPosition(footerX, footerY, footerWidth);
+        
         // Top separator
-        doc.add(new Paragraph(" ")
-                .setMarginTop(FOOTER_TOP_MARGIN)
+        canvas.add(new Paragraph(" ")
                 .setBorderTop(new SolidBorder(0.5f))
                 .setMarginBottom(SECTION_SPACING));
 
-        // Document description
-        if (StringUtils.isNotEmpty(config.documentDescription)) {
-            doc.add(new Paragraph(config.documentDescription)
-                    .setFontSize(8)
+        // Custom footer text if provided
+        if (StringUtils.isNotEmpty(config.customFooterText)) {
+            canvas.add(new Paragraph(config.customFooterText)
+                    .setFontSize(6)
                     .setTextAlignment(TextAlignment.LEFT)
                     .setMarginBottom(LINE_SPACING));
         }
 
         // Facility name and payment terms
         if (StringUtils.isNotEmpty(config.paymentTerms)) {
-            doc.add(new Paragraph()
+            canvas.add(new Paragraph()
                     .add(new Text(facilityName).setBold().setFontSize(8))
                     .add(new Text(" | ").setFontSize(8))
                     .add(new Text(config.paymentTerms).setFontSize(8))
@@ -82,7 +100,7 @@ public class DocumentFooter {
 
         // Thank you message
         if (StringUtils.isNotEmpty(config.thankYouMessage)) {
-            doc.add(new Paragraph()
+            canvas.add(new Paragraph()
                     .add(new Text("Thank you for choosing ").setFontSize(7))
                     .add(new Text(facilityName).setBold().setFontSize(7))
                     .add(new Text(" ").setFontSize(7))
@@ -91,16 +109,8 @@ public class DocumentFooter {
                     .setMarginBottom(SECTION_SPACING));
         }
 
-        // System note
-        doc.add(createSystemNote(data));
-    }
-
-    /**
-     * Renders the document footer with custom data
-     * @param doc The PDF document to add the footer to
-     */
-    public void render(Document doc) {
-        render(doc, null);
+        // System note with page number
+        canvas.add(createSystemNote(documentNumber, pageNumber));
     }
 
     /**
@@ -122,26 +132,6 @@ public class DocumentFooter {
         }
 
         return "No facility name configured, please add facility name in the global property kenyaemr.cashier.receipt.facilityInformation";
-    }
-
-    /**
-     * Create system-generated note
-     */
-    private Paragraph createSystemNote(Object data) {
-        String documentNumber = extractDocumentNumber(data);
-        String generatedDate = dateFormat.format(new Date());
-        String generatedBy = Context.getAuthenticatedUser() != null ? 
-                Context.getAuthenticatedUser().getUsername() : "system";
-
-        return new Paragraph()
-                .add(new Text("Computer-generated document. DOC NO: ").setFontSize(6))
-                .add(new Text(documentNumber).setBold().setFontSize(6))
-                .add(new Text(" | ").setFontSize(6))
-                .add(new Text(generatedDate).setFontSize(6))
-                .add(new Text(" | ").setFontSize(6))
-                .add(new Text(generatedBy).setItalic().setFontSize(6))
-                .setTextAlignment(TextAlignment.CENTER)
-                .setMarginTop(LINE_SPACING);
     }
 
     /**
@@ -192,23 +182,46 @@ public class DocumentFooter {
     }
 
     /**
+     * Create system-generated note with page number
+     */
+    private Paragraph createSystemNote(String documentNumber, int pageNumber) {
+        String generatedDateTime = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(new Date());
+        String generatedBy = Context.getAuthenticatedUser() != null ? 
+                Context.getAuthenticatedUser().getUsername() : "system";
+        String generatedByUserId = Context.getAuthenticatedUser() != null ? 
+                Context.getAuthenticatedUser().getId().toString() : "N/A";
+
+        return new Paragraph()
+                .add(new Text("Computer-generated document. DOC NO: ").setFontSize(6))
+                .add(new Text(documentNumber).setBold().setFontSize(6))
+                .add(new Text(" | ").setFontSize(6))
+                .add(new Text(generatedDateTime).setFontSize(6))
+                .add(new Text(" | ").setFontSize(6))
+                .add(new Text(generatedBy + " (" + generatedByUserId + ")").setItalic().setFontSize(6))
+                .add(new Text(" | Page ").setFontSize(6))
+                .add(new Text(String.valueOf(pageNumber)).setBold().setFontSize(6))
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginTop(LINE_SPACING);
+    }
+
+    /**
      * Footer configuration class
      */
     public static class FooterConfig {
-        public String documentDescription = "";
-        public String paymentTerms = "Payment due within 30 days of document date.";
-        public String thankYouMessage = "and get well soon. For inquiries, contact our department.";
+        public String customFooterText = "";
+        public String paymentTerms = "";
+        public String thankYouMessage = "";
 
         public FooterConfig() {}
 
-        public FooterConfig(String documentDescription, String paymentTerms, String thankYouMessage) {
-            this.documentDescription = documentDescription;
+        public FooterConfig(String customFooterText, String paymentTerms, String thankYouMessage) {
+            this.customFooterText = customFooterText;
             this.paymentTerms = paymentTerms;
             this.thankYouMessage = thankYouMessage;
         }
 
-        public FooterConfig setDocumentDescription(String documentDescription) {
-            this.documentDescription = documentDescription;
+        public FooterConfig setCustomFooterText(String customFooterText) {
+            this.customFooterText = customFooterText;
             return this;
         }
 

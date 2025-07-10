@@ -1,10 +1,10 @@
-package org.openmrs.module.kenyaemr.cashier.api.util.invoice;
+package org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.invoice;
 
 import com.itextpdf.kernel.pdf.PdfPage;
 import com.itextpdf.layout.Canvas;
-import org.openmrs.module.kenyaemr.cashier.api.util.layout.PageFooterHandler;
+import org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.layout.PageFooterHandler;
 
-public class InvoicePageFooterHandler implements PdfDocumentService.PageFooterHandler {
+public class InvoicePageFooterHandler implements org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.PdfDocumentService.PageFooterHandler {
 
     private final PageFooterHandler pageFooterHandler;
 

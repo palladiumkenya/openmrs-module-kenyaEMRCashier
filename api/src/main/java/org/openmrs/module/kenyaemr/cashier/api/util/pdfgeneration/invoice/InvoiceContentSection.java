@@ -1,4 +1,4 @@
-package org.openmrs.module.kenyaemr.cashier.api.util.invoice;
+package org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.invoice;
 
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.SolidBorder;
@@ -14,7 +14,7 @@ import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
-public class InvoiceContentSection implements PdfDocumentService.ContentSection {
+public class InvoiceContentSection implements org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.PdfDocumentService.ContentSection {
 
     private static final DecimalFormat CURRENCY_FORMAT = new DecimalFormat("#,##0.00");
     private static final float TABLE_MARGIN = 8f;

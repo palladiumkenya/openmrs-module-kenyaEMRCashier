@@ -1,4 +1,4 @@
-package org.openmrs.module.kenyaemr.cashier.api.util.invoice;
+package org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration;
 
 import java.io.File;
 

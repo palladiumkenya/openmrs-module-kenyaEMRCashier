@@ -1,4 +1,4 @@
-package org.openmrs.module.kenyaemr.cashier.api.util.layout;
+package org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.layout;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
