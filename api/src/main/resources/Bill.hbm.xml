@@ -99,6 +99,11 @@
 			</type>
 		</property>
 
+		<property name="closed" type="java.lang.Boolean" column="closed" length="1" not-null="true" />
+		<property name="closeReason" type="java.lang.String" column="close_reason" length="255" />
+		<many-to-one name="closedBy" class="org.openmrs.User" column="closed_by" />
+		<property name="dateClosed" type="java.util.Date" column="date_closed" length="19" />
+
 		<list name="lineItems" lazy="false" inverse="true" cascade="all-delete-orphan">
 			<key column="bill_id" />
 			<list-index column="line_item_order" />

@@ -38,7 +38,6 @@ import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
-import org.joda.time.DateTime;
 import org.openmrs.GlobalProperty;
 import org.openmrs.Location;
 import org.openmrs.Patient;
@@ -71,8 +70,8 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.security.AccessControlException;
 import java.text.DecimalFormat;
-import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Data service implementation class for {@link Bill}s.
@@ -133,13 +132,33 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		List<Bill> bills = searchBill(bill.getPatient());
 		if(!bills.isEmpty()) {
 			Bill billToUpdate = bills.get(0);
-			billToUpdate.setStatus(BillStatus.PENDING);
-			for (BillLineItem item: bill.getLineItems()) {
+			LOG.info("Found existing bill: " + billToUpdate.getReceiptNumber() + " with status: " + billToUpdate.getStatus() + ", closed: " + billToUpdate.isClosed() + ", voided: " + billToUpdate.getVoided());
+			
+			// Check if the existing bill is closed or voided
+			if (billToUpdate.isClosed() || billToUpdate.getVoided()) {
+				// If the bill is closed or voided, create a new bill instead of adding to the existing one
+				LOG.info("Bill " + billToUpdate.getReceiptNumber() + " is closed or voided. Creating new bill for patient " + bill.getPatient().getPatientId());
+				return super.save(bill);
+			}
+			
+			// If the existing bill is not closed, add new items to it
+			// Set status to PENDING if it was PAID/POSTED to allow new items
+			if (billToUpdate.getStatus() == BillStatus.PAID || billToUpdate.getStatus() == BillStatus.POSTED) {
+				LOG.info("Setting bill status from " + billToUpdate.getStatus() + " to PENDING to allow new items");
+				billToUpdate.setStatus(BillStatus.PENDING);
+			}
+			
+			// Create a copy of the line items to avoid ConcurrentModificationException
+			List<BillLineItem> itemsToAdd = new ArrayList<>(bill.getLineItems());
+			for (BillLineItem item: itemsToAdd) {
 				item.setBill(billToUpdate);
 				billToUpdate.getLineItems().add(item);
 			}
-			// appending items to existing pending bill if available
+			// appending items to existing non-closed bill
+			LOG.info("Adding " + itemsToAdd.size() + " items to existing bill: " + billToUpdate.getReceiptNumber());
 			return super.save(billToUpdate);
+		} else {
+			LOG.info("No existing bills found for patient " + bill.getPatient().getPatientId() + ", creating new bill");
 		}
 
 		return super.save(bill);
@@ -202,12 +221,16 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 			throw new NullPointerException("The bill search template must be defined.");
 		}
 
-		return executeCriteria(Bill.class, pagingInfo, new Action1<Criteria>() {
+		List<Bill> results = executeCriteria(Bill.class, pagingInfo, new Action1<Criteria>() {
 			@Override
 			public void apply(Criteria criteria) {
 				billSearch.updateCriteria(criteria);
 			}
 		}, Order.desc("id"));
+		
+		// Clean up null line items before returning
+		removeNullLineItems(results);
+		return results;
 	}
 
 	/*
@@ -264,8 +287,8 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 
 			index = bill.getLineItems().indexOf(null);
 		}
-		// We also want to remove voided line items
-		bill.getLineItems().removeIf(billLineItem -> billLineItem.getVoided());
+		// Note: We don't remove voided line items here to avoid conflicts with REST API filtering
+		// The REST layer will handle voided item filtering based on the includeVoidedLineItems parameter
 	}
 
 	@Override
@@ -288,27 +311,37 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		return PrivilegeConstants.VIEW_BILLS;
 	}
 
+	@Override
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
 	public List<Bill> searchBill(Patient patient) {
 		Criteria criteria = getRepository().createCriteria(Bill.class);
 
-		DateTime currentDate = new DateTime();
-		DateTime startOfDay = currentDate.withTimeAtStartOfDay();
-
-		Date startOfDayDate = startOfDay.toDate();
-
-		DateTime endOfDay = currentDate.plusDays(1);
-		endOfDay = endOfDay.withTimeAtStartOfDay();
-
-		Date endOfDayDate = endOfDay.toDate();
-
-		criteria.add(Restrictions.eq("status", BillStatus.PENDING));
+		// Look for any non-closed bills for the same patient, regardless of date
+		// This ensures that bills spanning multiple days remain as one bill
+		// until explicitly closed
+		// Also treat voided bills as closed bills
 		criteria.add(Restrictions.eq("patient", patient));
-		criteria.add(Restrictions.ge("dateCreated", startOfDayDate));
-
-		criteria.add(Restrictions.lt("dateCreated", endOfDayDate));
+		criteria.add(Restrictions.eq("closed", false)); // Exclude closed bills
+		criteria.add(Restrictions.eq("voided", false)); // Exclude voided bills (treat as closed)
 		criteria.addOrder(Order.desc("id"));
 
-		return criteria.list();
+		List<Bill> results = getRepository().select(Bill.class, criteria);
+		removeNullLineItems(results);
+		return results;
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	public List<Bill> getAllBillsForPatient(Patient patient) {
+		Criteria criteria = getRepository().createCriteria(Bill.class);
+
+		// Look for all bills for the same patient, including closed ones
+		criteria.add(Restrictions.eq("patient", patient));
+		criteria.addOrder(Order.desc("id"));
+
+		List<Bill> results = getRepository().select(Bill.class, criteria);
+		removeNullLineItems(results);
+		return results;
 	}
 
 	/**
@@ -518,5 +551,29 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 				((Cell) child).setBorder(border);
 			}
 		}
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.CLOSE_BILLS })
+	@Transactional
+	public Bill closeBill(Bill bill, String reason) {
+		if (bill == null) {
+			throw new NullPointerException("The bill must be defined.");
+		}
+		
+		bill.closeBill(reason);
+		return super.save(bill);
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.REOPEN_BILLS })
+	@Transactional
+	public Bill reopenBill(Bill bill) {
+		if (bill == null) {
+			throw new NullPointerException("The bill must be defined.");
+		}
+		
+		bill.reopenBill();
+		return super.save(bill);
 	}
 }

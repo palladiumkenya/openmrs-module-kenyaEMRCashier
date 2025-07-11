@@ -17,6 +17,7 @@ import org.openmrs.BaseOpenmrsData;
 import org.openmrs.Patient;
 import org.openmrs.Provider;
 import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.IDepositService;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.openmrs.module.stockmanagement.api.model.StockItem;
 
@@ -27,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Date;
+import org.openmrs.User;
 
 /**
  * Model class that represents a list of {@link BillLineItem}s and {@link Payment}s created by a cashier for a patient.
@@ -45,6 +48,11 @@ public class Bill extends BaseOpenmrsData {
 	private Set<Bill> adjustedBy;
 	private Boolean receiptPrinted = false;
 	private String adjustmentReason;
+	private Boolean closed = false;
+	private String closeReason;
+	private User closedBy;
+	private Date dateClosed;
+
 	public String getAdjustmentReason() {
 		return adjustmentReason;
 	}
@@ -98,6 +106,72 @@ public class Bill extends BaseOpenmrsData {
 		BigDecimal totalPayments = getTotalPayments();
 
 		return total.min(totalPayments);
+	}
+
+	/**
+	 * Gets the total amount of deposits applied to this bill.
+	 * @return The total deposits amount
+	 */
+	public BigDecimal getTotalDeposits() {
+		if (this.patient == null) {
+			return BigDecimal.ZERO;
+		}
+
+		IDepositService depositService = Context.getService(IDepositService.class);
+		BigDecimal totalDeposits = BigDecimal.ZERO;
+
+		// Get all deposits for the patient
+		List<Deposit> patientDeposits = depositService.getDepositsByPatient(this.patient, null);
+
+		// For each deposit, sum up the transactions that are linked to this bill's line items
+		for (Deposit deposit : patientDeposits) {
+			if (deposit.getTransactions() != null) {
+				for (DepositTransaction transaction : deposit.getTransactions()) {
+					if (!transaction.getVoided() &&
+							transaction.getTransactionType() == TransactionType.APPLY &&
+							transaction.getBillLineItem() != null &&
+							this.lineItems != null &&
+							this.lineItems.contains(transaction.getBillLineItem())) {
+						totalDeposits = totalDeposits.add(transaction.getAmount());
+					}
+				}
+			}
+		}
+
+		return totalDeposits;
+	}
+
+	/**
+	 * Gets the total amount of exempted items in this bill.
+	 * @return The total exempted amount
+	 */
+	public BigDecimal getTotalExempted() {
+		BigDecimal total = BigDecimal.ZERO;
+
+		if (this.lineItems != null) {
+			for (BillLineItem line : this.lineItems) {
+				if (line != null && !line.getVoided() &&
+						line.getPaymentStatus() != null &&
+						line.getPaymentStatus().equals(BillStatus.EXEMPTED) &&
+						line.getPrice() != null) {
+					total = total.add(line.getTotal());
+				}
+			}
+		}
+
+		return total;
+	}
+
+	/**
+	 * Gets the remaining balance for this bill.
+	 * @return The balance amount (total bill amount - payments - deposits)
+	 */
+	public BigDecimal getBalance() {
+		BigDecimal totalBillAmount = getTotal();
+		BigDecimal totalPayments = getTotalPayments();
+		BigDecimal totalDeposits = getTotalDeposits();
+
+		return totalBillAmount.subtract(totalPayments).subtract(totalDeposits);
 	}
 
 	@Override
@@ -331,5 +405,126 @@ public class Bill extends BaseOpenmrsData {
 		String dateString = (changedStr != null) ? changedStr : createdStr;
 
 		return dateString;
+	}
+
+	public Boolean isClosed() {
+		return closed;
+	}
+
+	public Boolean getClosed() {
+		return closed;
+	}
+
+	public void setClosed(Boolean closed) {
+		this.closed = closed;
+	}
+
+	public String getCloseReason() {
+		return closeReason;
+	}
+
+	public void setCloseReason(String closeReason) {
+		this.closeReason = closeReason;
+	}
+
+	public User getClosedBy() {
+		return closedBy;
+	}
+
+	public void setClosedBy(User closedBy) {
+		this.closedBy = closedBy;
+	}
+
+	public Date getDateClosed() {
+		return dateClosed;
+	}
+
+	public void setDateClosed(Date dateClosed) {
+		this.dateClosed = dateClosed;
+	}
+
+	/**
+	 * Closes the bill manually, preventing new items from being added.
+	 * Only users with CLOSE_BILLS privilege can close bills.
+	 * @param reason The reason for closing the bill
+	 * @throws IllegalStateException if the bill has pending payments
+	 */
+	public void closeBill(String reason) {
+		checkAuthorizedToClose();
+		if (reason == null || reason.trim().isEmpty()) {
+			throw new IllegalArgumentException("Close reason must be provided.");
+		}
+		
+		// Check if bill has pending payments
+		if (hasPendingPayments()) {
+			BigDecimal balance = getBalance();
+			BigDecimal total = getTotal();
+			BigDecimal totalPayments = getTotalPayments();
+			BigDecimal totalDeposits = getTotalDeposits();
+			
+			throw new IllegalStateException(
+				String.format("Cannot close bill with pending payments. " +
+					"Bill total: %s, Payments: %s, Deposits: %s, Remaining balance: %s. " +
+					"All items must be paid before closing the bill.", 
+					total, totalPayments, totalDeposits, balance));
+		}
+		
+		this.closed = true;
+		this.closeReason = reason;
+		this.closedBy = Context.getAuthenticatedUser();
+		this.dateClosed = new Date();
+	}
+
+	/**
+	 * Reopens a closed bill, allowing new items to be added.
+	 * Only users with REOPEN_BILLS privilege can reopen bills.
+	 */
+	public void reopenBill() {
+		checkAuthorizedToReopen();
+		if (!this.closed) {
+			throw new IllegalStateException("Bill is not closed and cannot be reopened.");
+		}
+		
+		this.closed = false;
+		this.closeReason = null;
+		this.closedBy = null;
+		this.dateClosed = null;
+	}
+
+	/**
+	 * Checks if the bill can accept new line items.
+	 * @return true if the bill is not closed and can accept new items
+	 */
+	public boolean canAcceptNewItems() {
+		// Treat voided bills as closed bills - they cannot accept new items
+		return !this.closed && !this.getVoided();
+	}
+
+	/**
+	 * Checks if the bill has pending payments.
+	 * @return true if the bill has a remaining balance greater than zero
+	 */
+	public boolean hasPendingPayments() {
+		return getBalance().compareTo(BigDecimal.ZERO) > 0;
+	}
+
+	/**
+	 * Checks if the bill can be closed.
+	 * @return true if the bill can be closed (no remaining balance and not already closed)
+	 */
+	public boolean canBeClosed() {
+		return !this.closed && !this.getVoided() && !hasPendingPayments();
+	}
+
+	private void checkAuthorizedToClose() {
+		if (!Context.hasPrivilege(PrivilegeConstants.CLOSE_BILLS)) {
+			throw new AccessControlException("Access denied to close bill.");
+		}
+	}
+
+	private void checkAuthorizedToReopen() {
+		if (!Context.hasPrivilege(PrivilegeConstants.REOPEN_BILLS)) {
+			throw new AccessControlException("Access denied to reopen bill.");
+		}
 	}
 }

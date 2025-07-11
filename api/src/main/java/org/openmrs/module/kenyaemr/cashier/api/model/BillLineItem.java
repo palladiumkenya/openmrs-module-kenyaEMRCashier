@@ -53,9 +53,12 @@ public class BillLineItem extends BaseOpenmrsData {
 	/**
 	 * Get the total price for the line item
 	 *
-	 * @return double the total price for the line item
+	 * @return BigDecimal the total price for the line item, or BigDecimal.ZERO if price or quantity is null
 	 */
 	public BigDecimal getTotal() {
+		if (price == null || quantity == null) {
+			return BigDecimal.ZERO;
+		}
 		return price.multiply(BigDecimal.valueOf(quantity));
 	}
 

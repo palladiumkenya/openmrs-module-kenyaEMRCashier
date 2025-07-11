@@ -38,7 +38,6 @@ import org.springframework.aop.AfterReturningAdvice;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -98,8 +97,8 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                     DrugOrder drugOrder = (DrugOrder) order;
                     Integer drugID = drugOrder.getDrug() != null ? drugOrder.getDrug().getDrugId() : 0;
                     double drugQuantity = drugOrder.getQuantity() != null ? drugOrder.getQuantity() : 0.0;
-                    List<StockItem> stockItems = stockService.getStockItemByDrug(drugID); // we expect a one-to-one mapping of drug to stock item in the inventory module
-
+                    // we expect a one-to-one mapping of drug to stock item in the inventory module
+                    List<StockItem> stockItems = stockService.getStockItemByDrug(drugID); 
                     if (!stockItems.isEmpty()) {
                         // check from the list for all exemptions
                         boolean isExempted = checkIfOrderIsExempted(workflowService, order,
@@ -230,11 +229,10 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                     paymentMethodDuringVisit = paymentMethod.getValueReference();
                 }
             }
-            
 
             if (stockItem != null) {
                 Integer stockItemId = stockItem.getId();
-                if(!isStockAvailable(stockItemId)){
+                if (!isStockAvailable(stockItemId)) {
                     return;
                 }
 
@@ -260,27 +258,54 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
             // Sets the price to that defined in a visit attribute during check-in,
             // otherwise pick the first price
             billLineItem.setPrice(itemPrice != null ? itemPrice.getPrice() : itemPrices.get(0).getPrice());
-            // Check if patient has an active bill
-            Bill activeBill = new Bill();
-            activeBill.setPatient(patient);
-            activeBill.setStatus(BillStatus.PENDING);
-            // Bill Item
 
+            // Check if patient has an existing non-closed bill
+            List<Bill> existingBills = billService.searchBill(patient);
+            Bill activeBill = null;
+
+            if (!existingBills.isEmpty()) {
+                // Use existing bill if it's not closed or voided
+                activeBill = existingBills.get(0);
+                if (activeBill.isClosed() || activeBill.getVoided()) {
+                    // If the existing bill is closed or voided, create a new one
+                    System.out.println(
+                            "Existing bill is closed or voided, creating new bill for patient: " + patient.getPatientId());
+                    activeBill = null;
+                } else {
+                    // If the existing bill is PAID, set it back to PENDING to allow new items
+                    if (activeBill.getStatus() == BillStatus.PAID) {
+                        activeBill.setStatus(BillStatus.PENDING);
+                    }
+                }
+            }
+
+            // Create new bill if no suitable existing bill found
+            if (activeBill == null) {
+                activeBill = new Bill();
+                activeBill.setPatient(patient);
+                activeBill.setStatus(BillStatus.PENDING);
+            }
+
+            // Bill Item
             billLineItem.setQuantity(quantity);
             billLineItem.setPaymentStatus(lineItemStatus);
             billLineItem.setLineItemOrder(0);
             billLineItem.setOrder(order);
+
             // Bill
             User user = Context.getAuthenticatedUser();
             List<Provider> providers = new ArrayList<>(
                     Context.getProviderService().getProvidersByPerson(user.getPerson()));
 
             if (!providers.isEmpty()) {
-                activeBill.setCashier(providers.get(0));
-                List<CashPoint> cashPoints = cashPointService.getAll();
-                activeBill.setCashPoint(cashPoints.get(0)); // TODO: this needs correction
+                if (activeBill.getCashier() == null) {
+                    activeBill.setCashier(providers.get(0));
+                }
+                if (activeBill.getCashPoint() == null) {
+                    List<CashPoint> cashPoints = cashPointService.getAll();
+                    activeBill.setCashPoint(cashPoints.get(0)); // TODO: this needs correction
+                }
                 activeBill.addLineItem(billLineItem);
-                activeBill.setStatus(BillStatus.PENDING);
                 billService.save(activeBill);
             } else {
                 System.out.println("User is not a provider");
@@ -290,33 +315,6 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
             System.err.println("Error adding the bill item: " + ex.getMessage());
             ex.printStackTrace();
         }
-    }
-
-    private String fetchPatientPayment(Order order) {
-        String patientPayingMethod = "";
-        Collection<VisitAttribute> visitAttributeList = order.getEncounter().getVisit().getActiveAttributes();
-
-        for (VisitAttribute attribute : visitAttributeList) {
-            if (attribute.getAttributeType().getUuid().equals("c39b684c-250f-4781-a157-d6ad7353bc90")
-                    && !attribute.getVoided()) {
-                patientPayingMethod = attribute.getValueReference();
-            }
-        }
-        return patientPayingMethod;
-    }
-
-    private boolean fetchPatientPayingCategory(Order order) {
-        boolean isPaying = false;
-        Collection<VisitAttribute> visitAttributeList = order.getEncounter().getVisit().getActiveAttributes();
-
-        for (VisitAttribute attribute : visitAttributeList) {
-            if (attribute.getAttributeType().getUuid().equals("caf2124f-00a9-4620-a250-efd8535afd6d")
-                    && attribute.getValueReference().equals("1c30ee58-82d4-4ea4-a8c1-4bf2f9dfc8cf")) {
-                return true;
-            }
-        }
-
-        return isPaying;
     }
 
     /**
@@ -346,8 +344,17 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
 
             // check if the bill has any other bill line items if not void or close the bill
             Bill bill = billLineItem.getBill();
-            if (bill.getLineItems().isEmpty()) {
-                bill.setStatus(BillStatus.CANCELLED);
+            
+            // Check if all line items in the bill are voided
+            boolean allItemsVoided = bill.getLineItems().stream()
+                    .allMatch(item -> item.getVoided());
+            
+            if (allItemsVoided) {
+                // If all items are voided, void the entire bill
+                bill.setVoided(true);
+                bill.setVoidReason("All line items voided");
+                bill.setVoidedBy(Context.getAuthenticatedUser());
+                bill.setDateVoided(new Date());
                 billService.save(bill);
             }
         } catch (Exception e) {
@@ -360,18 +367,18 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
         if (stockItemId == null) {
             return false;
         }
-    
+
         StockItemInventorySearchFilter filter = new StockItemInventorySearchFilter();
         StockItemInventorySearchFilter.ItemGroupFilter itemGroupFilter = new StockItemInventorySearchFilter.ItemGroupFilter(
                 null, stockItemId, null);
         filter.setItemGroupFilters(Collections.singletonList(itemGroupFilter));
-    
+
         StockInventoryResult stockItemInventoryResult = stockService.getStockInventory(filter);
-        if (stockItemInventoryResult == null || stockItemInventoryResult.getTotals() == null 
+        if (stockItemInventoryResult == null || stockItemInventoryResult.getTotals() == null
                 || stockItemInventoryResult.getTotals().isEmpty()) {
             return false;
         }
-    
+
         BigDecimal totalQuantity = stockItemInventoryResult.getTotals().get(0).getQuantity();
         return totalQuantity != null && totalQuantity.compareTo(BigDecimal.ZERO) > 0;
     }
