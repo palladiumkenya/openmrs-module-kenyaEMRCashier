@@ -11,7 +11,7 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
 import com.itextpdf.layout.Canvas;
 import com.itextpdf.layout.Document;
-import org.openmrs.module.kenyaemr.cashier.api.util.invoice.PdfDocumentService;
+import org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.PdfDocumentService;
 
 import java.io.File;
 import java.io.FileOutputStream;
