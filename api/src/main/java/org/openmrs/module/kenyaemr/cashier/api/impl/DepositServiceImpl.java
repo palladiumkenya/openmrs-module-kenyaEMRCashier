@@ -7,13 +7,12 @@ import org.openmrs.OpenmrsObject;
 import org.openmrs.Patient;
 import org.openmrs.api.APIException;
 import org.openmrs.api.context.Context;
-import org.openmrs.api.impl.BaseOpenmrsService;
 import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
 import org.openmrs.module.kenyaemr.cashier.api.IDepositService;
 import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.impl.BaseEntityDataServiceImpl;
-import org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepository;
+import org.openmrs.module.kenyaemr.cashier.api.base.entity.security.IEntityAuthorizationPrivileges;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
 import org.openmrs.module.kenyaemr.cashier.api.model.Deposit;
@@ -30,72 +29,43 @@ import java.util.List;
 /**
  * Service implementation for {@link IDepositService}.
  */
-public class DepositServiceImpl extends BaseOpenmrsService implements IDepositService {
+@Transactional
+public class DepositServiceImpl extends BaseEntityDataServiceImpl<Deposit> implements IEntityAuthorizationPrivileges, IDepositService {
     private static final Log LOG = LogFactory.getLog(DepositServiceImpl.class);
 
-    private IEntityDataService<Deposit> repository;
-
-    public void setRepository(IEntityDataService<Deposit> repository) {
-        this.repository = repository;
+    @Override
+    protected IEntityAuthorizationPrivileges getPrivileges() {
+        return this;
     }
 
     @Override
-    public void setRepository(BaseHibernateRepository repository) {
-        if (this.repository instanceof BaseEntityDataServiceImpl) {
-            ((BaseEntityDataServiceImpl<Deposit>) this.repository).setRepository(repository);
-        }
+    protected void validate(Deposit object) {
+        // No special validation required
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Deposit> getAll() {
-        return repository.getAll();
+    protected Collection<? extends OpenmrsObject> getRelatedObjects(Deposit entity) {
+        return entity.getTransactions();
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Deposit> getAll(PagingInfo paging) {
-        return repository.getAll(paging);
+    public String getVoidPrivilege() {
+        return null;
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Deposit> getAll(boolean includeVoided) {
-        return repository.getAll(includeVoided);
+    public String getSavePrivilege() {
+        return null;
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<Deposit> getAll(boolean includeVoided, PagingInfo paging) {
-        return repository.getAll(includeVoided, paging);
+    public String getPurgePrivilege() {
+        return null;
     }
 
     @Override
-    @Transactional
-    public Deposit save(Deposit deposit) {
-        if (deposit == null) {
-            throw new NullPointerException("The deposit to save must be defined.");
-        }
-
-        return repository.save(deposit);
-    }
-
-    @Override
-    @Transactional
-    public Deposit saveAll(Deposit object, Collection<? extends OpenmrsObject> related) {
-        return repository.saveAll(object, related);
-    }
-
-    @Override
-    @Transactional
-    public void saveAll(Collection<? extends OpenmrsObject> collection) {
-        repository.saveAll(collection);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Deposit getById(int id) {
-        return repository.getById(id);
+    public String getGetPrivilege() {
+        return null;
     }
 
     @Override
@@ -104,18 +74,7 @@ public class DepositServiceImpl extends BaseOpenmrsService implements IDepositSe
         if (depositId == null) {
             throw new NullPointerException("The deposit id must be defined.");
         }
-
-        return repository.getById(depositId);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Deposit getByUuid(String uuid) {
-        if (StringUtils.isEmpty(uuid)) {
-            throw new IllegalArgumentException("The deposit uuid must be defined.");
-        }
-
-        return repository.getByUuid(uuid);
+        return getById(depositId.intValue());
     }
 
     @Override
@@ -135,7 +94,7 @@ public class DepositServiceImpl extends BaseOpenmrsService implements IDepositSe
             throw new NullPointerException("The patient uuid must be defined.");
         }
 
-        List<Deposit> deposits = repository.getAll(false, pagingInfo);
+        List<Deposit> deposits = getAll(false, pagingInfo);
         List<Deposit> result = new ArrayList<>();
         for (Deposit deposit : deposits) {
             if (deposit.getPatient().getUuid().equals(patientUuid)) {
@@ -152,7 +111,7 @@ public class DepositServiceImpl extends BaseOpenmrsService implements IDepositSe
             throw new IllegalArgumentException("The reference number must be defined.");
         }
 
-        List<Deposit> deposits = repository.getAll(false);
+        List<Deposit> deposits = getAll(false);
         for (Deposit deposit : deposits) {
             if (deposit.getReferenceNumber().equals(referenceNumber)) {
                 return deposit;
@@ -248,27 +207,5 @@ public class DepositServiceImpl extends BaseOpenmrsService implements IDepositSe
         }
 
         return save(deposit);
-    }
-
-    @Override
-    @Transactional
-    public void purge(Deposit deposit) {
-        if (deposit == null) {
-            throw new NullPointerException("The deposit to purge must be defined.");
-        }
-
-        repository.purge(deposit);
-    }
-
-    @Override
-    @Transactional
-    public Deposit voidEntity(Deposit entity, String reason) {
-        return repository.voidEntity(entity, reason);
-    }
-
-    @Override
-    @Transactional
-    public Deposit unvoidEntity(Deposit entity) {
-        return repository.unvoidEntity(entity);
     }
 }

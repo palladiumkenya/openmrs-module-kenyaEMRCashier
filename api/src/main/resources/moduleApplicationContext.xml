@@ -236,7 +236,7 @@
 		<property name="transactionManager" ref="transactionManager" />
 		<property name="target">
 			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositServiceImpl">
-				<property name="repository" ref="depositEntityDataService" />
+				<property name="repository" ref="genericRepositoryDao" />
 			</bean>
 		</property>
 		<property name="preInterceptors" ref="serviceInterceptors" />
@@ -246,7 +246,7 @@
 		<property name="transactionManager" ref="transactionManager" />
 		<property name="target">
 			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositTransactionServiceImpl">
-				<property name="repository" ref="depositTransactionEntityDataService" />
+				<property name="repository" ref="genericRepositoryDao" />
 			</bean>
 		</property>
 		<property name="preInterceptors" ref="serviceInterceptors" />
@@ -254,15 +254,5 @@
 	</bean>
 	<bean id="genericRepositoryDao" class="org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepositoryImpl">
 		<constructor-arg name="sessionFactory" ref="dbSessionFactory"/>
-	</bean>
-
-	<!-- Deposit Entity Data Service -->
-	<bean id="depositEntityDataService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositEntityDataServiceImpl">
-		<property name="repository" ref="genericRepositoryDao"/>
-	</bean>
-
-	<!-- DepositTransaction Entity Data Service -->
-	<bean id="depositTransactionEntityDataService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositTransactionEntityDataServiceImpl">
-		<property name="repository" ref="genericRepositoryDao"/>
 	</bean>
 </beans>
