@@ -13,6 +13,8 @@
  */
 package org.openmrs.module.kenyaemr.cashier.api.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.font.PdfFont;
@@ -66,6 +68,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.security.AccessControlException;
@@ -84,6 +88,8 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	private static final Log LOG = LogFactory.getLog(BillServiceImpl.class);
 	private static final String GP_DEFAULT_LOCATION = "kenyaemr.defaultLocation";
 	private static final String GP_FACILITY_ADDRESS_DETAILS = "kenyaemr.cashier.receipt.facilityAddress";
+	private static final String GP_FACILITY_INFORMATION = "kenyaemr.cashier.receipt.facilityInformation";
+	private static final ObjectMapper objectMapper = new ObjectMapper();
 	public static final String OPENMRS_ID = "dfacd928-0370-4315-99d7-6ec1c9f7ae76";
 	public static final String PAYMENT_REFERENCE_ATTRIBUTE = "d453e528-0264-4d6e-ae23-bc0b777e1146";
 
@@ -414,21 +420,37 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		PdfFont headerSectionFont = helveticaBold;
 		PdfFont billItemSectionFont = helvetica;
 		PdfFont footerSectionFont = courierBold;
-		URL logoUrl = BillServiceImpl.class.getClassLoader().getResource("img/kenyaemr-primary-logo.png");
-
-		Image logiImage = new Image(ImageDataFactory.create(logoUrl));
-		logiImage.scaleToFit(80, 80);
+		
+		// Get facility information from global property
+		FacilityInfo facilityInfo = getFacilityInformation();
+		Image logoImage = getLogoFromFacilityInformation();
+		
 		Paragraph divider = new Paragraph("------------------------------------------------------------------");
 		Text billDateLabel = new Text(Utils.getSimpleDateFormat("dd-MMM-yyyy HH:mm:ss").format(bill.getDateCreated()));
 
+		// Use facility name from facility information, fallback to location name
 		GlobalProperty gp = Context.getAdministrationService().getGlobalPropertyObject(GP_DEFAULT_LOCATION);
-		GlobalProperty gpFacilityAddress = Context.getAdministrationService().getGlobalPropertyObject(GP_FACILITY_ADDRESS_DETAILS);
-		Text facilityName = new Text(gp != null && gp.getValue() != null ? ((Location) gp.getValue()).getName() : bill.getCashPoint().getLocation().getName());
+		String facilityNameText = StringUtils.isNotEmpty(facilityInfo.facilityName) ? 
+			facilityInfo.facilityName : 
+			(gp != null && gp.getValue() != null ? ((Location) gp.getValue()).getName() : bill.getCashPoint().getLocation().getName());
+		Text facilityName = new Text(facilityNameText);
 
-		Text facilityAddressDetails = new Text(gpFacilityAddress != null && gpFacilityAddress.getValue() != null ? gpFacilityAddress.getPropertyValue() : "");
+		// Use address from facility information contacts, fallback to old global property
+		String addressText = "";
+		if (facilityInfo.contacts != null && StringUtils.isNotEmpty(facilityInfo.contacts.address)) {
+			addressText = facilityInfo.contacts.address;
+		} else {
+			GlobalProperty gpFacilityAddress = Context.getAdministrationService().getGlobalPropertyObject(GP_FACILITY_ADDRESS_DETAILS);
+			addressText = gpFacilityAddress != null && gpFacilityAddress.getValue() != null ? gpFacilityAddress.getPropertyValue() : "";
+		}
+		Text facilityAddressDetails = new Text(addressText);
+		
 		Paragraph logoSection = new Paragraph();
 		logoSection.setFontSize(14);
-		//logoSection.add(logiImage).add("\n");
+		if (logoImage != null) {
+			logoImage.scaleToFit(80, 80);
+			logoSection.add(logoImage).add("\n");
+		}
 		logoSection.add(facilityName).add("\n");
 		logoSection.setTextAlignment(TextAlignment.CENTER);
 		logoSection.setFont(timesRoman).setBold();
@@ -575,5 +597,146 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		
 		bill.reopenBill();
 		return super.save(bill);
+	}
+
+	/**
+	 * Get logo from facility information global property
+	 * @return Image object or null if not found
+	 */
+	private Image getLogoFromFacilityInformation() {
+		try {
+			String facilityInfoJson = Context.getAdministrationService()
+					.getGlobalProperty(GP_FACILITY_INFORMATION);
+
+			if (StringUtils.isNotEmpty(facilityInfoJson)) {
+				JsonNode facilityNode = objectMapper.readTree(facilityInfoJson);
+				
+				// First try to use logo data from global property (base64 encoded)
+				String logoData = getJsonValue(facilityNode, "logoData", "");
+				if (StringUtils.isNotEmpty(logoData)) {
+					try {
+						byte[] imageBytes = java.util.Base64.getDecoder().decode(logoData);
+						return new Image(ImageDataFactory.create(imageBytes));
+					} catch (Exception e) {
+						LOG.warn("Failed to decode base64 logo data", e);
+					}
+				}
+				
+				// If no logo data, try to use logo path from global property
+				String logoPath = getJsonValue(facilityNode, "logoPath", "");
+				if (StringUtils.isNotEmpty(logoPath)) {
+					try {
+						java.io.File logoFile = new java.io.File(logoPath);
+						if (logoFile.exists()) {
+							byte[] imageBytes = java.nio.file.Files.readAllBytes(logoFile.toPath());
+							return new Image(ImageDataFactory.create(imageBytes));
+						} else {
+							// Try as resource path
+							InputStream inputStream = getClass().getResourceAsStream(logoPath);
+							if (inputStream != null) {
+								ByteArrayOutputStream baos = new ByteArrayOutputStream();
+								byte[] buffer = new byte[1024];
+								int length;
+								while ((length = inputStream.read(buffer)) != -1) {
+									baos.write(buffer, 0, length);
+								}
+								byte[] imageBytes = baos.toByteArray();
+								inputStream.close();
+								return new Image(ImageDataFactory.create(imageBytes));
+							}
+						}
+					} catch (Exception e) {
+						LOG.warn("Failed to load logo from path: " + logoPath, e);
+					}
+				}
+			}
+		} catch (Exception e) {
+			LOG.warn("Failed to parse facility information JSON for logo", e);
+		}
+
+		// Fallback to the original hardcoded logo if facility information is not available
+		try {
+			URL logoUrl = BillServiceImpl.class.getClassLoader().getResource("img/kenyaemr-primary-logo.png");
+			if (logoUrl != null) {
+				return new Image(ImageDataFactory.create(logoUrl));
+			}
+		} catch (Exception e) {
+			LOG.warn("Failed to load fallback logo", e);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Safely extract value from JSON node with fallback
+	 */
+	private String getJsonValue(JsonNode node, String fieldName, String defaultValue) {
+		return node.has(fieldName) ? node.get(fieldName).asText() : defaultValue;
+	}
+
+	/**
+	 * Get facility information from global property
+	 * @return FacilityInfo object with parsed facility information
+	 */
+	private FacilityInfo getFacilityInformation() {
+		FacilityInfo info = new FacilityInfo();
+		
+		try {
+			String facilityInfoJson = Context.getAdministrationService()
+					.getGlobalProperty(GP_FACILITY_INFORMATION);
+
+			if (StringUtils.isNotEmpty(facilityInfoJson)) {
+				JsonNode facilityNode = objectMapper.readTree(facilityInfoJson);
+				info.facilityName = getJsonValue(facilityNode, "facilityName", info.facilityName);
+				info.tagline = getJsonValue(facilityNode, "tagline", info.tagline);
+				info.logoPath = getJsonValue(facilityNode, "logoPath", info.logoPath);
+				info.logoData = getJsonValue(facilityNode, "logoData", info.logoData);
+				
+				// Parse contacts if present
+				if (facilityNode.has("contacts")) {
+					JsonNode contactsNode = facilityNode.get("contacts");
+					info.contacts = new FacilityContacts();
+					info.contacts.tel = getJsonValue(contactsNode, "tel", "");
+					info.contacts.email = getJsonValue(contactsNode, "email", "");
+					info.contacts.address = getJsonValue(contactsNode, "address", "");
+					info.contacts.web = getJsonValue(contactsNode, "website", "");
+					info.contacts.emergency = getJsonValue(contactsNode, "emergency", "");
+				}
+			}
+		} catch (Exception e) {
+			LOG.warn("Failed to parse facility information JSON. Using defaults.", e);
+		}
+
+		return info;
+	}
+
+	/**
+	 * Facility information data class
+	 */
+	private static class FacilityInfo {
+		public String facilityName = "";
+		public String tagline = "";
+		public String logoPath = "";
+		public String logoData = "";
+		public FacilityContacts contacts = null;
+
+		public FacilityInfo() {
+		}
+	}
+
+	/**
+	 * Facility contacts data class
+	 */
+	private static class FacilityContacts {
+		public String tel = "";
+		public String email = "";
+		public String address = "";
+		public String web = "";
+		public String emergency = "";
+
+		public boolean hasAny() {
+			return StringUtils.isNotEmpty(tel) || StringUtils.isNotEmpty(email) || StringUtils.isNotEmpty(address)
+					|| StringUtils.isNotEmpty(web) || StringUtils.isNotEmpty(emergency);
+		}
 	}
 }
