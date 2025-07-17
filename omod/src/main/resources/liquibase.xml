@@ -1073,4 +1073,113 @@
 			
 	</changeSet>
 
+	<changeSet id="kenyaemr.cashier-002-close-existing-paid-bills" author="Donald Kibet">
+		<preConditions onError="WARN" onFail="MARK_RAN">
+			<tableExists tableName="cashier_bill" />
+			<columnExists columnName="closed" tableName="cashier_bill" />
+			<sqlCheck expectedResult="0">
+				SELECT COUNT(*) FROM cashier_bill WHERE closed = 1
+			</sqlCheck>
+		</preConditions>
+		
+		<comment>Close existing bills that are fully paid and not already closed to ensure the close/reopen feature works correctly</comment>
+
+		<!-- Update bills that are fully paid (status = PAID) and not voided to be closed -->
+		<sql><![CDATA[
+			UPDATE cashier_bill 
+			SET closed = 1, 
+				close_reason = 'Auto-closed during migration: Bill was fully paid', 
+				closed_by = creator, 
+				date_closed = NOW() 
+			WHERE status = 'PAID' 
+				AND voided = 0 
+				AND closed = 0
+		]]></sql>
+
+		<!-- Update bills that have status = POSTED but are actually fully paid (no remaining balance) -->
+		<sql><![CDATA[
+			UPDATE cashier_bill cb
+			SET closed = 1, 
+				close_reason = 'Auto-closed during migration: Bill was fully paid', 
+				closed_by = cb.creator, 
+				date_closed = NOW() 
+			WHERE cb.status = 4 
+				AND cb.voided = 0 
+				AND cb.closed = 0
+				AND (
+					SELECT COALESCE(SUM(cbli.price * cbli.quantity), 0) 
+					FROM cashier_bill_line_item cbli 
+					WHERE cbli.bill_id = cb.bill_id 
+						AND cbli.voided = 0
+				) <= (
+					SELECT COALESCE(SUM(cbp.amount_tendered), 0) 
+					FROM cashier_bill_payment cbp 
+					WHERE cbp.bill_id = cb.bill_id 
+						AND cbp.voided = 0
+				) + (
+					SELECT COALESCE(SUM(cdt.amount), 0) 
+					FROM cashier_deposit_transaction cdt 
+					INNER JOIN cashier_bill_line_item cbli ON cdt.bill_line_item_id = cbli.bill_line_item_id 
+					WHERE cbli.bill_id = cb.bill_id 
+						AND cdt.voided = 0
+				)
+		]]></sql>
+
+		<!-- Update bills that have status = PENDING but are actually fully paid (no remaining balance) -->
+		<sql><![CDATA[
+			UPDATE cashier_bill cb
+			SET closed = 1, 
+				close_reason = 'Auto-closed during migration: Bill was fully paid', 
+				closed_by = cb.creator, 
+				date_closed = NOW() 
+			WHERE cb.status = 0 
+				AND cb.voided = 0 
+				AND cb.closed = 0
+				AND (
+					SELECT COALESCE(SUM(cbli.price * cbli.quantity), 0) 
+					FROM cashier_bill_line_item cbli 
+					WHERE cbli.bill_id = cb.bill_id 
+						AND cbli.voided = 0
+				) <= (
+					SELECT COALESCE(SUM(cbp.amount_tendered), 0) 
+					FROM cashier_bill_payment cbp 
+					WHERE cbp.bill_id = cb.bill_id 
+						AND cbp.voided = 0
+				) + (
+					SELECT COALESCE(SUM(cdt.amount), 0) 
+					FROM cashier_deposit_transaction cdt 
+					INNER JOIN cashier_bill_line_item cbli ON cdt.bill_line_item_id = cbli.bill_line_item_id 
+					WHERE cbli.bill_id = cb.bill_id 
+						AND cdt.voided = 0
+				)
+		]]></sql>
+
+		<!-- Also update the status to PAID for bills that were fully paid but had wrong status -->
+		<sql><![CDATA[
+			UPDATE cashier_bill cb
+			SET status = 1
+			WHERE cb.status IN (0, 4) 
+				AND cb.voided = 0 
+				AND cb.closed = 1
+				AND (
+					SELECT COALESCE(SUM(cbli.price * cbli.quantity), 0) 
+					FROM cashier_bill_line_item cbli 
+					WHERE cbli.bill_id = cb.bill_id 
+						AND cbli.voided = 0
+				) <= (
+					SELECT COALESCE(SUM(cbp.amount_tendered), 0) 
+					FROM cashier_bill_payment cbp 
+					WHERE cbp.bill_id = cb.bill_id 
+						AND cbp.voided = 0
+				) + (
+					SELECT COALESCE(SUM(cdt.amount), 0) 
+					FROM cashier_deposit_transaction cdt 
+					INNER JOIN cashier_bill_line_item cbli ON cdt.bill_line_item_id = cbli.bill_line_item_id 
+					WHERE cbli.bill_id = cb.bill_id 
+						AND cdt.voided = 0
+				)
+		]]></sql>
+			
+	</changeSet>
+
 </databaseChangeLog>
