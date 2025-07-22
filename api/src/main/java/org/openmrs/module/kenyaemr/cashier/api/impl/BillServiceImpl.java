@@ -48,6 +48,7 @@ import org.openmrs.PatientIdentifierType;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
+import org.openmrs.module.kenyaemr.cashier.api.IDepositService;
 import org.openmrs.module.kenyaemr.cashier.api.IReceiptNumberGenerator;
 import org.openmrs.module.kenyaemr.cashier.api.ReceiptNumberGeneratorFactory;
 import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
@@ -57,8 +58,11 @@ import org.openmrs.module.kenyaemr.cashier.api.base.f.Action1;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
+import org.openmrs.module.kenyaemr.cashier.api.model.Deposit;
+import org.openmrs.module.kenyaemr.cashier.api.model.DepositTransaction;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
+import org.openmrs.module.kenyaemr.cashier.api.model.TransactionType;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
@@ -526,6 +530,54 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 
 		setInnerCellBorder(paymentSection, Border.NO_BORDER);
 		setInnerCellBorder(totalsSection, Border.NO_BORDER);
+		
+		// Add deposits section if there are deposits
+		float [] depositColWidth = {1f, 5f, 2f, 2f};
+		Table depositSection = new Table(depositColWidth);
+		BigDecimal totalDeposits = bill.getTotalDeposits();
+		if (totalDeposits.compareTo(BigDecimal.ZERO) > 0) {
+			depositSection.setWidth(UnitValue.createPercentValue(100f));
+			depositSection.addCell(new Paragraph("  "));
+			depositSection.addCell(new Paragraph("Deposits").setTextAlignment(TextAlignment.LEFT).setBold());
+			depositSection.addCell(new Paragraph(" "));
+			depositSection.addCell(new Paragraph(" "));
+			
+			// Get deposit service to fetch deposit details
+			IDepositService depositService = Context.getService(IDepositService.class);
+			List<Deposit> patientDeposits = depositService.getDepositsByPatient(bill.getPatient(), null);
+			
+			for (Deposit deposit : patientDeposits) {
+				if (deposit.getTransactions() != null) {
+					for (DepositTransaction transaction : deposit.getTransactions()) {
+						if (!transaction.getVoided() &&
+								transaction.getTransactionType() == TransactionType.APPLY &&
+								transaction.getBillLineItem() != null &&
+								bill.getLineItems().contains(transaction.getBillLineItem())) {
+							depositSection.addCell(new Paragraph(" "));
+							depositSection.addCell(new Paragraph("Deposit: " + deposit.getReferenceNumber()).setTextAlignment(TextAlignment.LEFT)).setFontSize(10).setFont(helvetica);
+							depositSection.addCell(new Paragraph(" "));
+							depositSection.addCell(new Paragraph(df.format(transaction.getAmount())).setTextAlignment(TextAlignment.RIGHT)).setFontSize(10).setFont(helvetica);
+						}
+					}
+				}
+			}
+			
+			setInnerCellBorder(depositSection, Border.NO_BORDER);
+		}
+		
+		// Add balance section
+		float [] balanceColWidth = {1f, 5f, 2f, 2f};
+		Table balanceSection = new Table(balanceColWidth);
+		BigDecimal balance = bill.getBalance();
+		if (balance.compareTo(BigDecimal.ZERO) > 0) {
+			balanceSection.setWidth(UnitValue.createPercentValue(100f));
+			balanceSection.addCell(new Paragraph(" "));
+			balanceSection.addCell(new Paragraph(" "));
+			balanceSection.addCell(new Paragraph("Balance Due")).setFontSize(10).setTextAlignment(TextAlignment.RIGHT).setFont(helvetica).setBold();
+			balanceSection.addCell(new Paragraph(df.format(balance))).setFontSize(10).setTextAlignment(TextAlignment.RIGHT).setFont(helvetica).setBold();
+			setInnerCellBorder(balanceSection, Border.NO_BORDER);
+		}
+		
 		doc.add(logoSection);
 		doc.add(addressSection);
 		doc.add(receiptHeader);
@@ -535,6 +587,10 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		doc.add(totalsSection);
 		doc.add(divider);
 		doc.add(paymentSection);
+		doc.add(divider);
+		doc.add(depositSection);
+		doc.add(divider);
+		doc.add(balanceSection);
 		doc.add(divider);
 		doc.add(new Paragraph("You were served by " + bill.getCashier().getName()).setFont(footerSectionFont).setFontSize(8).setTextAlignment(TextAlignment.CENTER));
 		doc.add(new Paragraph("GET WELL SOON").setFont(footerSectionFont).setFontSize(10).setTextAlignment(TextAlignment.CENTER));
