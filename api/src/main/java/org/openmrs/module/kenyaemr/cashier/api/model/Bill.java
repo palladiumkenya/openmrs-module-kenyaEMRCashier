@@ -341,11 +341,15 @@ public class Bill extends BaseOpenmrsData {
 	}
 
 	public void synchronizeBillStatus() {
-		if (this.getPayments().size() > 0  && getTotalPayments().compareTo(BigDecimal.ZERO) > 0) {
-			boolean billFullySettled = getTotalPayments().compareTo(getTotal()) >= 0;
+		BigDecimal totalPayments = getTotalPayments();
+		BigDecimal totalDeposits = getTotalDeposits();
+		BigDecimal totalSettled = totalPayments.add(totalDeposits);
+		
+		if (totalSettled.compareTo(BigDecimal.ZERO) > 0) {
+			boolean billFullySettled = totalSettled.compareTo(getTotal()) >= 0;
 			if (billFullySettled) {
 				this.setStatus(BillStatus.PAID);
-			} else if (!billFullySettled) {
+			} else {
 				this.setStatus(BillStatus.POSTED);
 			}
 		}
