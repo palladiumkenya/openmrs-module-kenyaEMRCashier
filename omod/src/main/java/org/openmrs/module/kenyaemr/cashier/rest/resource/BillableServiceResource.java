@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.*;
+import org.openmrs.Drug;
 
 /**
  * {@link Resource} for {@link BillableService}, supporting CRUD operations
@@ -178,6 +179,7 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
             String serviceStatus = context.getParameter("status");
             String conceptUuid = context.getParameter("concept");
             String stockItemUuid = context.getParameter("stockItem");
+            String drugUuid = context.getParameter("drugUuid");
             String name = context.getParameter("name");
 
             BillableServiceSearch search = new BillableServiceSearch();
@@ -207,7 +209,15 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
                 search.getTemplate().setServiceStatus(status);
             } else {
                 // Default to enabled services if not specified
-                search.getTemplate().setServiceStatus(BillableServiceStatus.ENABLED);
+                boolean hasSearchCriteria = StringUtils.isNotBlank(name) ||
+                        StringUtils.isNotBlank(serviceTypeUuid) ||
+                        StringUtils.isNotBlank(serviceCategoryUuid) ||
+                        StringUtils.isNotBlank(stockItemUuid) ||
+                        StringUtils.isNotBlank(drugUuid);
+
+                if (hasSearchCriteria) {
+                    search.getTemplate().setServiceStatus(BillableServiceStatus.ENABLED);
+                }
             }
 
             if (StringUtils.isNotBlank(stockItemUuid)) {
@@ -219,13 +229,44 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
                 search.getTemplate().setStockItem(stockItem);
             }
 
+            // Handle drug UUID search
+            if (StringUtils.isNotBlank(drugUuid)) {
+                Drug drug = Context.getConceptService().getDrugByUuid(drugUuid);
+                if (drug == null) {
+                    throw new ObjectNotFoundException();
+                }
+
+                List<StockItem> stockItems = Context.getService(StockManagementService.class)
+                        .getStockItemByDrug(drug.getDrugId());
+
+                if (stockItems.isEmpty()) {
+                    return new AlreadyPaged<BillableService>(context, new ArrayList<>(), false);
+                }
+
+                if (StringUtils.isNotBlank(stockItemUuid)) {
+                    StockItem requestedStockItem = Context.getService(StockManagementService.class)
+                            .getStockItemByUuid(stockItemUuid);
+                    if (requestedStockItem == null || !stockItems.contains(requestedStockItem)) {
+                        return new AlreadyPaged<BillableService>(context, new ArrayList<>(), false);
+                    }
+                    search.getTemplate().setStockItem(requestedStockItem);
+                } else {
+                    search.getTemplate().setStockItem(stockItems.get(0));
+                }
+            }
+
             Integer startIndex = context.getStartIndex();
             Integer limit = context.getLimit();
 
             IBillableItemsService service = Context.getService(IBillableItemsService.class);
-            List<BillableService> results = service.findServices(search);
+            if (service == null) {
+                throw new ConversionException("BillableItemsService not found in context");
+            }
 
-            Integer totalCount = results.size();
+            List<BillableService> results = service.findServices(search);
+            if (results == null) {
+                results = new ArrayList<>();
+            }
 
             return new AlreadyPaged<BillableService>(context, results, false);
         } catch (ObjectNotFoundException e) {
@@ -390,6 +431,12 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
         stockItemRef.put("uuid", stockItem.getUuid());
         stockItemRef.put("display", stockItem.getCommonName());
 
+        // Add drug only if drug is not null
+        if (stockItem.getDrug() != null) {
+            stockItemRef.put("drug",
+                    ConversionUtil.getPropertyWithRepresentation(stockItem.getDrug(), "uuid", Representation.REF));
+        }
+
         // Add resource link
         Map<String, String> links = new HashMap<>();
         links.put("self", RestConstants.URI_PREFIX + "stockmanagement/stockitem/" + stockItem.getUuid());
@@ -404,7 +451,7 @@ public class BillableServiceResource extends BaseRestDataResource<BillableServic
             instance.setStockItem(null);
             return;
         }
-        
+
         StockItem stockItem = Context.getService(StockManagementService.class).getStockItemByUuid(stockItemUuid);
         if (stockItem == null) {
             throw new ObjectNotFoundException();
