@@ -19,6 +19,7 @@ import org.openmrs.module.kenyaemr.cashier.api.model.Deposit;
 import org.openmrs.module.kenyaemr.cashier.api.model.DepositTransaction;
 import org.openmrs.module.kenyaemr.cashier.api.model.DepositStatus;
 import org.openmrs.module.kenyaemr.cashier.api.model.TransactionType;
+import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -161,6 +162,12 @@ public class DepositServiceImpl extends BaseEntityDataServiceImpl<Deposit> imple
                 billLineItem.setPaymentStatus(BillStatus.PAID);
                 Context.getService(BillLineItemService.class).save(billLineItem);
             }
+            
+            // Synchronize the bill status to reflect the new deposit
+            if (billLineItem.getBill() != null) {
+                billLineItem.getBill().synchronizeBillStatus();
+                Context.getService(IBillService.class).save(billLineItem.getBill());
+            }
         }
 
         deposit.addTransaction(transaction);
@@ -194,6 +201,12 @@ public class DepositServiceImpl extends BaseEntityDataServiceImpl<Deposit> imple
             BillLineItem billLineItem = transaction.getBillLineItem();
             billLineItem.setPaymentStatus(BillStatus.PENDING);
             Context.getService(BillLineItemService.class).save(billLineItem);
+            
+            // Synchronize the bill status to reflect the voided deposit
+            if (billLineItem.getBill() != null) {
+                billLineItem.getBill().synchronizeBillStatus();
+                Context.getService(IBillService.class).save(billLineItem.getBill());
+            }
         }
 
         transaction.setVoided(true);
