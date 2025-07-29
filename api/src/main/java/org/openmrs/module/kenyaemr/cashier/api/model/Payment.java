@@ -17,6 +17,7 @@ import org.openmrs.module.kenyaemr.cashier.api.base.entity.model.BaseInstanceCus
 import org.openmrs.module.stockmanagement.api.model.StockItem;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Model class that represents the {@link Bill} payment information.
@@ -29,6 +30,12 @@ public class Payment extends BaseInstanceCustomizableData<PaymentMode, PaymentAt
 	private BigDecimal amount;
 	private BigDecimal amountTendered;
 	private StockItem item;
+	
+	// Transient field for multiple line item allocation
+	private List<String> lineItemUuids;
+	
+	// Transient field for multiple stock item allocation
+	private List<String> stockItemUuids;
 
 
 	public Integer getId() {
@@ -85,5 +92,21 @@ public class Payment extends BaseInstanceCustomizableData<PaymentMode, PaymentAt
 
 	public void setItem(StockItem item) {
 		this.item = item;
+	}
+	
+	public List<String> getLineItemUuids() {
+		return lineItemUuids;
+	}
+	
+	public void setLineItemUuids(List<String> lineItemUuids) {
+		this.lineItemUuids = lineItemUuids;
+	}
+	
+	public List<String> getStockItemUuids() {
+		return stockItemUuids;
+	}
+	
+	public void setStockItemUuids(List<String> stockItemUuids) {
+		this.stockItemUuids = stockItemUuids;
 	}
 }
