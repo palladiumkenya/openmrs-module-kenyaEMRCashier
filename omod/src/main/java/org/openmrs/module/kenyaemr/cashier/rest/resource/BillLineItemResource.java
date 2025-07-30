@@ -50,7 +50,8 @@ import java.util.List;
 /**
  * REST resource representing a {@link BillLineItem}.
  */
-@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE + "/billLineItem", supportedClass = BillLineItem.class, supportedOpenmrsVersions = {"2.0 - 2.*"})
+@Resource(name = RestConstants.VERSION_1 + CashierResourceController.KENYAEMR_CASHIER_NAMESPACE
+        + "/billLineItem", supportedClass = BillLineItem.class, supportedOpenmrsVersions = { "2.0 - 2.*" })
 public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
 
     private static final Log LOG = LogFactory.getLog(BillLineItemResource.class);
@@ -108,7 +109,6 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
         }
     }
 
-
     @PropertySetter(value = "price")
     public void setPriceValue(BillLineItem instance, Object price) {
         if (price instanceof Double || price instanceof Integer) {
@@ -138,7 +138,9 @@ public class BillLineItemResource extends BaseRestDataResource<BillLineItem> {
                 CashierItemPrice itemPrice = itemPriceService.getByUuid(uuid);
                 if (itemPrice != null) {
                     instance.setItemPrice(itemPrice);
-                    instance.setPrice(itemPrice.getPrice());
+                    if (instance.getPrice() == null) {
+                        instance.setPrice(itemPrice.getPrice());
+                    }
                     instance.setPriceName(itemPrice.getName());
                 } else {
                     LOG.warn("CashierItemPrice not found for UUID: " + uuid);
