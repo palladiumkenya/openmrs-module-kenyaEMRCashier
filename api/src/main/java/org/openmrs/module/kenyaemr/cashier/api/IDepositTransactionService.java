@@ -18,7 +18,6 @@ public interface IDepositTransactionService extends IEntityDataService<DepositTr
      * @should return all deposit transactions
      * @should return an empty list if no transactions are found
      */
-    @Authorized(PrivilegeConstants.VIEW_DEPOSITS)
     List<DepositTransaction> getAll(Boolean includeVoided);
 
     /**
@@ -37,7 +36,6 @@ public interface IDepositTransactionService extends IEntityDataService<DepositTr
      * @should return the deposit transaction with the specified id
      * @should return null if no deposit transaction is found
      */
-    @Authorized(PrivilegeConstants.VIEW_DEPOSITS)
     DepositTransaction getById(Integer depositTransactionId);
 
     /**
@@ -47,7 +45,6 @@ public interface IDepositTransactionService extends IEntityDataService<DepositTr
      * @should return the deposit transaction with the specified uuid
      * @should return null if no deposit transaction is found
      */
-    @Authorized(PrivilegeConstants.VIEW_DEPOSITS)
     DepositTransaction getByUuid(String uuid);
 
     /**
