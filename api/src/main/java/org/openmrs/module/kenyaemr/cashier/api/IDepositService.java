@@ -33,7 +33,6 @@ public interface IDepositService extends IEntityDataService<Deposit> {
      * @should return the deposit with the specified id
      * @should return null if no deposit is found
      */
-    @Authorized(PrivilegeConstants.VIEW_DEPOSITS)
     Deposit getById(Integer depositId);
 
     /**
@@ -44,7 +43,6 @@ public interface IDepositService extends IEntityDataService<Deposit> {
      * @should return the deposit with the specified uuid
      * @should return null if no deposit is found
      */
-    @Authorized(PrivilegeConstants.VIEW_DEPOSITS)
     Deposit getByUuid(String uuid);
 
     /**
@@ -56,7 +54,6 @@ public interface IDepositService extends IEntityDataService<Deposit> {
      * @should return all deposits for the specified patient
      * @should return an empty list if the patient has no deposits
      */
-    @Authorized(PrivilegeConstants.VIEW_DEPOSITS)
     List<Deposit> getDepositsByPatient(Patient patient, PagingInfo pagingInfo);
 
     /**
@@ -68,7 +65,6 @@ public interface IDepositService extends IEntityDataService<Deposit> {
      * @should return all deposits for the specified patient
      * @should return an empty list if the patient has no deposits
      */
-    @Authorized(PrivilegeConstants.VIEW_DEPOSITS)
     List<Deposit> getDepositByPatientUuid(String patientUuid, PagingInfo pagingInfo);
 
     /**
@@ -79,7 +75,6 @@ public interface IDepositService extends IEntityDataService<Deposit> {
      * @should return the deposit with the specified reference number
      * @should return null if no deposit is found
      */
-    @Authorized(PrivilegeConstants.VIEW_DEPOSITS)
     Deposit getDepositByReferenceNumber(String referenceNumber);
 
     /**
