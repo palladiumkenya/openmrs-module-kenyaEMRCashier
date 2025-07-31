@@ -46,16 +46,13 @@ import org.openmrs.module.webservices.rest.web.RestConstants;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
+import org.openmrs.module.webservices.rest.web.representation.CustomRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.DefaultRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.FullRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.RefRepresentation;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
 import org.openmrs.module.webservices.rest.web.resource.impl.AlreadyPaged;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
-import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingSubResource;
-import org.openmrs.module.webservices.rest.web.resource.impl.NeedsPaging;
-import org.openmrs.module.webservices.rest.web.response.ObjectNotFoundException;
-import org.openmrs.module.webservices.rest.web.response.ResponseException;
 
 import org.springframework.web.client.RestClientException;
 
@@ -66,7 +63,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * REST resource representing a {@link Bill}.
@@ -77,14 +73,46 @@ public class BillResource extends BaseRestDataResource<Bill> {
 	@Override
 	public DelegatingResourceDescription getRepresentationDescription(Representation rep) {
 		DelegatingResourceDescription description = super.getRepresentationDescription(rep);
-		if (!(rep instanceof RefRepresentation)) {
+		
+		if (rep instanceof RefRepresentation) {
+			// For REF representation, only include basic identifying properties
+			description.addProperty("uuid");
+			description.addProperty("display");
+			description.addProperty("receiptNumber");
+			description.addProperty("status");
+			description.addProperty("dateCreated");
+		} else if (rep instanceof DefaultRepresentation) {
+			// For DEFAULT representation, include essential properties with appropriate detail levels
 			description.addProperty("adjustedBy", Representation.REF);
 			description.addProperty("billAdjusted", Representation.REF);
 			description.addProperty("cashPoint", Representation.REF);
 			description.addProperty("cashier", Representation.REF);
 			description.addProperty("dateCreated");
 			description.addProperty("lineItems", Representation.DEFAULT);
-			description.addProperty("patient", Representation.REF);
+			description.addProperty("patient", Representation.DEFAULT);
+			description.addProperty("payments", Representation.DEFAULT);
+			description.addProperty("receiptNumber");
+			description.addProperty("status");
+			description.addProperty("adjustmentReason");
+			description.addProperty("id");
+			description.addProperty("closed");
+			description.addProperty("closeReason");
+			description.addProperty("closedBy");
+			description.addProperty("dateClosed");
+			// Add calculated properties for cumulative totals
+			description.addProperty("totalPayments", findMethod("getTotalPayments"), Representation.DEFAULT);
+			description.addProperty("totalExempted", findMethod("getTotalExempted"), Representation.DEFAULT);
+			description.addProperty("totalDeposits", findMethod("getTotalDeposits"), Representation.DEFAULT);
+			description.addProperty("balance", findMethod("getBalance"), Representation.DEFAULT);
+		} else if (rep instanceof FullRepresentation) {
+			// For FULL representation, include all properties with maximum detail
+			description.addProperty("adjustedBy", Representation.FULL);
+			description.addProperty("billAdjusted", Representation.FULL);
+			description.addProperty("cashPoint", Representation.FULL);
+			description.addProperty("cashier", Representation.FULL);
+			description.addProperty("dateCreated");
+			description.addProperty("lineItems", Representation.FULL);
+			description.addProperty("patient", Representation.FULL);
 			description.addProperty("payments", Representation.FULL);
 			description.addProperty("receiptNumber");
 			description.addProperty("status");
@@ -94,12 +122,36 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			description.addProperty("closeReason");
 			description.addProperty("closedBy");
 			description.addProperty("dateClosed");
-			// Add new properties for cumulative totals
-			description.addProperty("totalPayments", findMethod("getTotalPayments"), Representation.DEFAULT);
-			description.addProperty("totalExempted", findMethod("getTotalExempted"), Representation.DEFAULT);
-			description.addProperty("totalDeposits", findMethod("getTotalDeposits"), Representation.DEFAULT);
-			description.addProperty("balance", findMethod("getBalance"), Representation.DEFAULT);
+			// Add calculated properties for cumulative totals
+			description.addProperty("totalPayments", findMethod("getTotalPayments"), Representation.FULL);
+			description.addProperty("totalExempted", findMethod("getTotalExempted"), Representation.FULL);
+			description.addProperty("totalDeposits", findMethod("getTotalDeposits"), Representation.FULL);
+			description.addProperty("balance", findMethod("getBalance"), Representation.FULL);
+		} else if (rep instanceof CustomRepresentation) {
+			// For CUSTOM representation, include all properties but let the custom representation handle detail levels
+			description.addProperty("adjustedBy");
+			description.addProperty("billAdjusted");
+			description.addProperty("cashPoint");
+			description.addProperty("cashier");
+			description.addProperty("dateCreated");
+			description.addProperty("lineItems");
+			description.addProperty("patient");
+			description.addProperty("payments");
+			description.addProperty("receiptNumber");
+			description.addProperty("status");
+			description.addProperty("adjustmentReason");
+			description.addProperty("id");
+			description.addProperty("closed");
+			description.addProperty("closeReason");
+			description.addProperty("closedBy");
+			description.addProperty("dateClosed");
+			// Add calculated properties for cumulative totals
+			description.addProperty("totalPayments", findMethod("getTotalPayments"));
+			description.addProperty("totalExempted", findMethod("getTotalExempted"));
+			description.addProperty("totalDeposits", findMethod("getTotalDeposits"));
+			description.addProperty("balance", findMethod("getBalance"));
 		}
+		
 		return description;
 	}
 
