@@ -10,6 +10,7 @@ import com.itextpdf.layout.properties.UnitValue;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
+import org.openmrs.module.kenyaemr.cashier.api.util.CurrencyUtil;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -59,8 +60,8 @@ public class InvoiceContentSection implements org.openmrs.module.kenyaemr.cashie
             itemsTable.addCell(createCenterCell(String.valueOf(itemNumber++)));
             itemsTable.addCell(createLeftCell(getItemName(item)));
             itemsTable.addCell(createCenterCell(formatQuantity(item.getQuantity())));
-            itemsTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(item.getPrice())));
-            itemsTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(item.getTotal())));
+            itemsTable.addCell(createLeftCell(CurrencyUtil.formatCurrency(item.getPrice())));
+            itemsTable.addCell(createLeftCell(CurrencyUtil.formatCurrency(item.getTotal())));
         }
 
         doc.add(itemsTable);
@@ -71,7 +72,7 @@ public class InvoiceContentSection implements org.openmrs.module.kenyaemr.cashie
      */
     private void createTableSummary(Document doc, Bill bill) {
         // Simple total summary aligned to the right
-        Paragraph totalSummary = new Paragraph("Total: Ksh " + CURRENCY_FORMAT.format(bill.getTotal()))
+        Paragraph totalSummary = new Paragraph("Total: " + CurrencyUtil.formatCurrency(bill.getTotal()))
                 .setBold()
                 .setFontSize(10)
                 .setTextAlignment(TextAlignment.RIGHT)
@@ -188,8 +189,8 @@ public class InvoiceContentSection implements org.openmrs.module.kenyaemr.cashie
         // Add initial balance row
         paymentTable.addCell(createCenterCell("1"));
         paymentTable.addCell(createLeftCell("Bill Total"));
-        paymentTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(totalBillAmount)));
-        paymentTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(runningBalance)));
+        paymentTable.addCell(createLeftCell(CurrencyUtil.formatCurrency(totalBillAmount)));
+        paymentTable.addCell(createLeftCell(CurrencyUtil.formatCurrency(runningBalance)));
         paymentTable.addCell(createLeftCell("-"));
 
         // Add payment table rows with running balance
@@ -200,8 +201,8 @@ public class InvoiceContentSection implements org.openmrs.module.kenyaemr.cashie
 
             paymentTable.addCell(createCenterCell(String.valueOf(paymentNumber++)));
             paymentTable.addCell(createLeftCell(payment.getInstanceType().getName()));
-            paymentTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(paymentAmount)));
-            paymentTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(runningBalance)));
+            paymentTable.addCell(createLeftCell(CurrencyUtil.formatCurrency(paymentAmount)));
+            paymentTable.addCell(createLeftCell(CurrencyUtil.formatCurrency(runningBalance)));
             paymentTable.addCell(createLeftCell(formatDate(payment.getDateCreated())));
         }
 
@@ -233,7 +234,7 @@ public class InvoiceContentSection implements org.openmrs.module.kenyaemr.cashie
                 .setMarginBottom(TABLE_MARGIN);
 
         summaryTable.addCell(createSummaryCell("Balance:", true));
-        summaryTable.addCell(createSummaryCell("Ksh " + CURRENCY_FORMAT.format(remainingBalance), false));
+        summaryTable.addCell(createSummaryCell(CurrencyUtil.formatCurrency(remainingBalance), false));
 
         doc.add(summaryTable);
     }

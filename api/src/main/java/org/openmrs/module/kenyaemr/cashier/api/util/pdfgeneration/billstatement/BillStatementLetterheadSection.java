@@ -11,6 +11,7 @@ import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.util.CurrencyUtil;
 import org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.layout.DocumentHeader;
 import org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.PdfDocumentService;
 
@@ -123,12 +124,12 @@ public class BillStatementLetterheadSection implements PdfDocumentService.Letter
 
         cell.add(new Paragraph("BILL SUMMARY").setBold().setFontSize(10).setMarginBottom(4f));
         cell.add(createInfoLine("Status:", bill.getStatus() != null ? bill.getStatus().name() : "UNKNOWN"));
-        cell.add(createInfoLine("Total Bill:", "Ksh " + formatCurrency(bill.getTotal())));
-        cell.add(createInfoLine("Total Paid:", "Ksh " + formatCurrency(bill.getTotalPayments())));
+        cell.add(createInfoLine("Total Bill:", CurrencyUtil.formatCurrency(bill.getTotal())));
+        cell.add(createInfoLine("Total Paid:", CurrencyUtil.formatCurrency(bill.getTotalPayments())));
         
         // Balance Due
         java.math.BigDecimal balance = bill.getTotal().subtract(bill.getTotalPayments());
-        cell.add(createInfoLine("Balance:", "Ksh " + formatCurrency(balance)));
+        cell.add(createInfoLine("Balance:", CurrencyUtil.formatCurrency(balance)));
         
         // Cash Point
         if (bill.getCashPoint() != null) {
@@ -196,10 +197,5 @@ public class BillStatementLetterheadSection implements PdfDocumentService.Letter
         return patient.getPatientId() != null ? patient.getPatientId().toString() : "N/A";
     }
 
-    private String formatCurrency(java.math.BigDecimal amount) {
-        if (amount == null)
-            return "0.00";
-        
-        return String.format("%.2f", amount);
-    }
+
 } 
