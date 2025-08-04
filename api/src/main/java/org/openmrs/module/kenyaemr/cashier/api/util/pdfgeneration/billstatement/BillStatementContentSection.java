@@ -11,6 +11,7 @@ import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
+import org.openmrs.module.kenyaemr.cashier.api.util.CurrencyUtil;
 import org.openmrs.module.kenyaemr.cashier.api.util.pdfgeneration.PdfDocumentService;
 
 import java.math.BigDecimal;
@@ -126,8 +127,8 @@ public class BillStatementContentSection implements PdfDocumentService.ContentSe
                     itemsTable.addCell(createCenterCell(String.valueOf(itemNumber++)));
                     itemsTable.addCell(createLeftCell(getItemDescription(item)));
                     itemsTable.addCell(createCenterCell(String.valueOf(item.getQuantity())));
-                    itemsTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(item.getPrice())));
-                    itemsTable.addCell(createLeftCell("Ksh " + CURRENCY_FORMAT.format(item.getTotal())));
+                                itemsTable.addCell(createLeftCell(CurrencyUtil.formatCurrency(item.getPrice())));
+            itemsTable.addCell(createLeftCell(CurrencyUtil.formatCurrency(item.getTotal())));
 
                     // Date added with time
                     String dateAdded = item.getDateCreated() != null ? SHORT_DATE_FORMAT.format(item.getDateCreated())
@@ -190,10 +191,10 @@ public class BillStatementContentSection implements PdfDocumentService.ContentSe
                 paymentTable.addCell(createCenterCell(paymentMethod));
 
                 // Amount tendered
-                paymentTable.addCell(createRightCell("Ksh " + CURRENCY_FORMAT.format(payment.getAmountTendered())));
+                paymentTable.addCell(createRightCell(CurrencyUtil.formatCurrency(payment.getAmountTendered())));
 
                 // Amount applied
-                paymentTable.addCell(createRightCell("Ksh " + CURRENCY_FORMAT.format(payment.getAmount())));
+                paymentTable.addCell(createRightCell(CurrencyUtil.formatCurrency(payment.getAmount())));
 
                 // Cashier
                 String cashier = payment.getCreator() != null ? payment.getCreator().getDisplayString() : "N/A";
@@ -231,13 +232,13 @@ public class BillStatementContentSection implements PdfDocumentService.ContentSe
 
         // Summary rows
         summaryTable.addCell(createSummaryLabelCell("Total Bill Amount:"));
-        summaryTable.addCell(createSummaryValueCell("Ksh " + CURRENCY_FORMAT.format(totalBillAmount)));
+        summaryTable.addCell(createSummaryValueCell(CurrencyUtil.formatCurrency(totalBillAmount)));
 
         summaryTable.addCell(createSummaryLabelCell("Total Payments:"));
-        summaryTable.addCell(createSummaryValueCell("Ksh " + CURRENCY_FORMAT.format(totalPayments)));
+        summaryTable.addCell(createSummaryValueCell(CurrencyUtil.formatCurrency(totalPayments)));
 
         summaryTable.addCell(createSummaryLabelCell("Balance Due:"));
-        summaryTable.addCell(createSummaryValueCell("Ksh " + CURRENCY_FORMAT.format(balanceDue)));
+        summaryTable.addCell(createSummaryValueCell(CurrencyUtil.formatCurrency(balanceDue)));
 
         doc.add(summaryTable);
     }
