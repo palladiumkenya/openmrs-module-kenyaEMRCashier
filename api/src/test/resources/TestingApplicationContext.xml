@@ -16,6 +16,11 @@
     <!-- Enable transaction management -->
     <tx:annotation-driven/>
     
+    <!-- Mock transaction manager for testing -->
+    <bean id="transactionManager" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.springframework.transaction.PlatformTransactionManager"/>
+    </bean>
+    
     <!-- Mock beans for testing -->
     <bean id="sessionFactory" class="org.mockito.Mockito" factory-method="mock">
         <constructor-arg value="org.hibernate.SessionFactory"/>
