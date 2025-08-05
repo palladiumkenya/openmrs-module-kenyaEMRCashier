@@ -2,33 +2,72 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:jee="http://www.springframework.org/schema/jee"
        xmlns:tx="http://www.springframework.org/schema/tx"
-       xmlns:aop="http://www.springframework.org/schema/aop"
-       xmlns:util="http://www.springframework.org/schema/util"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
-  		    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
-  		    http://www.springframework.org/schema/context
-  		    http://www.springframework.org/schema/context/spring-context-3.0.xsd
-  		    http://www.springframework.org/schema/jee
-  		    http://www.springframework.org/schema/jee/spring-jee-3.0.xsd
-  		    http://www.springframework.org/schema/tx
-  		    http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
-  		    http://www.springframework.org/schema/aop
-  		    http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
-  		    http://www.springframework.org/schema/util
-  		    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+                           http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context-3.2.xsd
+                           http://www.springframework.org/schema/tx
+                           http://www.springframework.org/schema/tx/spring-tx-3.2.xsd">
 
-   	<bean id="sessionFactory" class="org.openmrs.api.db.hibernate.HibernateSessionFactoryBean">
-		<property name="configLocations">
-			<list>
-				<value>classpath:hibernate.cfg.xml</value>
-				<value>classpath:test-hibernate.cfg.xml</value>
-			</list>
-		</property>
-	</bean>
-	
-	<bean id="genericRepository" class="org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepositoryImpl">
-		<constructor-arg name="sessionFactory" ref="sessionFactory" />
-	</bean>
+    <!-- Enable component scanning -->
+    <context:component-scan base-package="org.openmrs.module.kenyaemr.cashier.api"/>
+    
+    <!-- Enable transaction management -->
+    <tx:annotation-driven/>
+    
+    <!-- Mock beans for testing -->
+    <bean id="sessionFactory" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.hibernate.SessionFactory"/>
+    </bean>
+    
+    <bean id="genericRepository" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.openmrs.module.kenyaemr.cashier.api.base.entity.db.hibernate.BaseHibernateRepositoryImpl"/>
+    </bean>
+    
+    <!-- Service beans -->
+    <bean id="billService" class="org.openmrs.module.kenyaemr.cashier.api.impl.BillServiceImpl"/>
+    <bean id="billableItemsService" class="org.openmrs.module.kenyaemr.cashier.api.impl.BillableItemsServiceImpl"/>
+    <bean id="billLineItemService" class="org.openmrs.module.kenyaemr.cashier.api.impl.BillLineItemServiceImpl"/>
+    
+    <!-- Add missing service implementations -->
+    <bean id="depositService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositServiceImpl"/>
+    <bean id="cashPointService" class="org.openmrs.module.kenyaemr.cashier.api.impl.CashPointServiceImpl"/>
+    <bean id="paymentModeService" class="org.openmrs.module.kenyaemr.cashier.api.impl.PaymentModeServiceImpl"/>
+    <bean id="sequentialReceiptNumberGeneratorService" class="org.openmrs.module.kenyaemr.cashier.api.impl.SequentialReceiptNumberGeneratorServiceImpl"/>
+    <bean id="timesheetService" class="org.openmrs.module.kenyaemr.cashier.api.impl.TimesheetServiceImpl"/>
+    <bean id="cashierOptionsService" class="org.openmrs.module.kenyaemr.cashier.api.impl.CashierOptionsServiceGpImpl"/>
+    <bean id="itemPriceService" class="org.openmrs.module.kenyaemr.cashier.api.impl.ItemPriceServiceImpl"/>
+    <bean id="paymentModeAttributeTypeService" class="org.openmrs.module.kenyaemr.cashier.api.impl.PaymentModeAttributeTypeServiceImpl"/>
+    <bean id="depositTransactionService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositTransactionServiceImpl"/>
+    <bean id="pdfDocumentService" class="org.openmrs.module.kenyaemr.cashier.api.impl.PdfDocumentServiceImpl"/>
+    <bean id="depositEntityDataService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositEntityDataServiceImpl"/>
+    <bean id="depositTransactionEntityDataService" class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositTransactionEntityDataServiceImpl"/>
+    <bean id="cashierItemPriceService" class="org.openmrs.module.kenyaemr.cashier.api.impl.ICashierItemPriceServiceImpl"/>
+    
+    <!-- Mock OpenMRS services that might be needed -->
+    <bean id="administrationService" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.openmrs.api.AdministrationService"/>
+    </bean>
+    
+    <bean id="patientService" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.openmrs.api.PatientService"/>
+    </bean>
+    
+    <bean id="providerService" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.openmrs.api.ProviderService"/>
+    </bean>
+    
+    <bean id="locationService" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.openmrs.api.LocationService"/>
+    </bean>
+    
+    <bean id="conceptService" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.openmrs.api.ConceptService"/>
+    </bean>
+    
+    <bean id="userService" class="org.mockito.Mockito" factory-method="mock">
+        <constructor-arg value="org.openmrs.api.UserService"/>
+    </bean>
+    
 </beans>
