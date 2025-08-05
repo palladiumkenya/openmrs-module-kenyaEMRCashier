@@ -122,6 +122,14 @@
 			</list>
 		</property>
 	</bean>
+	<bean parent="serviceContext">
+		<property name="moduleService">
+			<list merge="true">
+				<value>org.openmrs.module.kenyaemr.cashier.api.IPaymentAttributeService</value>
+				<ref bean="paymentAttributeService" />
+			</list>
+		</property>
+	</bean>
 
 	<!-- Service Bean Definitions -->
 	<bean id="itemPriceService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
@@ -246,6 +254,16 @@
 		<property name="transactionManager" ref="transactionManager" />
 		<property name="target">
 			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.DepositTransactionServiceImpl">
+				<property name="repository" ref="genericRepositoryDao" />
+			</bean>
+		</property>
+		<property name="preInterceptors" ref="serviceInterceptors" />
+		<property name="transactionAttributeSource" ref="transactionAttributeSource" />
+	</bean>
+	<bean id="paymentAttributeService" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="target">
+			<bean class="org.openmrs.module.kenyaemr.cashier.api.impl.PaymentAttributeServiceImpl">
 				<property name="repository" ref="genericRepositoryDao" />
 			</bean>
 		</property>

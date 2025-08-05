@@ -63,6 +63,7 @@ import org.openmrs.module.kenyaemr.cashier.api.model.DepositTransaction;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
 import org.openmrs.module.kenyaemr.cashier.api.model.TransactionType;
+import org.openmrs.module.kenyaemr.cashier.api.IPaymentAttributeService;
 import org.openmrs.module.kenyaemr.cashier.api.search.BillSearch;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
 import org.openmrs.module.kenyaemr.cashier.util.Utils;
@@ -80,6 +81,10 @@ import java.security.AccessControlException;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Data service implementation class for {@link Bill}s.
@@ -105,7 +110,50 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 	DecimalFormat df = new DecimalFormat("0.00");
 
 	@Override
-	protected void validate(Bill bill) {}
+	protected void validate(Bill bill) {
+		validatePaymentAttributes(bill);
+	}
+
+	/**
+	 * Validates payment attributes to ensure no duplicate values exist within the same bill for the same attribute type.
+	 * @param bill The bill to validate
+	 */
+	private void validatePaymentAttributes(Bill bill) {
+		if (bill.getPayments() == null) {
+			return;
+		}
+
+		// Track attribute values per attribute type across all payments in the bill
+		Map<String, Set<String>> attributeTypeValues = new HashMap<>();
+		
+		for (Payment payment : bill.getPayments()) {
+			if (payment.getAttributes() != null) {
+				for (PaymentAttribute attribute : payment.getAttributes()) {
+					if (attribute.getAttributeType() != null && StringUtils.isNotBlank(attribute.getValue())) {
+						String attributeTypeId = attribute.getAttributeType().getId().toString();
+						String attributeValue = attribute.getValue().trim();
+						
+						// Initialize the set for this attribute type if it doesn't exist
+						if (!attributeTypeValues.containsKey(attributeTypeId)) {
+							attributeTypeValues.put(attributeTypeId, new HashSet<>());
+						}
+						
+						// Check if this value already exists for this attribute type
+						Set<String> existingValues = attributeTypeValues.get(attributeTypeId);
+						if (existingValues.contains(attributeValue)) {
+							throw new IllegalArgumentException(
+								String.format("Duplicate payment attribute value '%s' found for attribute type '%s' across multiple payments in the same bill",
+									attributeValue,
+									attribute.getAttributeType().getName()));
+						}
+						
+						// Add this value to the set
+						existingValues.add(attributeValue);
+					}
+				}
+			}
+		}
+	}
 
 	/**
 	 * Saves the bill to the database, creating a new bill or updating an existing one.

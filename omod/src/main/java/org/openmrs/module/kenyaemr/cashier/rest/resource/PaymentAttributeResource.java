@@ -35,6 +35,7 @@ import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestAttributeDataResource;
 import org.openmrs.module.kenyaemr.cashier.rest.controller.base.CashierResourceController;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
+import org.openmrs.module.kenyaemr.cashier.api.IPaymentAttributeService;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentModeAttributeType;
 import org.openmrs.module.webservices.rest.web.RestConstants;
@@ -172,7 +173,6 @@ public class PaymentAttributeResource extends BaseRestAttributeDataResource<Paym
 
 	@Override
 	public Class<? extends IEntityDataService<PaymentAttribute>> getServiceClass() {
-		// Todo add  PaymentAttributeService
-		return (Class<IEntityDataService<PaymentAttribute>>)(Object) PaymentAttribute.class;
+		return IPaymentAttributeService.class;
 	}
 }

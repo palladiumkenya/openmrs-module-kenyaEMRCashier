@@ -1073,4 +1073,28 @@
 			
 	</changeSet>
 
+	<changeSet id="kenyaemr.cashier-20240804-payment-attribute-uniqueness-1" author="Donald Kibet">
+		<comment>Change value_reference column from TEXT to VARCHAR to support unique constraints</comment>
+		<sql>ALTER TABLE cashier_bill_payment_attribute MODIFY COLUMN value_reference VARCHAR(255) NOT NULL</sql>
+	</changeSet>
+
+	<changeSet id="kenyaemr.cashier-20240804-payment-attribute-uniqueness-2" author="Donald Kibet">
+		<comment>Add unique constraint on payment attributes to prevent duplicate values for same attribute type within a payment</comment>
+		<addUniqueConstraint 
+			tableName="cashier_bill_payment_attribute" 
+			columnNames="bill_payment_id, payment_mode_attribute_type_id, value_reference"
+			constraintName="uk_payment_attribute_unique_value_per_type" />
+	</changeSet>
+
+	<changeSet id="kenyaemr.cashier-20240804-payment-attribute-uniqueness-3" author="Donald Kibet">
+		<comment>Add index for payment attribute value lookup to improve performance</comment>
+		<createIndex 
+			tableName="cashier_bill_payment_attribute" 
+			indexName="idx_payment_attribute_value_lookup">
+			<column name="bill_payment_id" />
+			<column name="payment_mode_attribute_type_id" />
+			<column name="value_reference" />
+		</createIndex>
+	</changeSet>
+
 </databaseChangeLog>
