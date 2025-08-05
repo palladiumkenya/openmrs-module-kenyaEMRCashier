@@ -45,6 +45,7 @@ import org.openmrs.Location;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
+import org.openmrs.Visit;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
@@ -406,6 +407,63 @@ public class BillServiceImpl extends BaseEntityDataServiceImpl<Bill> implements 
 		List<Bill> results = getRepository().select(Bill.class, criteria);
 		removeNullLineItems(results);
 		return results;
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	public List<Bill> getBillsByVisit(Visit visit) {
+		if (visit == null) {
+			throw new NullPointerException("The visit must be defined.");
+		}
+
+		Criteria criteria = getRepository().createCriteria(Bill.class);
+		criteria.add(Restrictions.eq("visit", visit));
+		criteria.addOrder(Order.desc("id"));
+
+		List<Bill> results = getRepository().select(Bill.class, criteria);
+		removeNullLineItems(results);
+		return results;
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	public List<Bill> getBillsByVisitId(Integer visitId) {
+		if (visitId == null) {
+			throw new NullPointerException("The visit ID must be defined.");
+		}
+
+		Criteria criteria = getRepository().createCriteria(Bill.class);
+		criteria.add(Restrictions.eq("visit.id", visitId));
+		criteria.addOrder(Order.desc("id"));
+
+		List<Bill> results = getRepository().select(Bill.class, criteria);
+		removeNullLineItems(results);
+		return results;
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.MANAGE_BILLS })
+	public Bill associateBillWithVisit(Bill bill, Visit visit) {
+		if (bill == null) {
+			throw new NullPointerException("The bill must be defined.");
+		}
+		if (visit == null) {
+			throw new NullPointerException("The visit must be defined.");
+		}
+
+		bill.setVisit(visit);
+		return super.save(bill);
+	}
+
+	@Override
+	@Authorized({ PrivilegeConstants.MANAGE_BILLS })
+	public Bill disassociateBillFromVisit(Bill bill) {
+		if (bill == null) {
+			throw new NullPointerException("The bill must be defined.");
+		}
+
+		bill.setVisit(null);
+		return super.save(bill);
 	}
 
 	/**

@@ -19,6 +19,7 @@ import org.openmrs.module.kenyaemr.cashier.api.ICashPointService;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IMetadataDataService;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
 import org.openmrs.module.webservices.rest.web.RestConstants;
+import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.Resource;
 import org.openmrs.module.webservices.rest.web.representation.Representation;
 import org.openmrs.module.webservices.rest.web.resource.impl.DelegatingResourceDescription;
@@ -51,5 +52,16 @@ public class CashPointResource extends BaseRestMetadataResource<CashPoint> {
 	@Override
 	public Class<? extends IMetadataDataService<CashPoint>> getServiceClass() {
 		return ICashPointService.class;
+	}
+
+	/**
+	 * Gets the display string for the cash point
+	 * 
+	 * @param instance the cash point instance
+	 * @return the display string
+	 */
+	@PropertyGetter("display")
+	public String getDisplayString(CashPoint instance) {
+		return instance.getName();
 	}
 }

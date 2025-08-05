@@ -18,6 +18,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.openmrs.Patient;
 import org.openmrs.Provider;
 import org.openmrs.User;
+import org.openmrs.Visit;
 import org.openmrs.api.AdministrationService;
 import org.openmrs.api.ProviderService;
 import org.openmrs.api.context.Context;
@@ -99,13 +100,14 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			description.addProperty("closeReason");
 			description.addProperty("closedBy");
 			description.addProperty("dateClosed");
-			// Add calculated properties for cumulative totals
-			description.addProperty("totalPayments", findMethod("getTotalPayments"), Representation.DEFAULT);
-			description.addProperty("totalExempted", findMethod("getTotalExempted"), Representation.DEFAULT);
-			description.addProperty("totalDeposits", findMethod("getTotalDeposits"), Representation.DEFAULT);
-			description.addProperty("balance", findMethod("getBalance"), Representation.DEFAULT);
+			description.addProperty("visit", Representation.REF);
+			description.addProperty("totalPayments");
+			description.addProperty("totalExempted");
+			description.addProperty("totalDeposits");
+			description.addProperty("balance");
+			description.addProperty("total");
 		} else if (rep instanceof FullRepresentation) {
-			// For FULL representation, include all properties with maximum detail
+			// For FULL representation, include all properties with full detail levels
 			description.addProperty("adjustedBy", Representation.FULL);
 			description.addProperty("billAdjusted", Representation.FULL);
 			description.addProperty("cashPoint", Representation.FULL);
@@ -120,15 +122,21 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			description.addProperty("id");
 			description.addProperty("closed");
 			description.addProperty("closeReason");
-			description.addProperty("closedBy");
+			description.addProperty("closedBy", Representation.FULL);
 			description.addProperty("dateClosed");
+			description.addProperty("visit", Representation.FULL);
 			// Add calculated properties for cumulative totals
 			description.addProperty("totalPayments", findMethod("getTotalPayments"), Representation.FULL);
 			description.addProperty("totalExempted", findMethod("getTotalExempted"), Representation.FULL);
 			description.addProperty("totalDeposits", findMethod("getTotalDeposits"), Representation.FULL);
 			description.addProperty("balance", findMethod("getBalance"), Representation.FULL);
 		} else if (rep instanceof CustomRepresentation) {
-			// For CUSTOM representation, include all properties but let the custom representation handle detail levels
+			// For custom representation, provide all available properties
+			// The framework will parse the custom representation string and add the requested properties
+			description.addProperty("uuid");
+			description.addProperty("display", findMethod("getDisplayString"));
+			description.addProperty("voided");
+			description.addProperty("voidReason");
 			description.addProperty("adjustedBy");
 			description.addProperty("billAdjusted");
 			description.addProperty("cashPoint");
@@ -145,7 +153,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 			description.addProperty("closeReason");
 			description.addProperty("closedBy");
 			description.addProperty("dateClosed");
-			// Add calculated properties for cumulative totals
+			description.addProperty("visit");
 			description.addProperty("totalPayments", findMethod("getTotalPayments"));
 			description.addProperty("totalExempted", findMethod("getTotalExempted"));
 			description.addProperty("totalDeposits", findMethod("getTotalDeposits"));
@@ -157,7 +165,21 @@ public class BillResource extends BaseRestDataResource<Bill> {
 
 	@Override
 	public DelegatingResourceDescription getCreatableProperties() {
-		return getRepresentationDescription(new DefaultRepresentation());
+		DelegatingResourceDescription description = super.getCreatableProperties();
+		description.addProperty("visit");
+		description.addProperty("lineItems");
+		description.addProperty("payments");
+		description.addProperty("billAdjusted");
+		description.addProperty("status");
+		description.addProperty("adjustmentReason");
+		description.addProperty("closed");
+		description.addProperty("closeReason");
+		return description;
+	}
+
+	@PropertySetter("visit")
+	public void setVisit(Bill instance, Visit visit) {
+		instance.setVisit(visit);
 	}
 
 	@PropertySetter("lineItems")
@@ -264,6 +286,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		String patientUuid = context.getRequest().getParameter("patientUuid");
 		String status = context.getRequest().getParameter("status");
 		String cashPointUuid = context.getRequest().getParameter("cashPointUuid");
+		String visitUuid = context.getRequest().getParameter("visitUuid");
 		String createdOnOrBeforeDateStr = context.getRequest().getParameter("createdOnOrBefore");
 		String createdOnOrAfterDateStr = context.getRequest().getParameter("createdOnOrAfter");
 
@@ -293,6 +316,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		CashPoint cashPoint = Strings.isNotEmpty(cashPointUuid)
 				? Context.getService(ICashPointService.class).getByUuid(cashPointUuid)
 				: null;
+		Visit visit = Strings.isNotEmpty(visitUuid) ? Context.getVisitService().getVisitByUuid(visitUuid) : null;
 		Date createdOnOrBeforeDate = StringUtils.isNotBlank(createdOnOrBeforeDateStr)
 				? (Date) ConversionUtil.convert(createdOnOrBeforeDateStr, Date.class)
 				: null;
@@ -304,6 +328,7 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		searchTemplate.setPatient(patient);
 		searchTemplate.setStatus(billStatus);
 		searchTemplate.setCashPoint(cashPoint);
+		searchTemplate.setVisit(visit);
 		IBillService service = Context.getService(IBillService.class);
 
 		List<Bill> result = service
