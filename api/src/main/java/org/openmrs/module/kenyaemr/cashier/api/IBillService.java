@@ -18,6 +18,7 @@ import java.io.File;
 import java.util.List;
 
 import org.openmrs.Patient;
+import org.openmrs.Visit;
 import org.openmrs.annotation.Authorized;
 import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 import org.openmrs.module.kenyaemr.cashier.api.base.entity.IEntityDataService;
@@ -149,4 +150,39 @@ public interface IBillService extends IEntityDataService<Bill> {
 	@Transactional(readOnly = true)
 	@Authorized({ PrivilegeConstants.VIEW_BILLS })
 	List<Bill> getAllBillsForPatient(Patient patient);
+
+	/**
+	 * Gets all bills associated with a specific visit.
+	 * @param visit The visit to search for bills.
+	 * @return List of bills associated with the visit.
+	 */
+	@Transactional(readOnly = true)
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	List<Bill> getBillsByVisit(Visit visit);
+
+	/**
+	 * Gets all bills associated with a specific visit ID.
+	 * @param visitId The visit ID to search for bills.
+	 * @return List of bills associated with the visit.
+	 */
+	@Transactional(readOnly = true)
+	@Authorized({ PrivilegeConstants.VIEW_BILLS })
+	List<Bill> getBillsByVisitId(Integer visitId);
+
+	/**
+	 * Associates a bill with a visit.
+	 * @param bill The bill to associate.
+	 * @param visit The visit to associate with.
+	 * @return The updated bill.
+	 */
+	@Authorized({ PrivilegeConstants.MANAGE_BILLS })
+	Bill associateBillWithVisit(Bill bill, Visit visit);
+
+	/**
+	 * Removes the visit association from a bill.
+	 * @param bill The bill to disassociate.
+	 * @return The updated bill.
+	 */
+	@Authorized({ PrivilegeConstants.MANAGE_BILLS })
+	Bill disassociateBillFromVisit(Bill bill);
 }
