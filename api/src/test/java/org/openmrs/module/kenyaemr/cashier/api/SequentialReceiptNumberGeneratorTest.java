@@ -13,6 +13,23 @@
  */
 package org.openmrs.module.kenyaemr.cashier.api;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openmrs.api.context.Context;
+import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
+import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
+import org.openmrs.module.kenyaemr.cashier.api.model.SequentialReceiptNumberGeneratorModel;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Calendar;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -20,24 +37,14 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.openmrs.Provider;
-import org.openmrs.api.context.Context;
-import org.openmrs.module.kenyaemr.cashier.api.ISequentialReceiptNumberGeneratorService;
-import org.openmrs.module.kenyaemr.cashier.api.SequentialReceiptNumberGenerator;
-import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
-import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
-import org.openmrs.module.kenyaemr.cashier.api.model.SequentialReceiptNumberGeneratorModel;
 import org.openmrs.patient.impl.LuhnIdentifierValidator;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
+/**
+ * Tests for {@link SequentialReceiptNumberGenerator}
+ */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Context.class, SequentialReceiptNumberGenerator.class })
 public class SequentialReceiptNumberGeneratorTest {
@@ -45,8 +52,24 @@ public class SequentialReceiptNumberGeneratorTest {
 	private SequentialReceiptNumberGenerator generator;
 	private Calendar calendar;
 
+	static {
+		// Set up OpenMRS application data directory before any OpenMRS classes are loaded
+		try {
+			File tempDir = File.createTempFile("openmrs-test", "data");
+			tempDir.delete();
+			tempDir.mkdirs();
+			System.setProperty("OPENMRS_APPLICATION_DATA_DIRECTORY", tempDir.getAbsolutePath());
+			
+			// Suppress logging initialization that causes Context to be loaded
+			System.setProperty("log4j.configuration", "none");
+			System.setProperty("logback.configurationFile", "none");
+		} catch (Exception e) {
+			// Ignore exceptions in static initializer
+		}
+	}
+
 	@Before
-	public void before() {
+	public void before() throws IOException {
 		mockStatic(Context.class);
 		service = mock(ISequentialReceiptNumberGeneratorService.class);
 		when(Context.getService(ISequentialReceiptNumberGeneratorService.class))
@@ -57,6 +80,24 @@ public class SequentialReceiptNumberGeneratorTest {
 		when(Calendar.getInstance()).thenReturn(calendar);
 
 		generator = new SequentialReceiptNumberGenerator();
+	}
+
+	@After
+	public void after() {
+		// Clean up temp directory
+		File tempDir = new File(System.getProperty("OPENMRS_APPLICATION_DATA_DIRECTORY"));
+		if (tempDir.exists()) {
+			deleteDirectory(tempDir);
+		}
+	}
+	
+	private void deleteDirectory(File dir) {
+		if (dir.isDirectory()) {
+			for (File file : dir.listFiles()) {
+				deleteDirectory(file);
+			}
+		}
+		dir.delete();
 	}
 
 	/**
@@ -81,8 +122,8 @@ public class SequentialReceiptNumberGeneratorTest {
 		// Test no grouping
 		Bill bill = createBill(1, 3);
 		String number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals("0001", number);
+		assertNotNull(number);
+		assertEquals("0001", number);
 
 		// Test cashier grouping
 		model.setGroupingType(SequentialReceiptNumberGenerator.GroupingType.CASHIER);
@@ -90,8 +131,8 @@ public class SequentialReceiptNumberGeneratorTest {
 		when(service.reserveNextSequence("P1")).thenReturn(10);
 
 		number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals("P10010", number);
+		assertNotNull(number);
+		assertEquals("P10010", number);
 
 		// Test cash point grouping
 		model.setGroupingType(SequentialReceiptNumberGenerator.GroupingType.CASH_POINT);
@@ -99,8 +140,8 @@ public class SequentialReceiptNumberGeneratorTest {
 		when(service.reserveNextSequence("CP3")).thenReturn(87);
 
 		number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals("CP30087", number);
+		assertNotNull(number);
+		assertEquals("CP30087", number);
 
 		// Test cashier and cash point grouping
 		model.setGroupingType(SequentialReceiptNumberGenerator.GroupingType.CASHIER_AND_CASH_POINT);
@@ -108,8 +149,8 @@ public class SequentialReceiptNumberGeneratorTest {
 		when(service.reserveNextSequence("P1CP3")).thenReturn(3);
 
 		number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals("P1CP30003", number);
+		assertNotNull(number);
+		assertEquals("P1CP30003", number);
 	}
 
 	/**
@@ -134,8 +175,8 @@ public class SequentialReceiptNumberGeneratorTest {
 		// Test no grouping
 		Bill bill = createBill(1, 3);
 		String number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals("0001", number);
+		assertNotNull(number);
+		assertEquals("0001", number);
 
 		model.setSequenceType(SequentialReceiptNumberGenerator.SequenceType.DATE_COUNTER);
 		generator.load();
@@ -146,8 +187,8 @@ public class SequentialReceiptNumberGeneratorTest {
 		when(calendar.getTimeInMillis()).thenReturn(date.getTime());
 
 		number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals(format.format(date) + "52013", number);
+		assertNotNull(number);
+		assertEquals(format.format(date) + "52013", number);
 
 		model.setSequenceType(SequentialReceiptNumberGenerator.SequenceType.DATE_TIME_COUNTER);
 		generator.load();
@@ -156,8 +197,8 @@ public class SequentialReceiptNumberGeneratorTest {
 		format = new SimpleDateFormat("yyMMddHHmmss");
 
 		number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals(format.format(date) + "0015", number);
+		assertNotNull(number);
+		assertEquals(format.format(date) + "0015", number);
 	}
 
 	/**
@@ -181,8 +222,8 @@ public class SequentialReceiptNumberGeneratorTest {
 
 		Bill bill = createBill(1, 3);
 		String number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals("0001", number);
+		assertNotNull(number);
+		assertEquals("0001", number);
 
 		model.setGroupingType(SequentialReceiptNumberGenerator.GroupingType.CASHIER_AND_CASH_POINT);
 		model.setSequenceType(SequentialReceiptNumberGenerator.SequenceType.DATE_TIME_COUNTER);
@@ -194,16 +235,16 @@ public class SequentialReceiptNumberGeneratorTest {
 		when(calendar.getTimeInMillis()).thenReturn(date.getTime());
 
 		number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals("P1-CP3-" + format.format(date) + "52013", number);
+		assertNotNull(number);
+		assertEquals("P1-CP3-" + format.format(date) + "52013", number);
 
 		model.setIncludeCheckDigit(true);
 		generator.load();
 
 		number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
+		assertNotNull(number);
 		String expected = "P1-CP3-" + format.format(date) + "52013";
-		Assert.assertEquals(expected + "-" + generator.generateCheckDigit(expected), number);
+		assertEquals(expected + "-" + generator.generateCheckDigit(expected), number);
 	}
 
 	/**
@@ -228,26 +269,26 @@ public class SequentialReceiptNumberGeneratorTest {
 		Bill bill = createBill(1, 3);
 
 		String number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals("00018", number);
+		assertNotNull(number);
+		assertEquals("00018", number);
 
 		model.setSeparator("-");
 		generator.load();
 
 		number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
-		Assert.assertEquals("0001-8", number);
+		assertNotNull(number);
+		assertEquals("0001-8", number);
 
 		model.setGroupingType(SequentialReceiptNumberGenerator.GroupingType.CASHIER_AND_CASH_POINT);
 		generator.load();
 		when(service.reserveNextSequence("P1CP3")).thenReturn(25);
 
 		number = generator.generateNumber(bill);
-		Assert.assertNotNull(number);
+		assertNotNull(number);
 
 		LuhnIdentifierValidator validator = new LuhnIdentifierValidator();
 		String idWithCheckDigit = validator.getValidIdentifier("P1CP30025");
-		Assert.assertEquals("P1-CP3-0025-" + idWithCheckDigit.substring(idWithCheckDigit.length() - 1), number);
+		assertEquals("P1-CP3-0025-" + idWithCheckDigit.substring(idWithCheckDigit.length() - 1), number);
 	}
 
 	/**
