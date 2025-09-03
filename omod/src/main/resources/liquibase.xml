@@ -1096,5 +1096,31 @@
 			<column name="value_reference" />
 		</createIndex>
 	</changeSet>
+	<changeSet id="openhmis.cashier-001-v3.0.0-202505052120" author="itskios09">
+		<preConditions onFail="MARK_RAN">
+			<columnExists tableName="cashier_bill_payment" columnName="item_id"/>
+		</preConditions>
+		<comment>Dropping the item_id column and its foreign key</comment>
 
+		<dropForeignKeyConstraint
+				baseTableName="cashier_bill_payment"
+				constraintName="cashier_bill_payment_item_id_fk"/>
+
+		<dropColumn tableName="cashier_bill_payment" columnName="item_id"/>
+
+		<addColumn tableName="cashier_bill_payment">
+			<column name="line_item_id" type="int">
+				<constraints nullable="true"/>
+			</column>
+		</addColumn>
+
+		<addForeignKeyConstraint
+				baseTableName="cashier_bill_payment"
+				baseColumnNames="line_item_id"
+				constraintName="cashier_bill_payment_line_item_id_fk"
+				referencedTableName="cashier_bill_line_item"
+				referencedColumnNames="bill_line_item_id"
+		onDelete="CASCADE"
+		onUpdate="CASCADE"/>
+	</changeSet>
 </databaseChangeLog>
