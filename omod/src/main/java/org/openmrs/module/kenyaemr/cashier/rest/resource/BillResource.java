@@ -77,7 +77,6 @@ public class BillResource extends BaseRestDataResource<Bill> {
 		if (rep instanceof RefRepresentation) {
 			// For REF representation, only include basic identifying properties
 			description.addProperty("uuid");
-			description.addProperty("display");
 			description.addProperty("receiptNumber");
 			description.addProperty("status");
 			description.addProperty("dateCreated");
