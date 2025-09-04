@@ -53,8 +53,8 @@
 	<properties>
 		<openMRSVersion>2.6.2</openMRSVersion>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<powermock.version>1.4.10</powermock.version>
-		<javaCompilerVersion>1.7</javaCompilerVersion>
+		<powermock.version>2.0.9</powermock.version>
+		<javaCompilerVersion>1.8</javaCompilerVersion>
 		<itextPdfVersion>8.0.2</itextPdfVersion>
 		<moduleId>kenyaemr.cashier</moduleId>
 	</properties>
@@ -175,6 +175,18 @@
 						<artifactId>javassist</artifactId>
 					</exclusion>
 				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>org.powermock</groupId>
+				<artifactId>powermock-module-junit4</artifactId>
+				<version>${powermock.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.powermock</groupId>
+				<artifactId>powermock-api-mockito2</artifactId>
+				<version>${powermock.version}</version>
+				<scope>test</scope>
 			</dependency>
 
 			<dependency>

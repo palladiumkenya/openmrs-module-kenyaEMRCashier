@@ -5,8 +5,8 @@
  * http://license.openmrs.org
  *
  * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
- * License for the specific language governing rights and limitations
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
+ * the License for the specific language governing rights and limitations
  * under the License.
  *
  * Copyright (C) OpenMRS, LLC.  All Rights Reserved.
@@ -14,6 +14,7 @@
 package org.openmrs.module.kenyaemr.cashier.api.impl;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IBillService;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
@@ -21,8 +22,10 @@ import org.openmrs.module.kenyaemr.cashier.api.model.BillStatus;
 import org.openmrs.Patient;
 import org.openmrs.Provider;
 import org.openmrs.module.kenyaemr.cashier.api.model.CashPoint;
-import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.GenericXmlContextLoader;
 
 import java.util.List;
 
@@ -31,7 +34,10 @@ import static org.junit.Assert.*;
 /**
  * Tests for BillServiceImpl to ensure voided bills are treated as closed bills
  */
-public class BillServiceImplTest extends BaseModuleContextSensitiveTest {
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = {"classpath:TestingApplicationContext.xml"}, 
+                     loader = GenericXmlContextLoader.class)
+public class BillServiceImplTest {
 
     @Autowired
     private IBillService billService;
