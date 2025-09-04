@@ -70,6 +70,9 @@ public class BillSearch extends BaseDataTemplateSearch<Bill> {
 		if (bill.getPatient() != null) {
 			criteria.add(Restrictions.eq("patient", bill.getPatient()));
 		}
+		if (bill.getVisit() != null) {
+			criteria.add(Restrictions.eq("visit", bill.getVisit()));
+		}
 		if (bill.getStatus() != null) {
 			criteria.add(Restrictions.eq("status", bill.getStatus()));
 		}

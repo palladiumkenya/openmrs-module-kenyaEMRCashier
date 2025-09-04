@@ -23,8 +23,10 @@
 //import org.junit.Assert;
 //import org.junit.Test;
 //import org.openmrs.Patient;
+//import org.openmrs.Visit;
 //import org.openmrs.api.PatientService;
 //import org.openmrs.api.ProviderService;
+//import org.openmrs.api.VisitService;
 //import org.openmrs.api.context.Context;
 //import org.openmrs.module.kenyaemr.cashier.api.base.PagingInfo;
 //import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
@@ -45,6 +47,7 @@
 //
 //	private ProviderService providerService;
 //	private PatientService patientService;
+//	private VisitService visitService;
 //	private IItemDataService itemService;
 //	private IPaymentModeService paymentModeService;
 //	private IPaymentModeAttributeTypeService paymentModeAttributeTypeService;
@@ -56,6 +59,7 @@
 //
 //		providerService = Context.getProviderService();
 //		patientService = Context.getPatientService();
+//		visitService = Context.getVisitService();
 //		itemService = Context.getService(IItemDataService.class);
 //		paymentModeService = Context.getService(IPaymentModeService.class);
 //		paymentModeAttributeTypeService = Context.getService(IPaymentModeAttributeTypeService.class);
@@ -75,6 +79,7 @@
 //		if (valid) {
 //			bill.setCashier(providerService.getProvider(0));
 //			bill.setPatient(patientService.getPatient(0));
+//			bill.setVisit(visitService.getVisit(1)); // Associate with a visit
 //			bill.setCashPoint(cashPointService.getById(0));
 //			bill.setReceiptNumber("Test 1234");
 //			bill.setStatus(BillStatus.PAID);
