@@ -34,6 +34,12 @@ import org.openmrs.module.kenyaemr.cashier.api.test.TestReceiptNumberGenerator;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.File;
+import java.io.IOException;
+
+/**
+ * Tests for {@link ReceiptNumberGeneratorFactory}
+ */
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Context.class)
 public class ReceiptNumberGeneratorFactoryTest {
@@ -41,8 +47,24 @@ public class ReceiptNumberGeneratorFactoryTest {
 
 	protected AdministrationService administrationService;
 
+	static {
+		// Set up OpenMRS application data directory before any OpenMRS classes are loaded
+		try {
+			File tempDir = File.createTempFile("openmrs-test", "data");
+			tempDir.delete();
+			tempDir.mkdirs();
+			System.setProperty("OPENMRS_APPLICATION_DATA_DIRECTORY", tempDir.getAbsolutePath());
+			
+			// Suppress logging initialization that causes Context to be loaded
+			System.setProperty("log4j.configuration", "none");
+			System.setProperty("logback.configurationFile", "none");
+		} catch (Exception e) {
+			// Ignore exceptions in static initializer
+		}
+	}
+
 	@Before
-	public void before() {
+	public void before() throws IOException {
 		administrationService = mock(AdministrationService.class);
 
 		mockStatic(Context.class);
@@ -53,6 +75,20 @@ public class ReceiptNumberGeneratorFactoryTest {
 	@After
 	public void after() {
 		ReceiptNumberGeneratorFactory.reset();
+		// Clean up temp directory
+		File tempDir = new File(System.getProperty("OPENMRS_APPLICATION_DATA_DIRECTORY"));
+		if (tempDir.exists()) {
+			deleteDirectory(tempDir);
+		}
+	}
+	
+	private void deleteDirectory(File dir) {
+		if (dir.isDirectory()) {
+			for (File file : dir.listFiles()) {
+				deleteDirectory(file);
+			}
+		}
+		dir.delete();
 	}
 
 	/**
