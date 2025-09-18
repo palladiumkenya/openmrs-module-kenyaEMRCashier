@@ -28,7 +28,7 @@ public class Payment extends BaseInstanceCustomizableData<PaymentMode, PaymentAt
 	private Bill bill;
 	private BigDecimal amount;
 	private BigDecimal amountTendered;
-	private StockItem item;
+	private BillLineItem billLineItem;
 
 
 	public Integer getId() {
@@ -79,11 +79,11 @@ public class Payment extends BaseInstanceCustomizableData<PaymentMode, PaymentAt
 	public void setBill(Bill bill) {
 		this.bill = bill;
 	}
-	public StockItem getItem() {
-		return item;
+	public BillLineItem getBillLineItem() {
+		return billLineItem;
+	}
+	public void setBillLineItem(BillLineItem billLineItem){
+		this.billLineItem = billLineItem;
 	}
 
-	public void setItem(StockItem item) {
-		this.item = item;
-	}
 }

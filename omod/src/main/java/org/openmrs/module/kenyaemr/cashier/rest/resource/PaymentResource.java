@@ -14,15 +14,15 @@
 package org.openmrs.module.kenyaemr.cashier.rest.resource;
 
 import org.openmrs.api.context.Context;
-import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
-import org.openmrs.module.stockmanagement.api.StockManagementService;
-import org.openmrs.module.stockmanagement.api.model.StockItem;
-import org.openmrs.module.kenyaemr.cashier.api.IBillService;
-import org.openmrs.module.kenyaemr.cashier.api.IPaymentModeService;
+import org.openmrs.module.kenyaemr.cashier.api.BillLineItemService;
+import org.openmrs.module.kenyaemr.cashier.api.model.BillLineItem;
 import org.openmrs.module.kenyaemr.cashier.api.model.Bill;
 import org.openmrs.module.kenyaemr.cashier.api.model.Payment;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentAttribute;
 import org.openmrs.module.kenyaemr.cashier.api.model.PaymentMode;
+import org.openmrs.module.kenyaemr.cashier.base.resource.BaseRestDataResource;
+import org.openmrs.module.kenyaemr.cashier.api.IBillService;
+import org.openmrs.module.kenyaemr.cashier.api.IPaymentModeService;
 import org.openmrs.module.webservices.rest.web.RequestContext;
 import org.openmrs.module.webservices.rest.web.annotation.PropertyGetter;
 import org.openmrs.module.webservices.rest.web.annotation.PropertySetter;
@@ -57,7 +57,7 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 			description.addProperty("attributes");
 			description.addProperty("amount");
 			description.addProperty("amountTendered");
-			description.addProperty("item");
+			description.addProperty("billLineItem");
 			description.addProperty("dateCreated");
 			description.addProperty("voided");
 		}
@@ -72,7 +72,7 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 		description.addProperty("attributes");
 		description.addProperty("amount");
 		description.addProperty("amountTendered");
-		description.addProperty("item");
+		description.addProperty("billLineItem");
 
 		return description;
 	}
@@ -89,10 +89,11 @@ public class PaymentResource extends DelegatingSubResource<Payment, Bill, BillRe
 
 		instance.setInstanceType(mode);
 	}
-	@PropertySetter("item")
-	public void setStockItem(Payment instance, String uuid) {
-		StockItem stockItem =  Context.getService(StockManagementService.class).getStockItemByUuid(uuid) ;
-		instance.setItem(stockItem);
+
+	@PropertySetter("billLineItem")
+	public void setBillLineItem(Payment instance, String uuid){
+		BillLineItem billLineItem = Context.getService(BillLineItemService.class).getByUuid(uuid);
+		instance.setBillLineItem(billLineItem);
 	}
 
 	@PropertySetter("attributes")
