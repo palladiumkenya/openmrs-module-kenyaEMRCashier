@@ -24,26 +24,26 @@ import org.openmrs.module.kenyaemr.cashier.api.model.CashierSettings;
  * Helper class to load and save the inventory module global settings.
  */
 public class ModuleSettings {
-	public static final String RECEIPT_REPORT_ID_PROPERTY = "openhmis.cashier.defaultReceiptReportId";
-	public static final String CASHIER_SHIFT_REPORT_ID_PROPERTY = "openhmis.cashier.defaultShiftReportId";
-	public static final String TIMESHEET_REQUIRED_PROPERTY = "openhmis.cashier.timesheetRequired";
-	public static final String ROUNDING_MODE_PROPERTY = "openhmis.cashier.roundingMode";
-	public static final String ROUND_TO_NEAREST_PROPERTY = "openhmis.cashier.roundToNearest";
-	public static final String ROUNDING_ITEM_ID = "openhmis.cashier.roundingItemId";
-	public static final String ROUNDING_DEPT_ID = "openhmis.cashier.roundingDeptId";
-	public static final String SYSTEM_RECEIPT_NUMBER_GENERATOR = "openhmis.cashier.systemReceiptNumberGenerator";
-	public static final String ADJUSTMENT_REASEON_FIELD = "openhmis.cashier.adjustmentReasonField";
-	public static final String ALLOW_BILL_ADJUSTMENT = "openhmis.cashier.allowBillAdjustments";
-	public static final String AUTOFILL_PAYMENT_AMOUNT = "openhmis.cashier.autofillPaymentAmount";
+	public static final String RECEIPT_REPORT_ID_PROPERTY = "kenyaemr.cashier.defaultReceiptReportId";
+	public static final String CASHIER_SHIFT_REPORT_ID_PROPERTY = "kenyaemr.cashier.defaultShiftReportId";
+	public static final String TIMESHEET_REQUIRED_PROPERTY = "kenyaemr.cashier.timesheetRequired";
+	public static final String ROUNDING_MODE_PROPERTY = "kenyaemr.cashier.roundingMode";
+	public static final String ROUND_TO_NEAREST_PROPERTY = "kenyaemr.cashier.roundToNearest";
+	public static final String ROUNDING_ITEM_ID = "kenyaemr.cashier.roundingItemId";
+	public static final String ROUNDING_DEPT_ID = "kenyaemr.cashier.roundingDeptId";
+	public static final String SYSTEM_RECEIPT_NUMBER_GENERATOR = "kenyaemr.cashier.systemReceiptNumberGenerator";
+	public static final String ADJUSTMENT_REASEON_FIELD = "kenyaemr.cashier.adjustmentReasonField";
+	public static final String ALLOW_BILL_ADJUSTMENT = "kenyaemr.cashier.allowBillAdjustments";
+	public static final String AUTOFILL_PAYMENT_AMOUNT = "kenyaemr.cashier.autofillPaymentAmount";
 	public static final String PATIENT_DASHBOARD_2_BILL_COUNT =
-	        "openhmis.cashier.patientDashboard2BillCount";
+	        "kenyaemr.cashier.patientDashboard2BillCount";
 	private static final Integer DEFAULT_PATIENT_DASHBOARD_2_BILL_COUNT = 4;
-	public static final String DEPARTMENT_COLLECTIONS_REPORT_ID_PROPERTY = "openhmis.cashier.reports.departmentCollections";
-	public static final String DEPARTMENT_REVENUE_REPORT_ID_PROPERTY = "openhmis.cashier.reports.departmentRevenue";
-	public static final String SHIFT_SUMMARY_REPORT_ID_PROPERTY = "openhmis.cashier.reports.shiftSummary";
-	public static final String DAILY_SHIFT_SUMMARY_REPORT_ID_PROPERTY = "openhmis.cashier.reports.dailyShiftSummary";
+	public static final String DEPARTMENT_COLLECTIONS_REPORT_ID_PROPERTY = "kenyaemr.cashier.reports.departmentCollections";
+	public static final String DEPARTMENT_REVENUE_REPORT_ID_PROPERTY = "kenyaemr.cashier.reports.departmentRevenue";
+	public static final String SHIFT_SUMMARY_REPORT_ID_PROPERTY = "kenyaemr.cashier.reports.shiftSummary";
+	public static final String DAILY_SHIFT_SUMMARY_REPORT_ID_PROPERTY = "kenyaemr.cashier.reports.dailyShiftSummary";
 	public static final String PAYMENTS_BY_PAYMENT_MODE_REPORT_ID_PROPERTY =
-	        "openhmis.cashier.reports.paymentsByPaymentMode";
+	        "kenyaemr.cashier.reports.paymentsByPaymentMode";
 
 	private static final AdministrationService administrationService;
 
