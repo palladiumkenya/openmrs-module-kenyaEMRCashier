@@ -284,6 +284,16 @@ public class GenerateBillFromOrderable implements AfterReturningAdvice {
                 activeBill = new Bill();
                 activeBill.setPatient(patient);
                 activeBill.setStatus(BillStatus.PENDING);
+                
+                // Associate the bill with the visit if available
+                if (visitForOrder != null) {
+                    activeBill.setVisit(visitForOrder);
+                }
+            } else {
+                // If we're using an existing bill, ensure it's associated with the visit
+                if (visitForOrder != null && activeBill.getVisit() == null) {
+                    activeBill.setVisit(visitForOrder);
+                }
             }
 
             // Bill Item

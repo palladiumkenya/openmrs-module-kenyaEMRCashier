@@ -1097,4 +1097,31 @@
 		</createIndex>
 	</changeSet>
 
+	<changeSet id="kenyaemr.cashier-20241201-add-visit-association" author="Donald Kibet">
+		<preConditions onError="WARN" onFail="MARK_RAN">
+			<tableExists tableName="cashier_bill" />
+			<not>
+				<columnExists columnName="visit_id" tableName="cashier_bill" />
+			</not>
+		</preConditions>
+		
+		<comment>Add visit association to bills for in-patient billing and care linking</comment>
+
+		<!-- Add visit_id column to cashier_bill table -->
+		<addColumn tableName="cashier_bill">
+			<column name="visit_id" type="int">
+				<constraints nullable="true" foreignKeyName="fk_cashier_bill_visit"
+					references="visit(visit_id)" />
+			</column>
+		</addColumn>
+
+		<!-- Add index for visit_id to improve query performance -->
+		<createIndex 
+			tableName="cashier_bill" 
+			indexName="idx_cashier_bill_visit_id">
+			<column name="visit_id" />
+		</createIndex>
+		
+	</changeSet>
+
 </databaseChangeLog>

@@ -16,6 +16,7 @@ package org.openmrs.module.kenyaemr.cashier.api.model;
 import org.openmrs.BaseOpenmrsData;
 import org.openmrs.Patient;
 import org.openmrs.Provider;
+import org.openmrs.Visit;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.kenyaemr.cashier.api.IDepositService;
 import org.openmrs.module.kenyaemr.cashier.api.util.PrivilegeConstants;
@@ -40,6 +41,7 @@ public class Bill extends BaseOpenmrsData {
 	private String receiptNumber;
 	private Provider cashier;
 	private Patient patient;
+	private Visit visit;
 	private CashPoint cashPoint;
 	private Bill billAdjusted;
 	private BillStatus status;
@@ -206,6 +208,14 @@ public class Bill extends BaseOpenmrsData {
 
 	public void setPatient(Patient patient) {
 		this.patient = patient;
+	}
+
+	public Visit getVisit() {
+		return visit;
+	}
+
+	public void setVisit(Visit visit) {
+		this.visit = visit;
 	}
 
 	public CashPoint getCashPoint() {
